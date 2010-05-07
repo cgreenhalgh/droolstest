@@ -10,6 +10,7 @@ rule "Enter region content"
 		ur : UserRegion ( )
 		cm : ContentMapping ( region_id == ur.region_id )
 	then
-	System.out.println( "User enters region" ); 
+	System.out.println( "User "+ur.user_id+" given content "+cm.content_id+" via region "+ur.region_id ); 
+	
 //	create ( new UserContentNotification ( user_id = ur.user_id, content_id = cm.content_id ) );
 end
