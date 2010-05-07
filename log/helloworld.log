@@ -1,0 +1,29 @@
+<object-stream>
+<org.drools.audit.event.ObjectLogEvent>
+  <type>1</type>
+  <factId>1</factId>
+  <objectToString>uk.ac.horizon.apptest.model.ContentMapping@f01771</objectToString>
+</org.drools.audit.event.ObjectLogEvent>
+<org.drools.audit.event.ActivationLogEvent>
+  <type>4</type>
+  <activationId>Enter region content [1, 2]</activationId>
+  <rule>Enter region content</rule>
+  <declarations>cm=uk.ac.horizon.apptest.model.ContentMapping@f01771(1); ur=uk.ac.horizon.apptest.model.UserRegion@d16fc1(2)</declarations>
+</org.drools.audit.event.ActivationLogEvent>
+<org.drools.audit.event.ObjectLogEvent>
+  <type>1</type>
+  <factId>2</factId>
+  <objectToString>uk.ac.horizon.apptest.model.UserRegion@d16fc1</objectToString>
+</org.drools.audit.event.ObjectLogEvent>
+<org.drools.audit.event.ActivationLogEvent>
+  <type>6</type>
+  <activationId>Enter region content [1, 2]</activationId>
+  <rule>Enter region content</rule>
+  <declarations>cm=uk.ac.horizon.apptest.model.ContentMapping@f01771(1); ur=uk.ac.horizon.apptest.model.UserRegion@d16fc1(2)</declarations>
+</org.drools.audit.event.ActivationLogEvent>
+<org.drools.audit.event.ActivationLogEvent>
+  <type>7</type>
+  <activationId>Enter region content [1, 2]</activationId>
+  <rule>Enter region content</rule>
+  <declarations>cm=uk.ac.horizon.apptest.model.ContentMapping@f01771(1); ur=uk.ac.horizon.apptest.model.UserRegion@d16fc1(2)</declarations>
+</org.drools.audit.event.ActivationLogEvent>

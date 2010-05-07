@@ -1,0 +1,15 @@
+package uk.ac.horizon.apptest.desktop
+ 
+import uk.ac.horizon.apptest.model.ContentMapping;
+import uk.ac.horizon.apptest.model.UserRegion;
+import uk.ac.horizon.apptest.model.UserContentNotification;
+
+rule "Enter region content"
+    dialect "mvel"
+	when
+		ur : UserRegion ( )
+		cm : ContentMapping ( region_id == ur.region_id )
+	then
+	System.out.println( "User enters region" ); 
+//	create ( new UserContentNotification ( user_id = ur.user_id, content_id = cm.content_id ) );
+end
