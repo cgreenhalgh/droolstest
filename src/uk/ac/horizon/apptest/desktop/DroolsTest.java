@@ -88,7 +88,7 @@ public class DroolsTest {
 
 		// setup the audit logging
 		KnowledgeRuntimeLogger logger = KnowledgeRuntimeLoggerFactory
-		.newFileLogger(ksession, "log/helloworld");
+		.newFileLogger(ksession, "helloworld");
 
 		// add "authored" content
 		
