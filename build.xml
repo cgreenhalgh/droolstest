@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     12 May 2010 20:18:28                                                        
+
+     droolstest    
+     droolstest web application
+                   
+     cmg                                                                
+     ====================================================================== -->
+<project name="droolstest" default="default">
+    <description>
+            droolstest web application
+    </description>
+
+    <!-- ================================= 
+          target: default              
+         ================================= -->
+    <target name="default" depends="war" description="droolstest web application">
+        
+    </target>
+
+	<path id="cp">
+		<fileset dir="lib">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+	
+    <!-- - - - - - - - - - - - - - - - - - 
+          target: war                      
+         - - - - - - - - - - - - - - - - - -->
+    <target name="war">
+    	<mkdir dir="build"/>
+    	<copy todir="build">
+			<fileset dir="webapp" includes="**"/>
+    	</copy>
+    	<mkdir dir="build/WEB-INF/lib"/>
+    	<copy todir="build/WEB-INF/lib">
+			<fileset dir="lib" includes="**"/>
+    	</copy>
+    	<mkdir dir="build/WEB-INF/classes"/>
+		<javac destdir="build/WEB-INF/classes" debug="true" target="1.5" source="1.5">
+    		<classpath refid="cp"/>
+			<src path="src"/>		
+    	</javac>
+    	<jar basedir="build" destfile="droolstest.war" includes="**"/>
+    </target>
+
+</project>
