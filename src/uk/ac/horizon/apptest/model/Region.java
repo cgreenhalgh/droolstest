@@ -2,13 +2,20 @@
  * 
  */
 package uk.ac.horizon.apptest.model;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.IdClass;
 
 /**
  * @author cmg
  *
  */
+@Entity
 public class Region {
 	/** region id */
+	@Id
 	protected String id;
 	/** region name */
 	protected String title;

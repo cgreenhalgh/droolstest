@@ -26,6 +26,9 @@
 		<fileset dir="lib/compile">
 			<include name="*.jar"/>
 		</fileset>
+		<fileset dir="lib/container">
+			<include name="*.jar"/>
+		</fileset>
 	</path>
 	
     <!-- - - - - - - - - - - - - - - - - - 
@@ -38,7 +41,7 @@
     	</copy>
     	<mkdir dir="build/WEB-INF/lib"/>
     	<copy todir="build/WEB-INF/lib">
-			<fileset dir="lib" includes="**"/>
+			<fileset dir="lib" includes="*.jar"/>
     	</copy>
     	<mkdir dir="build/WEB-INF/classes"/>
     	<copy todir="build/WEB-INF/classes">

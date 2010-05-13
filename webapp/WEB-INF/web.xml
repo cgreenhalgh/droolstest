@@ -5,7 +5,13 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
     version="2.4">
-  
+
+  <!-- data source -->  
+  <resource-env-ref>
+    <resource-env-ref-name>jdbc/db1</resource-env-ref-name>
+    <resource-env-ref-type>javax.sql.DataSource</resource-env-ref-type>
+  </resource-env-ref>
+
   <!-- =====================================================================
        General web application properties
        ===================================================================== -->
@@ -16,14 +22,25 @@
   <description>DroolsTest Web Application</description>
   
   <servlet>
-    <servlet-name>test</servlet-name>
+    <servlet-name>test1</servlet-name>
     <servlet-class>uk.ac.horizon.apptest.server.TestServlet</servlet-class>
     <load-on-startup>1</load-on-startup>
   </servlet>
 
   <servlet-mapping>
-    <servlet-name>test</servlet-name>
-    <url-pattern>/test/*</url-pattern>
+    <servlet-name>test1</servlet-name>
+    <url-pattern>/test1</url-pattern>
+  </servlet-mapping>  
+
+  <servlet>
+    <servlet-name>test2</servlet-name>
+    <servlet-class>uk.ac.horizon.apptest.server.JPATestServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>test2</servlet-name>
+    <url-pattern>/test2</url-pattern>
   </servlet-mapping>  
 
   <welcome-file-list>
