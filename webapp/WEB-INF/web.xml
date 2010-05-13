@@ -43,6 +43,17 @@
     <url-pattern>/test2</url-pattern>
   </servlet-mapping>  
 
+  <servlet>
+    <servlet-name>test3</servlet-name>
+    <servlet-class>uk.ac.horizon.apptest.server.JPADroolsTestServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>test3</servlet-name>
+    <url-pattern>/test3</url-pattern>
+  </servlet-mapping>  
+
   <welcome-file-list>
     <!-- a static test file for now -->
     <welcome-file>index.html</welcome-file>
