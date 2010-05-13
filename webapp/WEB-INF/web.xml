@@ -48,7 +48,7 @@
     <servlet-class>uk.ac.horizon.apptest.server.JPADroolsTestServlet</servlet-class>
     <load-on-startup>1</load-on-startup>
   </servlet>
-
+  
   <servlet-mapping>
     <servlet-name>test3</servlet-name>
     <url-pattern>/test3</url-pattern>

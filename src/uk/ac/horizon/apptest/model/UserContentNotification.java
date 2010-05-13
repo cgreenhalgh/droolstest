@@ -9,7 +9,7 @@ import java.util.Date;
  * @author cmg
  *
  */
-public class UserContentNotification {
+public class UserContentNotification implements java.io.Serializable {
 	/** user id */
 	protected String user_id;
 	/** content id */

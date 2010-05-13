@@ -7,7 +7,7 @@ package uk.ac.horizon.apptest.model;
  * @author cmg
  *
  */
-public class ContentMapping {
+public class ContentMapping implements java.io.Serializable {
 	/** content id */
 	protected String content_id;
 	/** region id */

@@ -13,7 +13,7 @@ import javax.persistence.IdClass;
  *
  */
 @Entity
-public class Region {
+public class Region implements java.io.Serializable {
 	/** region id */
 	@Id
 	protected String id;

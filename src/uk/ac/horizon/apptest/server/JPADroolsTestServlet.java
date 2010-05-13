@@ -36,6 +36,7 @@ import org.drools.persistence.jpa.JPAKnowledgeService;
 import uk.ac.horizon.apptest.desktop.DroolsTest;
 import uk.ac.horizon.apptest.model.ContentMapping;
 import uk.ac.horizon.apptest.model.UserRegion;
+import uk.ac.horizon.apptest.model.Region;
 
 import java.util.Collection;
 import java.util.logging.Level;
@@ -88,11 +89,17 @@ public class JPADroolsTestServlet extends HttpServlet {
 			          
 			// KnowledgeSessionConfiguration may be null, and a default will be used
 			StatefulKnowledgeSession ksession = null;
-			ksession = JPAKnowledgeService.newStatefulKnowledgeSession( kbase, null, env );
-			int sessionId = ksession.getId();
+			if (req.getParameter("session")==null) {
+				ksession = JPAKnowledgeService.newStatefulKnowledgeSession( kbase, null, env );
+				int sessionId = ksession.getId();
 			
-			logger.info("New session "+sessionId);
-			
+				logger.info("New session "+sessionId);
+			} else
+			{
+				int sessionId = Integer.parseInt(req.getParameter("session"));
+				ksession = JPAKnowledgeService.loadStatefulKnowledgeSession(sessionId, kbase, null, env);
+				logger.info("Loaded session "+sessionId);
+			}
 			UserTransaction ut =
 			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
 
@@ -107,6 +114,30 @@ public class JPADroolsTestServlet extends HttpServlet {
 			KnowledgeRuntimeLogger logger = KnowledgeRuntimeLoggerFactory
 			.newFileLogger(ksession, "helloworld");
 
+			JPADroolsTestServlet.logger.info("No op...");
+			// add "authored" content
+			ut.begin();
+			ut.commit();
+
+			JPADroolsTestServlet.logger.info("Add R...");
+			// add "authored" content
+			ut.begin();
+			
+			final Region r = new Region();
+			r.setId("R2");
+			ksession.insert(r);
+
+			// this only works at present if Region implements Serializable :-<
+			// a post suggests JPA persistence is also possible for facts...
+			ut.commit();
+
+			JPADroolsTestServlet.logger.info("fire rules");
+			ut.begin();
+			ksession.fireAllRules();
+			ut.commit();
+			
+
+			JPADroolsTestServlet.logger.info("Add CM...");
 			// add "authored" content
 			ut.begin();
 			
@@ -118,6 +149,7 @@ public class JPADroolsTestServlet extends HttpServlet {
 			ksession.fireAllRules();
 			ut.commit();
 			
+			JPADroolsTestServlet.logger.info("Add UR...");
 			ut.begin();
 			// add "game" content
 			final UserRegion ur = new UserRegion();

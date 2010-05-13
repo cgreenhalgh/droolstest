@@ -7,7 +7,7 @@ package uk.ac.horizon.apptest.model;
  * @author cmg
  *
  */
-public class UserRegion {
+public class UserRegion implements java.io.Serializable {
 	/** user id */
 	protected String user_id;
 	/** region id */
