@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+
+  
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+
+  
+  <title>drools persistence sessions</title>
+</head>
+
+
+<body>
+
+<h1>Drools Persistent Sessions</h1>
+
+<p>Some notes on trying to get Drools persistent sessions to work.</p>
+
+<p>Drools documentation: <a href="http://www.jboss.org/drools/documentation.html">Drools 5 documentation</a></p>
+
+<p>My notes on getting JTA/JPA to work with Tomcat:&nbsp; <a href="installation.html">installation.html</a></p>
+
+<p>I have got as far as sessions (apparently) being created and used for the first time.</p>
+
+<p>I had to make my Fact classes implement java.io.Serializable, or the
+session.insert would silently fail (the user transaction commit would
+roll back).</p>
+<p>There is a bug in Drools 5.0 which appears to prevent persistent
+sessions (with default serialisation object handling) being read back
+in. There appears to be a fix in Drools 5.1.0.M1.</p>
+<p></p>
+
+<h3>Drools 5.0 bug</h3>
+<p>Now when I try to load a previous session I get:</p>
+
+<pre>Hibernate: select sessioninf0_.id as id110_0_, sessioninf0_.dirty as dirty110_0_<br>, sessioninf0_.lastModificationDate as lastModi3_110_0_, sessioninf0_.rulesByteA<br>rray as rulesByt4_110_0_, sessioninf0_.startDate as startDate110_0_ from Session<br>Info sessioninf0_ where sessioninf0_.id=?<br>14-May-2010 09:35:44 bitronix.tm.BitronixTransaction fireAfterCompletionEvent<br>WARNING: Synchronization.afterCompletion() call failed for org.drools.persistenc<br>e.session.SingleSessionCommandService$SynchronizationImpl@81fb<br>java.lang.NullPointerException<br>        at org.drools.persistence.session.SingleSessionCommandService$Synchroniz<br>ationImpl.afterCompletion(SingleSessionCommandService.java:336)<br>        at bitronix.tm.BitronixTransaction.fireAfterCompletionEvent(BitronixTran<br>saction.java:416)<br>        at bitronix.tm.BitronixTransaction.commit(BitronixTransaction.java:195)<br>        at bitronix.tm.BitronixTransactionManager.commit(BitronixTransactionMana<br>ger.java:95)<br>        at org.drools.persistence.session.SingleSessionCommandService.&lt;init&gt;(Sin<br>gleSessionCommandService.java:153)<br>        at org.drools.persistence.jpa.impl.JPAKnowledgeServiceProviderImpl.loadS<br>tatefulKnowledgeSession(JPAKnowledgeServiceProviderImpl.java:75)<br>        at org.drools.persistence.jpa.JPAKnowledgeService.loadStatefulKnowledgeS<br>ession(JPAKnowledgeService.java:102)<br>        at uk.ac.horizon.apptest.server.JPADroolsTestServlet.doGet(JPADroolsTest<br>Servlet.java:100)<br>        at javax.servlet.http.HttpServlet.service(HttpServlet.java:617)<br>        at javax.servlet.http.HttpServlet.service(HttpServlet.java:717)<br>        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(Appl<br>icationFilterChain.java:290)<br>        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationF<br>ilterChain.java:206)<br>        at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperV<br>alve.java:233)<br>        at org.apache.catalina.core.StandardContextValve.invoke(StandardContextV<br>alve.java:191)<br>        at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.j<br>ava:127)<br>        at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.j<br>ava:102)<br>        at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineVal<br>ve.java:109)<br>        at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.jav<br>a:298)<br>        at org.apache.coyote.http11.Http11Processor.process(Http11Processor.java<br>:852)<br>        at org.apache.coyote.http11.Http11Protocol$Http11ConnectionHandler.proce<br>ss(Http11Protocol.java:588)<br>        at org.apache.tomcat.util.net.JIoEndpoint$Worker.run(JIoEndpoint.java:48<br>9)<br>        at java.lang.Thread.run(Thread.java:619)<br>14-May-2010 09:35:44 uk.ac.horizon.apptest.server.JPADroolsTestServlet doGet<br>WARNING: java.lang.RuntimeException: Unable to load session snapshot<br>java.lang.RuntimeException: Unable to load session snapshot<br>        at org.drools.persistence.session.JPASessionMarshallingHelper.loadSnapsh<br>ot(JPASessionMarshallingHelper.java:112)<br>        at org.drools.persistence.session.JPASessionMarshallingHelper.&lt;init&gt;(JPA<br>SessionMarshallingHelper.java:46)<br>        at org.drools.persistence.session.SingleSessionCommandService.&lt;init&gt;(Sin<br>gleSessionCommandService.java:171)<br>        at org.drools.persistence.jpa.impl.JPAKnowledgeServiceProviderImpl.loadS<br>tatefulKnowledgeSession(JPAKnowledgeServiceProviderImpl.java:75)<br>        at org.drools.persistence.jpa.JPAKnowledgeService.loadStatefulKnowledgeS<br>ession(JPAKnowledgeService.java:102)<br>        at uk.ac.horizon.apptest.server.JPADroolsTestServlet.doGet(JPADroolsTest<br>Servlet.java:100)<br>        at javax.servlet.http.HttpServlet.service(HttpServlet.java:617)<br>        at javax.servlet.http.HttpServlet.service(HttpServlet.java:717)<br>        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(Appl<br>icationFilterChain.java:290)<br>        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationF<br>ilterChain.java:206)<br>        at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperV<br>alve.java:233)<br>        at org.apache.catalina.core.StandardContextValve.invoke(StandardContextV<br>alve.java:191)<br>        at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.j<br>ava:127)<br>        at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.j<br>ava:102)<br>        at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineVal<br>ve.java:109)<br>        at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.jav<br>a:298)<br>        at org.apache.coyote.http11.Http11Processor.process(Http11Processor.java<br>:852)<br>        at org.apache.coyote.http11.Http11Protocol$Http11ConnectionHandler.proce<br>ss(Http11Protocol.java:588)<br>        at org.apache.tomcat.util.net.JIoEndpoint$Worker.run(JIoEndpoint.java:48<br>9)<br>        at java.lang.Thread.run(Thread.java:619)<br>Caused by: java.lang.NullPointerException<br>        at org.drools.common.ConcurrentNodeMemories.getNodeMemory(ConcurrentNode<br>Memories.java:69)<br>[should be null NodeMemory argument?]<br>        at org.drools.common.AbstractWorkingMemory.getNodeMemory(AbstractWorking<br>Memory.java:1534)<br>        at org.drools.marshalling.impl.InputMarshaller.readFactHandles(InputMars<br>haller.java:334)<br>[       // add handles to object type nodes<br>        for ( InternalFactHandle handle : handles ) {<br>            Object object = handle.getObject();<br>            ClassObjectType objectType = new ClassObjectType( object.getClass() );<br>            ObjectTypeNode objectTypeNode = objectTypeNodes.get( objectType );<br>**looks like objectTypeNode is null, so objectTypeNodes does not contain objectType**<br>**this is from (an) EntryPointNode, which doesn't appear to have objectTypeNodes initialised**<br>            ObjectHashSet set = (ObjectHashSet) context.wm.getNodeMemory( **objectTypeNode** );<br>]<br>        at org.drools.marshalling.impl.InputMarshaller.readSession(InputMarshall<br>er.java:207)<br>        at org.drools.marshalling.impl.DefaultMarshaller.unmarshall(DefaultMarsh<br>aller.java:75)<br>        at org.drools.persistence.session.JPASessionMarshallingHelper.loadSnapsh<br>ot(JPASessionMarshallingHelper.java:104)<br>        ... 19 more<br>14-May-2010 09:36:43 bitronix.tm.recovery.Recoverer run</pre>
+
+<p>I have found one or two variants of this error mentioned online, and request(s) for patches: <a href="http://www.mail-archive.com/rules-users@lists.jboss.org/msg10197.html">http://www.mail-archive.com/rules-users@lists.jboss.org/msg10197.html</a></p>
+<p>It seems to be caused by the use of user-defined fact types. I
+wonder if it is more specifically ones which are not referenced in the
+RuleBase (e.g. through imports), but I haven't tested that.</p>
+<p></p>
+</body>
+</html>

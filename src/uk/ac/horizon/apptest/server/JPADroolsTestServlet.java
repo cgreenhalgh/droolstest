@@ -84,9 +84,13 @@ public class JPADroolsTestServlet extends HttpServlet {
 			env.set( EnvironmentName.ENTITY_MANAGER_FACTORY,
 			         Persistence.createEntityManagerFactory( "droolstest" ) );
 			// bitronix specific... !
-			env.set( EnvironmentName.TRANSACTION_MANAGER,
-			         bitronix.tm.TransactionManagerServices.getTransactionManager() );
-			          
+			//env.set( EnvironmentName.TRANSACTION_MANAGER,
+			//         bitronix.tm.TransactionManagerServices.getTransactionManager() );
+
+			UserTransaction ut =
+				  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
+
+			//ut.begin();
 			// KnowledgeSessionConfiguration may be null, and a default will be used
 			StatefulKnowledgeSession ksession = null;
 			if (req.getParameter("session")==null) {
@@ -100,9 +104,8 @@ public class JPADroolsTestServlet extends HttpServlet {
 				ksession = JPAKnowledgeService.loadStatefulKnowledgeSession(sessionId, kbase, null, env);
 				logger.info("Loaded session "+sessionId);
 			}
-			UserTransaction ut =
-			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
-
+			// can't commit - nested not supported: ut.commit();
+			
 			// new stateful session for this "game"
 //			final StatefulKnowledgeSession ksession = kbase
 //			.newStatefulKnowledgeSession();

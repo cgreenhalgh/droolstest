@@ -1,37 +1,137 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html><head><meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>Droolstest Installation</title></head>
-<body><h1>Droolstest Installation</h1><h2>Build</h2><p>Use the provided Apache ANT <span style="font-family: monospace;">build.xml</span> - target "war". Requires Java 1.5.</p><h2>Tomcat</h2><p>Tested with <a href="http://tomcat.apache.org/download-60.cgi">Tomcat 6</a> (6.0.26).</p><h3>Getting started with Tomcat</h3>Windows:<br><ul><ul><li>download the "core" <span style="font-family: monospace;">.zip</span> file from <a href="http://tomcat.apache.org/download-60.cgi">http://tomcat.apache.org/download-60.cgi</a></li><li>unzip it (produces e.g. a directory <span style="font-family: monospace;">apache-tomcat-6.0.26/</span>)</li><li>edit <span style="font-family: monospace;">conf/tomcat-users.xml</span> to add a "manager" user account, e.g. insert lines something like<br> <span style="font-family: monospace; font-weight: bold;">&lt;tomcat-users&gt;...</span><br style="font-family: monospace; font-weight: bold;"><span style="font-family: monospace; font-weight: bold;">&nbsp; &lt;role rolename="manager" /&gt;</span><br style="font-family: monospace; font-weight: bold;"><span style="font-family: monospace; font-weight: bold;">&nbsp; &lt;user username="admin" password="pa55w0rd" 
-roles="manager" /&gt;</span></li><li>make sure that the environment variable <span style="font-family: monospace;">JAVA_HOME</span> is set to the directory in which the JDK is installed (1.5 or above; tested with 1.6.0_03).&nbsp;</li><ul><li>On
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>Droolstest Installation</title>
+</head>
+
+<body>
+<h1>Droolstest Installation</h1>
+<h2>Build</h2>
+<p>Use the provided Apache ANT <span style="font-family: monospace;">build.xml</span> - target "war". Requires Java 1.5.</p>
+<h2>Tomcat</h2>
+<p>Tested with <a href="http://tomcat.apache.org/download-60.cgi">Tomcat 6</a> (6.0.26).</p>
+<h3>Getting started with Tomcat</h3>
+Windows:<br>
+<ul>
+  <ul>
+    <li>download the "core" <span style="font-family: monospace;">.zip</span> file from <a href="http://tomcat.apache.org/download-60.cgi">http://tomcat.apache.org/download-60.cgi</a></li>
+    <li>unzip it (produces e.g. a directory <span style="font-family: monospace;">apache-tomcat-6.0.26/</span>)</li>
+    <li>edit <span style="font-family: monospace;">conf/tomcat-users.xml</span> to add a "manager" user account, e.g. insert lines something like<br>
+ <span style="font-family: monospace;">&lt;tomcat-users&gt;...</span><br style="font-family: monospace; font-weight: bold;">
+      <span style="font-family: monospace; font-weight: bold;">&nbsp; &lt;role rolename="manager" /&gt;</span><br style="font-family: monospace; font-weight: bold;">
+      <span style="font-family: monospace; font-weight: bold;">&nbsp; &lt;user username="admin" password="pa55w0rd" 
+roles="manager" /&gt;</span></li>
+    <li>make sure that the environment variable <span style="font-family: monospace;">JAVA_HOME</span> is set to the directory in which the JDK is installed (1.5 or above; tested with 1.6.0_03).&nbsp;</li>
+    <ul>
+      <li>On
 windows set environment variables by: open the "Control Panel",
 "System", "Advanced" tab, "Environment Variables" button (at bottom),
-"User variables..." section ("New" or "Edit").&nbsp;</li></ul><li>double click <span style="font-family: monospace;">bin/startup.bat</span>
+"User variables..." section ("New" or "Edit").&nbsp;</li>
+    </ul>
+    <li>double click <span style="font-family: monospace;">bin/startup.bat</span>
 to start tomcat; it should open in a new windows. Depending on the
 webapps present it may take ~30 seconds to start. You can check the
-base URL in a browser to see if it is working:&nbsp;<a href="http://localhost:8080/">http://localhost:8080/</a>&nbsp;</li></ul></ul><p>Applications are deployed into the <span style="font-family: monospace;">webapp/</span> directory, either as a <span style="font-family: monospace;">.war</span>
+base URL in a browser to see if it is working:&nbsp;<a href="http://localhost:8080/">http://localhost:8080/</a>&nbsp;</li>
+  </ul>
+</ul>
+<p>Applications are deployed into the <span style="font-family: monospace;">webapp/</span> directory, either as a <span style="font-family: monospace;">.war</span>
 file (Web Archive) or a directory hierarchy. The Tomcat manager view
-allows you to see the status of current webapps (by default the URL is <a href="http://localhost:8080/manager/html">http://localhost:8080/manager/html</a> - use the username and password added to the <span style="font-family: monospace;">conf/tomcat-users.xml</span> file above). </p><h3>Configuring Bitronix Transaction Manager</h3><p>Drools persistence sessions documentation appears to require JTA (Java Transaction API) support, and suggests <a href="http://docs.codehaus.org/display/BTM/Download">Bitronix</a> Transaction Manager (or JBoss Transactions). Current stable version of BTM is 1.3.3. Bitronix gives the <a href="http://docs.codehaus.org/display/BTM/Tomcat13">following guidance</a> on using this with Tomcat 6:</p><ul><li>download <span style="font-family: monospace;">btm-dist-1.3.3.zip</span> (or later) from <a href="http://docs.codehaus.org/display/BTM/Download">Bitronix</a> and unzip (to give <span style="font-family: monospace;">btm-dist-1.3.3/</span>)</li><li>from BTM copy to Tomcat <span style="font-family: monospace;">lib/</span>: <span style="font-family: monospace;">btm-1.3.3.jar</span> (or later) and (from BTM <span style="font-family: monospace;">lib/</span>) <span style="font-family: monospace;">geronimo-jta_1.0.1B_spec-1.0.1.jar</span>,&nbsp;<span style="font-family: monospace;">slf4j-api-1.5.8.jar</span>,&nbsp;<span style="font-family: monospace;">slf4j-jdk14-1.5.8.jar</span> and (from BTM <span style="font-family: monospace;">integration/</span>)&nbsp;<span style="font-family: monospace;">btm-tomcat55-lifecycle.jar</span></li><li>Windows: copy file <a href="btm/setenv.bat"><tt>setenv.bat</tt></a> to Tomcat's <tt>bin/</tt> directory.</li><li>Coy file <a href="btm/btm-config.properties"><tt>btm-config.properties</tt></a> to Tomcat's <tt>conf/</tt> directory.</li><li>Edit the file named <tt>server.xml</tt> under Tomcat's <tt>conf/</tt> 
-directory. Under the line: <span style="font-family: monospace;"><br>&lt;Listener className=</span><span style="font-family: monospace;" class="code-quote">"org.apache.catalina.mbeans.GlobalResourcesLifecycleListener"</span><span style="font-family: monospace;"> /&gt;</span> <br>add:<br><span style="font-family: monospace;">&lt;Listener className=</span><span style="font-family: monospace;" class="code-quote">"bitronix.tm.integration.tomcat55.BTMLifecycleListener"</span><span style="font-family: monospace;"> /&gt;</span></li><li>Edit the file named <tt>context.xml</tt> under Tomcat's 
-<tt>conf/</tt> directory. Under this line: <span style="font-family: monospace;"><br>&lt;WatchedResource&gt;WEB-INF/web.xml&lt;/WatchedResource&gt;</span> <br>add:<br><span style="font-family: monospace;">&lt;Transaction factory=</span><span style="font-family: monospace;" class="code-quote">"bitronix.tm.BitronixUserTransactionObjectFactory"</span><span style="font-family: monospace;"> /&gt;</span></li><li>create an empty file named <tt>resources.properties</tt> under Tomcat's 
-<tt>conf/</tt> directory.</li><li>restart (quit and re-start) Tomcat and check the console output to see that BTM has initialised correctly.</li></ul><p>Note that the guidance also covers configuration of the underlying JDBC datasources (see later). </p><p>Bitronix also gives&nbsp;<a href="http://docs.codehaus.org/display/BTM/Hibernate13">guidance</a>
+allows you to see the status of current webapps (by default the URL is <a href="http://localhost:8080/manager/html">http://localhost:8080/manager/html</a> - use the username and password added to the <span style="font-family: monospace;">conf/tomcat-users.xml</span> file above). </p>
+<h3>Configuring Bitronix Transaction Manager</h3>
+<p>Drools persistence sessions documentation appears to require JTA (Java Transaction API) support, and suggests <a href="http://docs.codehaus.org/display/BTM/Download">Bitronix</a> Transaction Manager (or JBoss Transactions). Current stable version of BTM is 1.3.3. Bitronix gives the <a href="http://docs.codehaus.org/display/BTM/Tomcat13">following guidance</a> on using this with Tomcat 6:</p>
+<ul>
+  <li>download <span style="font-family: monospace;">btm-dist-1.3.3.zip</span> (or later) from <a href="http://docs.codehaus.org/display/BTM/Download">Bitronix</a> and unzip (to give <span style="font-family: monospace;">btm-dist-1.3.3/</span>)</li>
+  <ul>
+    <li><span style="font-weight: bold;">Note:</span> there may be copies of the required JARs in sample webapp's lib/container/ directory</li>
+  </ul>
+  <li>from BTM copy to Tomcat <span style="font-family: monospace;">lib/</span>: <span style="font-family: monospace;">btm-1.3.3.jar</span> (or later) and (from BTM <span style="font-family: monospace;">lib/</span>) <span style="font-family: monospace;">geronimo-jta_1.0.1B_spec-1.0.1.jar</span>,&nbsp;<span style="font-family: monospace;">slf4j-api-1.5.8.jar</span>,&nbsp;<span style="font-family: monospace;">slf4j-jdk14-1.5.8.jar</span> and (from BTM <span style="font-family: monospace;">integration/</span>)&nbsp;<span style="font-family: monospace;">btm-tomcat55-lifecycle.jar</span></li>
+  <li>Windows: copy file <a href="btm/setenv.bat"><tt>setenv.bat</tt></a> to Tomcat's <tt>bin/</tt> directory.</li>
+  <li>Coy file <a href="btm/btm-config.properties"><tt>btm-config.properties</tt></a> to Tomcat's <tt>conf/</tt> directory.</li>
+  <li>Edit the file named <tt>server.xml</tt> under Tomcat's <tt>conf/</tt> 
+directory. Under the line: <span style="font-family: monospace;"><br>
+&lt;Listener className=</span><span style="font-family: monospace;" class="code-quote">"org.apache.catalina.mbeans.GlobalResourcesLifecycleListener"</span><span style="font-family: monospace;"> /&gt;</span> <br>
+add:<br>
+    <span style="font-family: monospace;">&lt;Listener className=</span><span style="font-family: monospace;" class="code-quote">"bitronix.tm.integration.tomcat55.BTMLifecycleListener"</span><span style="font-family: monospace;"> /&gt;</span></li>
+  <li>Edit the file named <tt>context.xml</tt> under Tomcat's 
+    <tt>conf/</tt> directory. Under this line: <span style="font-family: monospace;"><br>
+&lt;WatchedResource&gt;WEB-INF/web.xml&lt;/WatchedResource&gt;</span> <br>
+add:<br>
+    <span style="font-family: monospace;">&lt;Transaction factory=</span><span style="font-family: monospace;" class="code-quote">"bitronix.tm.BitronixUserTransactionObjectFactory"</span><span style="font-family: monospace;"> /&gt;</span></li>
+  <li>create an empty file named <tt>resources.properties</tt> under Tomcat's 
+    <tt>conf/</tt> directory.</li>
+  <li>restart (quit and re-start) Tomcat and check the console output to see that BTM has initialised correctly.</li>
+</ul>
+<p>Note that the guidance also covers configuration of the underlying JDBC datasources (see later). </p>
+<p>Bitronix also gives&nbsp;<a href="http://docs.codehaus.org/display/BTM/Hibernate13">guidance</a>
 on use with Hibernate, which can support JPA (Java Persistence API),
 but much of this document is concerned with standlone J2SE use (not in
-a J2EE container).</p><p>The <a href="http://www.jboss.org/drools/documentation.html">Drools 5 documentation</a> on
+a J2EE container).</p>
+<p>The <a href="http://www.jboss.org/drools/documentation.html">Drools 5 documentation</a> on
 persistence works through an example with Hibernate as JPA provider and
-a H2 JDBC database. So that is what we will set up here...</p><h3>Configuring a H2 Database in Tomcat</h3><p>(See the later parts of the&nbsp;<a href="http://docs.codehaus.org/display/BTM/Tomcat13">guidance on using BTM with Tomcat</a>)</p><p><a href="http://www.h2database.com/">H2</a>
+a H2 JDBC database. So that is what we will set up here...</p>
+<h3>Configuring a H2 Database in Tomcat</h3>
+<p>(See the later parts of the&nbsp;<a href="http://docs.codehaus.org/display/BTM/Tomcat13">guidance on using BTM with Tomcat</a>)</p>
+<p><a href="http://www.h2database.com/">H2</a>
 is a Java database not unlike Hypersonic (HSQLDB) or Apache Derby. To
 set up a database as a JPA-compatible datasource (automatically created
-by BTM when Tomcat starts):</p><ul><li>Download the all platform <span style="font-family: monospace;">.zip</span> file (e.g. <span style="font-family: monospace;">h2-2010-05-08.zip</span> in our testing) and unzip it to give <span style="font-family: monospace;">h2/</span></li><li>Copy the JAR file (<span style="font-family: monospace;">h2-1.2.135.jar</span> in our testing) to Tomcat <span style="font-family: monospace;">lib/</span></li><li>Edit Tomcat <span style="font-family: monospace;">conf/resources.properties</span> (created above) and add configuration so that BTM will create the required datasource;&nbsp;here is an example <a href="btm/resources.properties">resources.properties</a> file creates&nbsp;an H2 embedded database using file(s) in Tomcat <span style="font-family: monospace;">work/db1</span>.* with the name <span style="font-family: monospace;">jdbc/db1</span>. &nbsp;</li></ul><h3>Using a Database in a WebApp</h3>To make this datasource accessible to a particular webapp within Tomcat:<br><ul><li>Within the webapp (i.e. in the webapp's source <span style="font-family: monospace;">webapp/</span> directory) create a <span style="font-family: monospace;">META-INF/context.xml</span> file with corresponding configuration; here is an example <a href="btm/context.xml">context.xml</a> corresponding to the above datasource.</li><li>Within the webapp <span style="font-family: monospace;">WEB-INF/web.xml</span> file add (immediately after the root <span style="font-family: monospace;">&lt;web-app&gt;</span> tag) something like:<br><span style="font-family: monospace;" class="code-tag">&lt;resource-env-ref&gt;</span><span style="font-family: monospace;">
-   </span><br style="font-family: monospace;"> <span style="font-family: monospace;" class="code-tag">&nbsp; &lt;resource-env-ref-name&gt;</span><span style="font-family: monospace;">jdbc/<span style="font-weight: bold;">db1</span></span><span style="font-family: monospace;" class="code-tag">&lt;/resource-env-ref-name&gt;</span><span style="font-family: monospace;">
-   </span><br style="font-family: monospace;"> <span style="font-family: monospace;" class="code-tag">&nbsp; &lt;resource-env-ref-type&gt;</span><span style="font-family: monospace;">javax.sql.DataSource</span><span style="font-family: monospace;" class="code-tag">&lt;/resource-env-ref-type&gt;</span><span style="font-family: monospace;">
- </span><br style="font-family: monospace;"> <span style="font-family: monospace;" class="code-tag">&lt;/resource-env-ref&gt;</span></li></ul><h3>Configuring Hibernate as a JPA Provider in a WebApp</h3><p>(See the <a href="http://www.jboss.org/drools/documentation.html">Drools 5 documentation</a> section 3.3.11 Persistence and Transactions)</p><ul><li>Download Hibernate (e.g. 3.5.1-Final - <span style="font-family: monospace;">hibernate-distribution-3.5.1-Final-dist.zip</span>) from <a href="http://sourceforge.net/projects/hibernate/files/hibernate3/">http://sourceforge.net/projects/hibernate/files/hibernate3/</a></li><li>Unzip to <span style="font-family: monospace;">hibernate-distribution-3.5.1-Final/</span> (or equivalent)</li><li>Copy the following to the webapp's <span style="font-family: monospace;">lib/</span> directory (doesn't need to be Tomcat's): <span style="font-family: monospace;">hibernate3.jar</span>, (and from hibernate's <span style="font-family: monospace;">lib/required</span>)&nbsp;<span style="font-family: monospace;">antlr-2.7.6.jar</span>,&nbsp;<span style="font-family: monospace;">javassist-3.9.0.GA.jar</span>,&nbsp;<span style="font-family: monospace;">commons-collections-3.1.jar</span>,&nbsp;<span style="font-family: monospace;">dom4j-1.6.1.jar</span>, (<span style="font-family: monospace;">slf4j-api-1.5.8.jar</span> is already in Tomcat <span style="font-family: monospace;">lib/</span> and <span style="font-family: monospace;">jta-1.1.jar</span> is presumably not replaced by BTM's use of <span style="font-family: monospace;">geronimo-jta_1.0.1B_spec-1.0.1.jar</span>) (and from Hibernate's <span style="font-family: monospace;">lib/jpa</span>) <span style="font-family: monospace;">hibernate-jpa-2.0-api-1.0.0.Final.jar</span>, (and from Hibernate's <span style="font-family: monospace;">lib/bytecode/cglib</span>) <span style="font-family: monospace;">cglib-2.2.jar</span>. [the last two are currently guesses]</li><li>The
+by BTM when Tomcat starts):</p>
+<ul>
+  <li>Download the all platform <span style="font-family: monospace;">.zip</span> file (e.g. <span style="font-family: monospace;">h2-2010-05-08.zip</span> in our testing) and unzip it to give <span style="font-family: monospace;">h2/</span></li>
+  <ul>
+    <li><span style="font-weight: bold;">Note:</span> there may be copies of the required JARs in sample webapp's lib/container/ directory</li>
+  </ul>
+  <li>Copy the JAR file (<span style="font-family: monospace;">h2-1.2.135.jar</span> in our testing) to Tomcat <span style="font-family: monospace;">lib/</span></li>
+  <li>Edit Tomcat <span style="font-family: monospace;">conf/resources.properties</span> (created above) and add configuration so that BTM will create the required datasource;&nbsp;here is an example <a href="btm/resources.properties">resources.properties</a> file creates&nbsp;an H2 embedded database using file(s) in Tomcat <span style="font-family: monospace;">work/db1</span>.* with the name <span style="font-family: monospace;">jdbc/db1</span>. &nbsp;</li>
+</ul>
+<h3>Using a Database in a WebApp</h3>
+To make this datasource accessible to a particular webapp within Tomcat:<br>
+<ul>
+  <li>Within the webapp (i.e. in the webapp's source <span style="font-family: monospace;">webapp/</span> directory) create a <span style="font-family: monospace;">META-INF/context.xml</span> file with corresponding configuration; here is an example <a href="btm/context.xml">context.xml</a> corresponding to the above datasource.</li>
+  <li>Within the webapp <span style="font-family: monospace;">WEB-INF/web.xml</span> file add (immediately after the root <span style="font-family: monospace;">&lt;web-app&gt;</span> tag) something like:<br>
+    <span style="font-family: monospace;" class="code-tag">&lt;resource-env-ref&gt;</span><span style="font-family: monospace;">
+   </span><br style="font-family: monospace;">
+ <span style="font-family: monospace;" class="code-tag">&nbsp; &lt;resource-env-ref-name&gt;</span><span style="font-family: monospace;">jdbc/<span style="font-weight: bold;">db1</span></span><span style="font-family: monospace;" class="code-tag">&lt;/resource-env-ref-name&gt;</span><span style="font-family: monospace;">
+   </span><br style="font-family: monospace;">
+ <span style="font-family: monospace;" class="code-tag">&nbsp; &lt;resource-env-ref-type&gt;</span><span style="font-family: monospace;">javax.sql.DataSource</span><span style="font-family: monospace;" class="code-tag">&lt;/resource-env-ref-type&gt;</span><span style="font-family: monospace;">
+ </span><br style="font-family: monospace;">
+ <span style="font-family: monospace;" class="code-tag">&lt;/resource-env-ref&gt;</span></li>
+</ul>
+<h3>Configuring Hibernate as a JPA Provider in a WebApp</h3>
+<p>(See the <a href="http://www.jboss.org/drools/documentation.html">Drools 5 documentation</a> section 3.3.11 Persistence and Transactions)</p>
+<ul>
+  <li>Download Hibernate (e.g. 3.5.1-Final - <span style="font-family: monospace;">hibernate-distribution-3.5.1-Final-dist.zip</span>) from <a href="http://sourceforge.net/projects/hibernate/files/hibernate3/">http://sourceforge.net/projects/hibernate/files/hibernate3/</a></li>
+  <li>Unzip to <span style="font-family: monospace;">hibernate-distribution-3.5.1-Final/</span> (or equivalent)</li>
+  <li>Copy the following to the webapp's <span style="font-family: monospace;">lib/</span> directory (doesn't need to be Tomcat's): <span style="font-family: monospace;">hibernate3.jar</span>, (and from hibernate's <span style="font-family: monospace;">lib/required</span>)&nbsp;<span style="font-family: monospace;">antlr-2.7.6.jar</span>,&nbsp;<span style="font-family: monospace;">javassist-3.9.0.GA.jar</span>,&nbsp;<span style="font-family: monospace;">commons-collections-3.1.jar</span>,&nbsp;<span style="font-family: monospace;">dom4j-1.6.1.jar</span>, (<span style="font-family: monospace;">slf4j-api-1.5.8.jar</span> is already in Tomcat <span style="font-family: monospace;">lib/</span> and <span style="font-family: monospace;">jta-1.1.jar</span> is presumably not replaced by BTM's use of <span style="font-family: monospace;">geronimo-jta_1.0.1B_spec-1.0.1.jar</span>) (and from Hibernate's <span style="font-family: monospace;">lib/jpa</span>) <span style="font-family: monospace;">hibernate-jpa-2.0-api-1.0.0.Final.jar</span>, (and from Hibernate's <span style="font-family: monospace;">lib/bytecode/cglib</span>) <span style="font-family: monospace;">cglib-2.2.jar</span>. [the last two are currently guesses]</li>
+  <li>The
 JPA persistence.xml file is placed in the webapp's
 WEB-INF/classes/META-INF directory. For Hibernate using H2 this would
-(typically) include:<br><a style="font-family: monospace;">&lt;persistence ...&gt;<br>...<br>&lt;persistence-unit name="..." transaction-type="JTA"&gt;
-   <br><span style="font-weight: bold;">&nbsp; &lt;provider&gt;org.hibernate.ejb.HibernatePersistence&lt;/provider&gt;
-   </span><br style="font-weight: bold;">&nbsp; &lt;jta-data-source&gt;jdbc/<span style="font-weight: bold;">db1</span>&lt;/jta-data-source&gt;&nbsp;<br>&nbsp; ...<br><span style="font-weight: bold;">&nbsp; &lt;properties&gt;
-         </span><br style="font-weight: bold;"><span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/&gt;</span><br style="font-weight: bold;"><span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.max_fetch_depth" value="3"/&gt;</span><br style="font-weight: bold;"><span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.hbm2ddl.auto" value="update" /&gt;
-         </span><br style="font-weight: bold;"><span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.show_sql" value="true" /&gt;
-         </span><br style="font-weight: bold;"><span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.transaction.manager_lookup_class"
+(typically) include:<br>
+    <a style="font-family: monospace;">&lt;persistence ...&gt;<br>
+...<br>
+&lt;persistence-unit name="..." transaction-type="JTA"&gt;
+   <br>
+    <span style="font-weight: bold;">&nbsp; &lt;provider&gt;org.hibernate.ejb.HibernatePersistence&lt;/provider&gt;
+   </span><br style="font-weight: bold;">
+&nbsp; &lt;jta-data-source&gt;jdbc/<span style="font-weight: bold;">db1</span>&lt;/jta-data-source&gt;&nbsp;<br>
+&nbsp; ...<br>
+    <span style="font-weight: bold;">&nbsp; &lt;properties&gt;
+         </span><br style="font-weight: bold;">
+    <span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/&gt;</span><br style="font-weight: bold;">
+    <span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.max_fetch_depth" value="3"/&gt;</span><br style="font-weight: bold;">
+    <span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.hbm2ddl.auto" value="update" /&gt;
+         </span><br style="font-weight: bold;">
+    <span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.show_sql" value="true" /&gt;
+         </span><br style="font-weight: bold;">
+    <span style="font-weight: bold;">&nbsp; &nbsp; &lt;property name="hibernate.transaction.manager_lookup_class"
                       value="org.hibernate.transaction.BTMTransactionManagerLookup" /&gt;
-   </span><br style="font-weight: bold;"><span style="font-weight: bold;">&nbsp; &lt;/properties&gt;
-</span><br style="font-weight: bold;">&lt;/persistence-unit&gt;<br>&lt;/persistence&gt;</a></li><li></li></ul><p></p></body></html>
+   </span><br style="font-weight: bold;">
+    <span style="font-weight: bold;">&nbsp; &lt;/properties&gt;
+    </span><br style="font-weight: bold;">
+&lt;/persistence-unit&gt;<br>
+&lt;/persistence&gt;</a></li>
+  <li></li>
+</ul>
+<p></p>
+</body>
+</html>

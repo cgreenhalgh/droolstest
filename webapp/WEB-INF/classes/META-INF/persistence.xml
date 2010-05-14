@@ -10,7 +10,8 @@
    <class>org.drools.persistence.processinstance.ProcessInstanceInfo</class>
    <class>org.drools.persistence.processinstance.ProcessInstanceEventInfo</class>
    <class>org.drools.persistence.processinstance.WorkItemInfo</class>
-
+	<!-- Drools 5.1.0.M1, not 5.0.1 -->
+	<class>org.drools.persistence.processinstance.variabletypes.VariableInstanceInfo</class>
       <!-- drools test -->
 	<class>uk.ac.horizon.apptest.model.Region</class>
 	
