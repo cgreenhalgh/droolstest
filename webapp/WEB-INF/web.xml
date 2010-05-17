@@ -21,6 +21,28 @@
   <!-- web application description -->
   <description>DroolsTest Web Application</description>
   
+  <!-- restlet application config -->
+  <context-param>  
+    <param-name>org.restlet.application</param-name>  
+    <param-value>  
+       uk.ac.horizon.ug.exserver.RestletApplication
+    </param-value>  
+  </context-param>  
+  
+     <!-- Restlet adapter -->  
+   <servlet>  
+      <servlet-name>RestletServlet</servlet-name>  
+      <servlet-class>  
+         org.restlet.ext.servlet.ServerServlet   
+      </servlet-class>  
+   </servlet>  
+  
+   <!-- Catch all requests -->  
+   <servlet-mapping>  
+      <servlet-name>RestletServlet</servlet-name>  
+      <url-pattern>/restlet/*</url-pattern>  
+   </servlet-mapping>  
+  
   <servlet>
     <servlet-name>test1</servlet-name>
     <servlet-class>uk.ac.horizon.apptest.server.TestServlet</servlet-class>
