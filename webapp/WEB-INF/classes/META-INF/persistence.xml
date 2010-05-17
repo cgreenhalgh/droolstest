@@ -14,7 +14,9 @@
 	<class>org.drools.persistence.processinstance.variabletypes.VariableInstanceInfo</class>
       <!-- drools test -->
 	<class>uk.ac.horizon.apptest.model.Region</class>
-	
+	<!--  exserver -->
+	<class>uk.ac.horizon.ug.exserver.model.SessionTemplate</class>
+
       <!-- Hibernate over H2 with BTM for Drools -->
       <properties>
         <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package uk.ac.horizon.ug.exserver.model;
+package uk.ac.horizon.ug.exserver;
 
 import uk.ac.horizon.apptest.model.ContentMapping;
 
