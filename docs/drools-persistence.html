@@ -30,7 +30,52 @@ sessions (with default serialisation object handling) being read back
 in. There appears to be a fix in Drools 5.1.0.M1.</p>
 <p></p>
 
-<h3>Drools 5.0 bug</h3>
+<h3>Drools 5.0 bugs</h3>
+
+<h4>DRL-defined type class-loading problems</h4>
+<p>DRL-defined types are created as java beans using bytecode generation. They don't seem to be accessible
+via the normal class loaders, though - e.g. Xstream can't find them by default.</p>
+
+<h4>Doing getObject in a JPA session</h4>
+<p>Present in 5.1.0.M1; fixed (untested) in SVN head</p>
+
+<p>GetObjectCommand assumes that outIdentifier is set when it is not for JPA sessions, single commands.</p>
+
+<h4>Doing update in a JPA session</h4>
+<p>Present in 5.1.0.M1. Trying SVN http://anonsvn.jboss.org/repos/labs/labs/jbossrules/tags/5.1.0.32742.M2/</p>
+
+<pre>Caused by: java.lang.NullPointerException
+        at org.drools.common.AbstractWorkingMemory.update(AbstractWorkingMemory.
+java:1445)
+        at org.drools.common.AbstractWorkingMemory.update(AbstractWorkingMemory.
+java:1403)
+        at org.drools.impl.StatefulKnowledgeSessionImpl.update(StatefulKnowledge
+SessionImpl.java:248)
+        at org.drools.command.runtime.rule.UpdateCommand.execute(UpdateCommand.j
+ava:26)
+        at org.drools.persistence.session.SingleSessionCommandService.execute(Si
+ngleSessionCommandService.java:254)
+        ... 59 more</pre>
+
+<h4>Doing retract in a JPA session</h4>
+<p>Present in 5.1.0.M1</p>
+<pre>Caused by: java.lang.NullPointerException
+        at org.drools.common.AbstractWorkingMemory.removePropertyChangeListener(
+AbstractWorkingMemory.java:1132)
+        at org.drools.common.AbstractWorkingMemory.retract(AbstractWorkingMemory
+.java:1190)
+        at org.drools.common.AbstractWorkingMemory.retract(AbstractWorkingMemory
+.java:1161)
+        at org.drools.impl.StatefulKnowledgeSessionImpl.retract(StatefulKnowledg
+eSessionImpl.java:237)
+        at org.drools.command.runtime.rule.RetractCommand.execute(RetractCommand
+.java:24)
+        at org.drools.persistence.session.SingleSessionCommandService.execute(Si
+ngleSessionCommandService.java:254)
+        ... 59 more</pre>
+<h4>Reading a persistent session</h4>
+<p>Present in 5.0; Fixed in drools 5.1.0.M1</p>
+
 <p>Now when I try to load a previous session I get:</p>
 
 <pre>Hibernate: select sessioninf0_.id as id110_0_, sessioninf0_.dirty as dirty110_0_<br>, sessioninf0_.lastModificationDate as lastModi3_110_0_, sessioninf0_.rulesByteA<br>rray as rulesByt4_110_0_, sessioninf0_.startDate as startDate110_0_ from Session<br>Info sessioninf0_ where sessioninf0_.id=?<br>14-May-2010 09:35:44 bitronix.tm.BitronixTransaction fireAfterCompletionEvent<br>WARNING: Synchronization.afterCompletion() call failed for org.drools.persistenc<br>e.session.SingleSessionCommandService$SynchronizationImpl@81fb<br>java.lang.NullPointerException<br>        at org.drools.persistence.session.SingleSessionCommandService$Synchroniz<br>ationImpl.afterCompletion(SingleSessionCommandService.java:336)<br>        at bitronix.tm.BitronixTransaction.fireAfterCompletionEvent(BitronixTran<br>saction.java:416)<br>        at bitronix.tm.BitronixTransaction.commit(BitronixTransaction.java:195)<br>        at bitronix.tm.BitronixTransactionManager.commit(BitronixTransactionMana<br>ger.java:95)<br>        at org.drools.persistence.session.SingleSessionCommandService.&lt;init&gt;(Sin<br>gleSessionCommandService.java:153)<br>        at org.drools.persistence.jpa.impl.JPAKnowledgeServiceProviderImpl.loadS<br>tatefulKnowledgeSession(JPAKnowledgeServiceProviderImpl.java:75)<br>        at org.drools.persistence.jpa.JPAKnowledgeService.loadStatefulKnowledgeS<br>ession(JPAKnowledgeService.java:102)<br>        at uk.ac.horizon.apptest.server.JPADroolsTestServlet.doGet(JPADroolsTest<br>Servlet.java:100)<br>        at javax.servlet.http.HttpServlet.service(HttpServlet.java:617)<br>        at javax.servlet.http.HttpServlet.service(HttpServlet.java:717)<br>        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(Appl<br>icationFilterChain.java:290)<br>        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationF<br>ilterChain.java:206)<br>        at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperV<br>alve.java:233)<br>        at org.apache.catalina.core.StandardContextValve.invoke(StandardContextV<br>alve.java:191)<br>        at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.j<br>ava:127)<br>        at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.j<br>ava:102)<br>        at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineVal<br>ve.java:109)<br>        at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.jav<br>a:298)<br>        at org.apache.coyote.http11.Http11Processor.process(Http11Processor.java<br>:852)<br>        at org.apache.coyote.http11.Http11Protocol$Http11ConnectionHandler.proce<br>ss(Http11Protocol.java:588)<br>        at org.apache.tomcat.util.net.JIoEndpoint$Worker.run(JIoEndpoint.java:48<br>9)<br>        at java.lang.Thread.run(Thread.java:619)<br>14-May-2010 09:35:44 uk.ac.horizon.apptest.server.JPADroolsTestServlet doGet<br>WARNING: java.lang.RuntimeException: Unable to load session snapshot<br>java.lang.RuntimeException: Unable to load session snapshot<br>        at org.drools.persistence.session.JPASessionMarshallingHelper.loadSnapsh<br>ot(JPASessionMarshallingHelper.java:112)<br>        at org.drools.persistence.session.JPASessionMarshallingHelper.&lt;init&gt;(JPA<br>SessionMarshallingHelper.java:46)<br>        at org.drools.persistence.session.SingleSessionCommandService.&lt;init&gt;(Sin<br>gleSessionCommandService.java:171)<br>        at org.drools.persistence.jpa.impl.JPAKnowledgeServiceProviderImpl.loadS<br>tatefulKnowledgeSession(JPAKnowledgeServiceProviderImpl.java:75)<br>        at org.drools.persistence.jpa.JPAKnowledgeService.loadStatefulKnowledgeS<br>ession(JPAKnowledgeService.java:102)<br>        at uk.ac.horizon.apptest.server.JPADroolsTestServlet.doGet(JPADroolsTest<br>Servlet.java:100)<br>        at javax.servlet.http.HttpServlet.service(HttpServlet.java:617)<br>        at javax.servlet.http.HttpServlet.service(HttpServlet.java:717)<br>        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(Appl<br>icationFilterChain.java:290)<br>        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationF<br>ilterChain.java:206)<br>        at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperV<br>alve.java:233)<br>        at org.apache.catalina.core.StandardContextValve.invoke(StandardContextV<br>alve.java:191)<br>        at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.j<br>ava:127)<br>        at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.j<br>ava:102)<br>        at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineVal<br>ve.java:109)<br>        at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.jav<br>a:298)<br>        at org.apache.coyote.http11.Http11Processor.process(Http11Processor.java<br>:852)<br>        at org.apache.coyote.http11.Http11Protocol$Http11ConnectionHandler.proce<br>ss(Http11Protocol.java:588)<br>        at org.apache.tomcat.util.net.JIoEndpoint$Worker.run(JIoEndpoint.java:48<br>9)<br>        at java.lang.Thread.run(Thread.java:619)<br>Caused by: java.lang.NullPointerException<br>        at org.drools.common.ConcurrentNodeMemories.getNodeMemory(ConcurrentNode<br>Memories.java:69)<br>[should be null NodeMemory argument?]<br>        at org.drools.common.AbstractWorkingMemory.getNodeMemory(AbstractWorking<br>Memory.java:1534)<br>        at org.drools.marshalling.impl.InputMarshaller.readFactHandles(InputMars<br>haller.java:334)<br>[       // add handles to object type nodes<br>        for ( InternalFactHandle handle : handles ) {<br>            Object object = handle.getObject();<br>            ClassObjectType objectType = new ClassObjectType( object.getClass() );<br>            ObjectTypeNode objectTypeNode = objectTypeNodes.get( objectType );<br>**looks like objectTypeNode is null, so objectTypeNodes does not contain objectType**<br>**this is from (an) EntryPointNode, which doesn't appear to have objectTypeNodes initialised**<br>            ObjectHashSet set = (ObjectHashSet) context.wm.getNodeMemory( **objectTypeNode** );<br>]<br>        at org.drools.marshalling.impl.InputMarshaller.readSession(InputMarshall<br>er.java:207)<br>        at org.drools.marshalling.impl.DefaultMarshaller.unmarshall(DefaultMarsh<br>aller.java:75)<br>        at org.drools.persistence.session.JPASessionMarshallingHelper.loadSnapsh<br>ot(JPASessionMarshallingHelper.java:104)<br>        ... 19 more<br>14-May-2010 09:36:43 bitronix.tm.recovery.Recoverer run</pre>
