@@ -29,6 +29,13 @@
     </param-value>  
   </context-param>  
   
+  <context-param>  
+    <param-name>org.restlet.clients</param-name>  
+    <param-value>  
+       FILE HTTP HTTPS
+    </param-value>  
+  </context-param>  
+  
      <!-- Restlet adapter -->  
    <servlet>  
       <servlet-name>RestletServlet</servlet-name>  

@@ -1,0 +1,10 @@
+<list>
+  <holder>
+
+    <fact class="uk.ac.horizon.exserver.test1.User">
+      <name>Chris</name>
+    </fact>
+    <operation>add</operation>
+  </holder>
+
+</list>

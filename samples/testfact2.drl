@@ -1,0 +1,10 @@
+package uk.ac.horizon.exserver.test1
+
+import java.util.Date
+
+declare User
+	name : String
+	id : String
+	location : String
+	created : Date
+end

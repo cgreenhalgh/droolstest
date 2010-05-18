@@ -19,6 +19,7 @@ import org.drools.runtime.StatefulKnowledgeSession;
 import java.util.Collection;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.naming.InitialContext;
