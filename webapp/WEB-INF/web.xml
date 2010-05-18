@@ -73,13 +73,13 @@
    <!-- Catch all requests -->  
    <servlet-mapping>  
       <servlet-name>RestletServlet</servlet-name>  
-      <url-pattern>/*</url-pattern>  
+      <url-pattern>/1/*</url-pattern>  
    </servlet-mapping>  
   
 
   <welcome-file-list>
     <!-- a static test file for now -->
-    <welcome-file>index.html</welcome-file>
+    <welcome-file>static/index.html</welcome-file>
   </welcome-file-list>
 
 </web-app>

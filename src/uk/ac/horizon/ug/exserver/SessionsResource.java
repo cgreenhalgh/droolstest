@@ -4,6 +4,7 @@
 package uk.ac.horizon.ug.exserver;
 
 import java.util.List;
+import java.util.Date;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -21,6 +22,7 @@ import org.restlet.data.Status;
 
 import uk.ac.horizon.ug.exserver.RestletApplication;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
+import uk.ac.horizon.ug.exserver.model.Session;
 
 import java.util.logging.Logger;
 
@@ -28,8 +30,8 @@ import java.util.logging.Logger;
  * @author cmg
  *
  */
-public class TemplatesResource extends BaseResource {
-	static Logger logger = Logger.getLogger(TemplatesResource.class.getName());
+public class SessionsResource extends BaseResource {
+	static Logger logger = Logger.getLogger(SessionsResource.class.getName());
 	
 //    @Get  
  //   public String toString() {   
@@ -41,16 +43,16 @@ public class TemplatesResource extends BaseResource {
     	UserTransaction ut = getTransaction();
     	
 		ut.begin();
-		Query q = em.createQuery ("SELECT x FROM SessionTemplate x");
-		List<SessionTemplate> results = (List<SessionTemplate>) q.getResultList ();
+		Query q = em.createQuery ("SELECT x FROM Session x");
+		List<Session> results = (List<Session>) q.getResultList ();
 		ut.commit();
 		
-    	XstreamRepresentation<List<SessionTemplate>> xml = new XstreamRepresentation<List<SessionTemplate>>(MediaType.APPLICATION_XML, results);
+    	XstreamRepresentation<List<Session>> xml = new XstreamRepresentation<List<Session>>(MediaType.APPLICATION_XML, results);
     	return xml;
     }
     
     /**  
-     * Handle POST requests: create a new item.  
+     * Handle POST requests: create a new session.  
      */  
     @Post  
     public Representation acceptItem(Representation entity) throws java.io.IOException, javax.naming.NamingException, javax.transaction.SystemException, javax.transaction.NotSupportedException, javax.transaction.RollbackException, javax.transaction.HeuristicRollbackException, javax.transaction.HeuristicMixedException {   
@@ -58,38 +60,29 @@ public class TemplatesResource extends BaseResource {
         // Parse the given representation and retrieve pairs of   
         // "name=value" tokens.   
         Form form = new Form(entity);   
-        SessionTemplate st = new SessionTemplate();
-        st.setName(form.getFirstValue("name"));   
-        st.setRulesetUrls(form.getValuesArray("rulesetUrls"));   
-        st.setFactUrls(form.getValuesArray("factUrls"));   
-        logger.info("acceptItem: "+form.getValuesMap());
-        logger.info("Name = "+st.getName());
-        
-    	
-    	if (st.getName()==null || st.getName().length()==0)
+        String templateName = form.getFirstValue("template");   
+
+    	if (templateName==null || templateName.length()==0)
     	{
-    		this.setStatus(Status.CLIENT_ERROR_BAD_REQUEST, "Name not specified");
+    		this.setStatus(Status.CLIENT_ERROR_BAD_REQUEST, "Template name not specified");
     		return null;
     	}
-    	
+
     	UserTransaction ut = getTransaction();
-		ut.begin();
+    	// get SessionTemplate
+    	ut.begin();
+		SessionTemplate st = null;
 		try {
 			EntityManager em = getEntityManager();
 
-			SessionTemplate est = em.find(SessionTemplate.class, st.getName());
-			if (est==null) {
-				logger.info("Did not find SessionTemplate "+st.getName()+" - adding");
-				em.persist(st);
-				// created
-				setStatus(Status.SUCCESS_CREATED);   
-			} 
-			else {
-				logger.info("Found SessionTemplate "+st.getName()+" - updating");
-				em.merge(st);
-				setStatus(Status.SUCCESS_ACCEPTED);   
+			st = em.find(SessionTemplate.class, templateName);
+			if (st==null) {
+				this.setStatus(Status.CLIENT_ERROR_BAD_REQUEST, "Template "+templateName+" not found");
+				ut.rollback();
+				em.close();
+				return null;
 			}
-			logger.info("Transaction status "+ut.getStatus()+" "+(ut.getStatus()==javax.transaction.Status.STATUS_MARKED_ROLLBACK ? "marked rollback!" : ""));
+
 			ut.commit();
 			em.close();
 		}
@@ -98,7 +91,35 @@ public class TemplatesResource extends BaseResource {
 			ut.rollback();
 			return null;
 		}
+		// Now we can make the drools session (outside transaction!)
+		DroolsSession ds = DroolsSession.createSession(st);
 
+		// now make our record - risk of leak, but non-nested transactions limits us
+		ut.begin();
+		try {
+			EntityManager em = getEntityManager();
+
+			Session s = new Session();
+			s.setTemplateName(templateName);
+			s.setRulesetUrls(st.getRulesetUrls());
+
+			// create session
+			s.setDroolsId(ds.getId());
+			
+			// TODO: GUID
+			s.setId(""+s.getDroolsId());
+			s.setCreatedDate(new Date());
+			
+			em.persist(s);
+
+			ut.commit();
+			em.close();
+		}
+		catch (Exception e) {
+			this.setStatus(Status.SERVER_ERROR_INTERNAL, e);
+			ut.rollback();
+			return null;
+		}
         return null;   
     }   
 }

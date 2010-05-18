@@ -18,7 +18,7 @@ public class SessionTemplate {
 	/** rule set(s) */
 	protected String rulesetUrls[];
 	/** fact files */
-	protected String dataUrls[];
+	protected String factUrls[];
 	/** cons */
 	public SessionTemplate() {	
 	}
@@ -49,14 +49,14 @@ public class SessionTemplate {
 	/**
 	 * @return the dataUrls
 	 */
-	public String[] getDataUrls() {
-		return dataUrls;
+	public String[] getFactUrls() {
+		return factUrls;
 	}
 	/**
 	 * @param dataUrls the dataUrls to set
 	 */
-	public void setDataUrls(String[] dataUrls) {
-		this.dataUrls = dataUrls;
+	public void setFactUrls(String[] factUrls) {
+		this.factUrls = factUrls;
 	}
 	
 }

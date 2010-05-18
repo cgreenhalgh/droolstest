@@ -13,7 +13,7 @@ import javax.transaction.UserTransaction;
 import org.restlet.Application;   
 import org.restlet.Restlet;   
 import org.restlet.routing.Router;   
-
+import org.restlet.resource.Directory;
 import uk.ac.horizon.ug.exserver.TemplatesResource;
 
 /**
@@ -29,23 +29,12 @@ public class RestletApplication extends Application {
         // Create a router Restlet that routes each call to a   
         // new instance of HelloWorldResource.   
         Router router = new Router(getContext());   
-  
+
         router.attach("/test", TestResource.class);   
         router.attach("/templates", TemplatesResource.class);   
+        router.attach("/sessions", SessionsResource.class);   
   
         return router;   
     }   
     
-    /** get persistence entity manager */
-    public EntityManager getEntityManager() {
-		EntityManagerFactory emf = Persistence.createEntityManagerFactory( "droolstest" );
-		EntityManager em = emf.createEntityManager();
-		return em;
-    }
-    /** get transaction */
-    public UserTransaction getTransaction() throws NamingException {
-		UserTransaction ut =
-			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
-		return ut;
-    }
 }
