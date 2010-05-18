@@ -22,6 +22,8 @@
 	<classpathentry kind="lib" path="lib/org.restlet.jar"/>
 	<classpathentry kind="lib" path="lib/org.codehaus.jettison.jar"/>
 	<classpathentry kind="lib" path="lib/org.restlet.ext.xstream.jar"/>
+	<classpathentry kind="lib" path="lib/org.restlet.ext.xml.jar"/>
+	<classpathentry kind="lib" path="lib/drools-core-5.1.0.M1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

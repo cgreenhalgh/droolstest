@@ -38,6 +38,12 @@ public class DroolsSession {
 	static Logger logger = Logger.getLogger(DroolsSession.class.getName());
 	/** drools knowledge session */
 	protected StatefulKnowledgeSession ksession;
+	/**
+	 * @return the ksession
+	 */
+	public StatefulKnowledgeSession getKsession() {
+		return ksession;
+	}
 	/** get drools id */
 	public int getId() {
 		return ksession.getId();

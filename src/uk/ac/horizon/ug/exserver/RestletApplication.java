@@ -33,6 +33,7 @@ public class RestletApplication extends Application {
         router.attach("/test", TestResource.class);   
         router.attach("/templates", TemplatesResource.class);   
         router.attach("/sessions", SessionsResource.class);   
+        router.attach("/sessions/{sessionId}", SessionResource.class);   
   
         return router;   
     }   

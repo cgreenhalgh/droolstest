@@ -15,6 +15,7 @@ import org.restlet.ext.xstream.XstreamRepresentation;
 import org.restlet.resource.Get;   
 import org.restlet.resource.Post;   
 import org.restlet.representation.Representation;   
+import org.restlet.representation.StringRepresentation;   
 
 import org.restlet.data.Form;   
 import org.restlet.data.MediaType;   
@@ -96,10 +97,10 @@ public class SessionsResource extends BaseResource {
 
 		// now make our record - risk of leak, but non-nested transactions limits us
 		ut.begin();
+		Session s = new Session();
 		try {
 			EntityManager em = getEntityManager();
 
-			Session s = new Session();
 			s.setTemplateName(templateName);
 			s.setRulesetUrls(st.getRulesetUrls());
 
@@ -120,6 +121,7 @@ public class SessionsResource extends BaseResource {
 			ut.rollback();
 			return null;
 		}
-        return null;   
+		setStatus(Status.SUCCESS_CREATED);
+        return new StringRepresentation(s.getId());   
     }   
 }
