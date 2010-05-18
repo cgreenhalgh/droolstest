@@ -1,0 +1,53 @@
+<html>
+<head>
+<title>List sessions</title>
+<script type="text/javascript">
+
+var req;
+
+function callback() {
+//	alert("callback");
+	var table = document.getElementById("table");
+    if (req.readyState == 4) {
+         if (req.status == 200) {
+            // update the HTML DOM based on whether or not message is valid
+			var sessions = req.responseXML.getElementsByTagName("session");    
+			// id, template         
+			var session;
+			for (session in sessions) {
+				var id = session.getElementsByTagName("id");
+				table.insertRow(0).insertCell(0).innerHTML=id;
+			}
+         }
+         else {
+         }
+    }
+}
+
+function get() {
+  if (typeof XMLHttpRequest != "undefined") {
+       req = new XMLHttpRequest();
+   } else if (window.ActiveXObject) {
+       req = new ActiveXObject("Microsoft.XMLHTTP");
+   }
+//	alert("get "+req);
+  
+   req.open("GET", "../1/sessions", true);
+   req.onreadystatechange = callback;
+   req.send(null);
+
+}
+
+
+get();
+</script>
+
+</head>
+<body>
+<H1>Sessions</H1>
+<div id="table"></div>
+
+<table id="table" border="1">
+</table>
+</body>
+</html>

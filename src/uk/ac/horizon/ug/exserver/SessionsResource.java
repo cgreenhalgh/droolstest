@@ -49,6 +49,7 @@ public class SessionsResource extends BaseResource {
 		ut.commit();
 		
     	XstreamRepresentation<List<Session>> xml = new XstreamRepresentation<List<Session>>(MediaType.APPLICATION_XML, results);
+    	xml.getXstream().alias("session", Session.class);
     	return xml;
     }
     

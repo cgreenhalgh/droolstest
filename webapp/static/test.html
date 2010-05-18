@@ -1,0 +1,17 @@
+<html>
+<head>
+<title>test</title>
+<script type="text/javascript">
+function test() {
+	var row = document.getElementById("table").insertRow(0);
+	var cell = row.insertCell(0);
+	cell.innerHTML = "New id";
+	//alert(div);
+}
+</script>
+</head>
+<body>
+<input type="button" onclick="test()"/>
+<table id="table" border="1">
+</body>
+</html>
