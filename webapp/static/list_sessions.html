@@ -7,21 +7,31 @@ var req;
 
 function callback() {
 //	alert("callback");
-	var table = document.getElementById("table");
+	//alert(table);
     if (req.readyState == 4) {
+    	var table = document.getElementById("myTable");
          if (req.status == 200) {
-             alert("ok");
+//             alert("ok");
             // update the HTML DOM based on whether or not message is valid
 			var sessions = req.responseXML.getElementsByTagName("session");    
 			// id, template         
 			var i;
 			for (i=0; i<sessions.length; i++) {
 				var session = sessions.item(i);
-				var id = session.getElementsByTagName("id");
-				table.insertRow(0).insertCell(0).innerHTML=id;
+				// first (only) 'id' child element
+				var id = session.getElementsByTagName("id").item(0).firstChild.nodeValue;
+				// hopefully the only child is the text context (value)
+				var row = table.insertRow();
+				row.insertCell().innerHTML=id;
+				row.insertCell().innerHTML="<a href='../1/sessions/"+id+"/web/index.html'>Index</a>";
+				row.insertCell().innerHTML="<a href='../1/sessions/"+id+"/rawfacts'>State (xml)</a>";
+				row.insertCell().innerHTML="<a href='../1/sessions/"+id+"/web/add_facts.html'>Add facts form</a>";
+				//table.insertRow(0).insertCell(1).innerHTML=id.innerHTML;
 			}
          }
          else {
+				var row = table.insertRow();
+				row.insertCell().innerHTML="Error loading session info";
          }
     }
 }
@@ -40,16 +50,15 @@ function get() {
 
 }
 
-
-get();
+//get();
 </script>
 
 </head>
-<body>
+<body onload="get()">
 <H1>Sessions</H1>
-<div id="table"></div>
 
-<table id="table" border="1">
+<table id="myTable" border="1">
+<thead><tr><td>ID</td><td>Index</td></tr></thead>
 </table>
 </body>
 </html>
