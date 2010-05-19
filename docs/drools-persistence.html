@@ -43,6 +43,7 @@ via the normal class loaders, though - e.g. Xstream can't find them by default.<
 
 <h4>Doing update in a JPA session</h4>
 <p>Present in 5.1.0.M1. Trying SVN http://anonsvn.jboss.org/repos/labs/labs/jbossrules/tags/5.1.0.32742.M2/</p>
+<p>Not present in 5.1.0.M1 transient (non-JPA)</p>
 
 <pre>Caused by: java.lang.NullPointerException
         at org.drools.common.AbstractWorkingMemory.update(AbstractWorkingMemory.
@@ -73,6 +74,19 @@ eSessionImpl.java:237)
         at org.drools.persistence.session.SingleSessionCommandService.execute(Si
 ngleSessionCommandService.java:254)
         ... 59 more</pre>
+        
+<p>Present in 5.1.0.M1 transient (non-JPA)</p>
+<pre>java.lang.NullPointerException
+        at org.drools.common.AbstractWorkingMemory.removePropertyChangeListener(
+AbstractWorkingMemory.java:1132)
+        at org.drools.common.AbstractWorkingMemory.retract(AbstractWorkingMemory
+.java:1190)
+        at org.drools.common.AbstractWorkingMemory.retract(AbstractWorkingMemory
+.java:1161)
+        at org.drools.impl.StatefulKnowledgeSessionImpl.retract(StatefulKnowledg
+eSessionImpl.java:237)
+        at uk.ac.horizon.ug.exserver.RawSessionResource.addFacts(RawSessionResou
+rce.java:272)</pre>
 <h4>Reading a persistent session</h4>
 <p>Present in 5.0; Fixed in drools 5.1.0.M1</p>
 

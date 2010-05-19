@@ -24,6 +24,7 @@ import org.restlet.data.Status;
 import uk.ac.horizon.ug.exserver.RestletApplication;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.Session;
+import uk.ac.horizon.ug.exserver.model.SessionType;
 
 import java.util.logging.Logger;
 
@@ -69,6 +70,17 @@ public class SessionsResource extends BaseResource {
     		this.setStatus(Status.CLIENT_ERROR_BAD_REQUEST, "Template name not specified");
     		return null;
     	}
+    	String type = form.getFirstValue("type");
+    	// default
+    	SessionType sessionType = SessionType.JPA_SERIALIZED;
+    	try {
+    		if (type!=null && type.length()>0)
+    			sessionType = SessionType.valueOf(type);
+    	}
+    	catch (Exception e) {
+    		this.setStatus(Status.CLIENT_ERROR_BAD_REQUEST, "Unknown session type: "+type);
+    		return null;
+    	}
 
     	UserTransaction ut = getTransaction();
     	// get SessionTemplate
@@ -94,7 +106,7 @@ public class SessionsResource extends BaseResource {
 			return null;
 		}
 		// Now we can make the drools session (outside transaction!)
-		DroolsSession ds = DroolsSession.createSession(st);
+		DroolsSession ds = DroolsSession.createSession(st, sessionType);
 
 		// now make our record - risk of leak, but non-nested transactions limits us
 		ut.begin();
@@ -107,6 +119,7 @@ public class SessionsResource extends BaseResource {
 
 			// create session
 			s.setDroolsId(ds.getId());
+			s.setSessionType(sessionType);
 			
 			// TODO: GUID
 			s.setId(""+s.getDroolsId());

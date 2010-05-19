@@ -21,6 +21,7 @@ import org.restlet.data.Status;
 
 import uk.ac.horizon.ug.exserver.RestletApplication;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
+import uk.ac.horizon.ug.exserver.model.SessionType;
 
 import java.util.logging.Logger;
 

@@ -24,6 +24,8 @@ public class Session {
 	protected String templateName;
 	/** created date */
 	protected Date createdDate;
+	/** drools session type */
+	protected SessionType sessionType = SessionType.JPA_SERIALIZED;
 	/** 
 	 * cons
 	 */
@@ -89,6 +91,18 @@ public class Session {
 	 */
 	public void setCreatedDate(Date createdDate) {
 		this.createdDate = createdDate;
+	}
+	/**
+	 * @return the sessionType
+	 */
+	public SessionType getSessionType() {
+		return sessionType;
+	}
+	/**
+	 * @param sessionType the sessionType to set
+	 */
+	public void setSessionType(SessionType sessionType) {
+		this.sessionType = sessionType;
 	}
 	
 }

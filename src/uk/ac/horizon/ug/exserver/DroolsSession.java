@@ -30,6 +30,7 @@ import javax.transaction.UserTransaction;
 import uk.ac.horizon.apptest.desktop.DroolsTest;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.Session;
+import uk.ac.horizon.ug.exserver.model.SessionType;
 
 /**
  * @author cmg
@@ -53,8 +54,8 @@ public class DroolsSession {
 	protected static Map<Integer,DroolsSession> sessions = new HashMap<Integer,DroolsSession>();
 	/** create a new drools session 
 	 * @throws NamingException */
-	public synchronized static DroolsSession createSession(SessionTemplate template) throws NamingException {
-		DroolsSession ds = new DroolsSession(template.getRulesetUrls(), true, 0);
+	public synchronized static DroolsSession createSession(SessionTemplate template, SessionType sessionType) throws NamingException {
+		DroolsSession ds = new DroolsSession(template.getRulesetUrls(), true, 0, sessionType);
 		sessions.put(ds.ksession.getId(), ds);
 		ds.addFacts(template.getFactUrls());
 		return ds;
@@ -65,13 +66,15 @@ public class DroolsSession {
 		DroolsSession ds = sessions.get(session.getDroolsId());
 		if (ds!=null)
 			return ds;
-		ds = new DroolsSession(session.getRulesetUrls(), false, session.getDroolsId());
+		if (session.getSessionType()==SessionType.TRANSIENT)
+			throw new RuntimeException("Cannot restore a transient session ("+session.getId()+")");
+		ds = new DroolsSession(session.getRulesetUrls(), false, session.getDroolsId(), session.getSessionType());
 		sessions.put(ds.ksession.getId(), ds);
 		return ds;
 	}
 	/** cons 
 	 * @throws NamingException */
-	private DroolsSession(String rulesetUrls[], boolean newFlag, int sessionId) throws NamingException {	
+	private DroolsSession(String rulesetUrls[], boolean newFlag, int sessionId, SessionType sessionType) throws NamingException {	
 		// force use of JANINO
 		System.setProperty("drools.dialect.java.compiler", "JANINO");
 
@@ -93,29 +96,37 @@ public class DroolsSession {
 		final KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
 		kbase.addKnowledgePackages(pkgs);
 
-		Environment env = KnowledgeBaseFactory.newEnvironment();
-		env.set( EnvironmentName.ENTITY_MANAGER_FACTORY,
-		         Persistence.createEntityManagerFactory( "droolstest" ) );
-		// bitronix specific... !
-		//env.set( EnvironmentName.TRANSACTION_MANAGER,
-		//         bitronix.tm.TransactionManagerServices.getTransactionManager() );
-
 		UserTransaction ut =
 			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
 
-		//ut.begin();
-		// KnowledgeSessionConfiguration may be null, and a default will be used
-		if (newFlag) {
-			this.ksession = JPAKnowledgeService.newStatefulKnowledgeSession( kbase, null, env );
-			sessionId = ksession.getId();
-		
-			logger.info("New session "+sessionId);
-		} else
-		{
-			this.ksession = JPAKnowledgeService.loadStatefulKnowledgeSession(sessionId, kbase, null, env);
-			logger.info("Loaded session "+sessionId);
+		switch(sessionType) {
+		case JPA_SERIALIZED: {
+			Environment env = KnowledgeBaseFactory.newEnvironment();
+			env.set( EnvironmentName.ENTITY_MANAGER_FACTORY,
+			         Persistence.createEntityManagerFactory( "droolstest" ) );
+			// bitronix specific... !
+			//env.set( EnvironmentName.TRANSACTION_MANAGER,
+			//         bitronix.tm.TransactionManagerServices.getTransactionManager() );
+			//ut.begin();
+			// KnowledgeSessionConfiguration may be null, and a default will be used
+			if (newFlag) {
+				this.ksession = JPAKnowledgeService.newStatefulKnowledgeSession( kbase, null, env );
+				sessionId = ksession.getId();
+			
+				logger.info("New session "+sessionId);
+			} else
+			{
+				this.ksession = JPAKnowledgeService.loadStatefulKnowledgeSession(sessionId, kbase, null, env);
+				logger.info("Loaded session "+sessionId);
+			}
+			// can't commit - nested not supported: ut.commit();
+			break;
 		}
-		// can't commit - nested not supported: ut.commit();
+		case TRANSIENT: 
+			this.ksession = kbase.newStatefulKnowledgeSession();
+			break;
+		}
+
 		
 //		ksession.addEventListener(new DebugAgendaEventListener());
 	}
