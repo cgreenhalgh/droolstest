@@ -90,9 +90,11 @@ public class RawSessionResource extends SessionResource {
     	return xml;
     }
     public static final String ELEMENT_HOLDER = "holder";
+    public static final String ELEMENT_RESULT = "result";
     
     private static void addAliases(XstreamRepresentation xr) {
     	xr.getXstream().alias(ELEMENT_HOLDER, RawFactHolder.class);
+    	xr.getXstream().alias(ELEMENT_RESULT, OperationResult.class);
     	xr.getXstream().alias("list", LinkedList.class);    	
 //    	xr.getXstream().getConverterLookup().
     }
@@ -249,31 +251,49 @@ public class RawSessionResource extends SessionResource {
     public Representation addFacts(List<RawFactHolder> facts) 
     throws java.io.IOException, javax.naming.NamingException, javax.transaction.SystemException, javax.transaction.NotSupportedException, javax.transaction.RollbackException, javax.transaction.HeuristicRollbackException, javax.transaction.HeuristicMixedException {   
         logger.info("facts = "+facts);
+        LinkedList<OperationResult> results = new LinkedList<OperationResult>();
         synchronized (droolsSession) {
         	UserTransaction ut = this.getTransaction();
         	ut.begin();
         	try {
         		EntityManager em = this.getEntityManager();
         		for (RawFactHolder rfh : facts) {
-        			switch (rfh.getOperation()) {
-        			case add: {
-        				FactHandle fh = droolsSession.getKsession().insert(rfh.getFact());
-        				logger.info("added "+fh+": "+rfh.getFact());
-        				break;
+        			OperationResult result = new OperationResult();
+        			result.setHolder(rfh);
+        			try {
+        				switch (rfh.getOperation()) {
+        				case add: {
+        					FactHandle fh = droolsSession.getKsession().insert(rfh.getFact());
+        					result.setHandle(fh.toExternalForm());
+        					result.setStatus(OperationStatus.SUCCESS);
+        					logger.info("added "+fh+": "+rfh.getFact());
+        					break;
+        				}
+        				case update: {
+        					FactHandle fh = new DisconnectedFactHandle(rfh.getHandle());
+        					droolsSession.getKsession().update(fh, rfh.getFact());
+        					// return handle??
+        					FactHandle newfh = droolsSession.getKsession().getFactHandle(rfh.getFact());
+        					if (newfh!=null)
+        						result.setHandle(newfh.toExternalForm());
+        					result.setStatus(OperationStatus.SUCCESS);
+        					logger.info("updated "+fh+": "+rfh.getFact());
+        					break;
+        				}
+        				case delete: {
+        					FactHandle fh = new DisconnectedFactHandle(rfh.getHandle());
+        					droolsSession.getKsession().retract(fh);
+        					result.setStatus(OperationStatus.SUCCESS);
+        					logger.info("deleted "+fh);
+        					break;	
+        				}
+        				}
         			}
-        			case update: {
-        				FactHandle fh = new DisconnectedFactHandle(rfh.getHandle());
-        				droolsSession.getKsession().update(fh, rfh.getFact());
-        				logger.info("updated "+fh+": "+rfh.getFact());
-        				break;
+        			catch (Exception e) {
+        				logger.log(Level.WARNING, "error doing add fact: "+rfh, e);
+        				result.setStatus(OperationStatus.FAILURE);
         			}
-        			case delete: {
-        				FactHandle fh = new DisconnectedFactHandle(rfh.getHandle());
-        				droolsSession.getKsession().retract(fh);
-        				logger.info("deleted "+fh);
-        				break;	
-        			}
-        			}
+        			results.add(result);
         		}
         		ut.commit();
         		em.close();
@@ -286,6 +306,8 @@ public class RawSessionResource extends SessionResource {
         	}
         }
        
-        return null;   
+    	XstreamRepresentation<List<OperationResult>> xml = new XstreamRepresentation<List<OperationResult>>(MediaType.APPLICATION_XML, results);
+    	addAliases(xml);
+    	return xml;
     }  
 }
