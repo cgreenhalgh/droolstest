@@ -10,11 +10,13 @@ function callback() {
 	var table = document.getElementById("table");
     if (req.readyState == 4) {
          if (req.status == 200) {
+             alert("ok");
             // update the HTML DOM based on whether or not message is valid
 			var sessions = req.responseXML.getElementsByTagName("session");    
 			// id, template         
-			var session;
-			for (session in sessions) {
+			var i;
+			for (i=0; i<sessions.length; i++) {
+				var session = sessions.item(i);
 				var id = session.getElementsByTagName("id");
 				table.insertRow(0).insertCell(0).innerHTML=id;
 			}
