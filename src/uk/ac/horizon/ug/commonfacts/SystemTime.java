@@ -51,5 +51,34 @@ public class SystemTime implements java.io.Serializable {
 	public void setTickCount(int tickCount) {
 		this.tickCount = tickCount;
 	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + tickCount;
+		result = prime * result + (int) (time ^ (time >>> 32));
+		return result;
+	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SystemTime other = (SystemTime) obj;
+		if (tickCount != other.tickCount)
+			return false;
+		if (time != other.time)
+			return false;
+		return true;
+	}
 	
 }

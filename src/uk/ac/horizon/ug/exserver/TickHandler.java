@@ -52,22 +52,27 @@ public class TickHandler extends BaseResource {
 			for (Session session : sessions) {
 				if (!session.isUpdateSystemTime())
 					continue;
-	    		DroolsSession droolsSession = DroolsSession.getSession(session);
-	    		synchronized(droolsSession) {
-    	        	SystemTime systemTime = new SystemTime();
-    	        	systemTime.setTickCount(tickCount);
-    	        	systemTime.setTime(System.currentTimeMillis());
-	    			if (session.getSystemTimeHandle()!=null) {
-	    				FactHandle fh = new DisconnectedFactHandle(session.getSystemTimeHandle());
-    					droolsSession.getKsession().update(fh, systemTime);
-    					FactHandle newfh = droolsSession.getKsession().getFactHandle(systemTime);
-    					if (newfh!=null)
-    						session.setSystemTimeHandle(newfh.toExternalForm());
-	    			} else {
-	    	        	session.setSystemTimeHandle(droolsSession.getKsession().insert(systemTime).toExternalForm());	    				
-	    			}
-	    		}
-	    		updated++;
+				try {
+					DroolsSession droolsSession = DroolsSession.getSession(session);
+					synchronized(droolsSession) {
+						SystemTime systemTime = new SystemTime();
+						systemTime.setTickCount(tickCount);
+						systemTime.setTime(System.currentTimeMillis());
+						if (session.getSystemTimeHandle()!=null) {
+							FactHandle fh = new DisconnectedFactHandle(session.getSystemTimeHandle());
+							droolsSession.getKsession().update(fh, systemTime);
+							FactHandle newfh = droolsSession.getKsession().getFactHandle(systemTime);
+							if (newfh!=null) 
+								session.setSystemTimeHandle(newfh.toExternalForm());
+						} else {
+							session.setSystemTimeHandle(droolsSession.getKsession().insert(systemTime).toExternalForm());	    				
+						}
+						em.persist(session);
+					}
+					updated++;
+				} catch (Exception e) {
+					logger.log(Level.WARNING,"problem updating time in session "+session.getId()+" for time handle "+session.getSystemTimeHandle(), e);
+				}
 			}
 
 			ut.commit();
