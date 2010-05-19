@@ -7,7 +7,10 @@
 <p>The default index page give links to create template (form), list templates (xml), create session (form) and list sessions (xml).</p>
 <p>Create a template first. The RulesetUrl must be a full URL (e.g. file:///...) to a Drools DRL file, including an declared types. E.g. <a href="../samples/testfact.drl">samples/testfact.drl</a>. The FactURL reading is not currently supported. If you use the name of an existing template then it will be updated/replaced.</p>
 <p>Then list the templates to check it is there. The rules are NOT checked/read when the template is created, only when a session is created.</p>
-<p>Create a session. Use the name of a template already created. Stick with "JPA_SERIALIZED" persistence at least for now. You will get back the ID of the created session, e.g. "1". You can also check created sessions usin ghe session list (xml) link.</p>
+<p>Create a session. Use the name of a template already created. Stick with "JPA_SERIALIZED" persistence at least for now. You will get back the ID of the created session, e.g. "1". You can also check created sessions using the session list (xml) link. 
+If you might want timed behaviour leave "Include SystemTime" checked.</p>
 <p>To interact with a session you can use URLs of the form <a href="http://localhost:8080/droolstest/1/sessions/1/web/index.html">http://localhost:8080/droolstest/1/sessions/{sessionid}/web/index.html</a> where {sessionid} is the session ID. This page give you options to dump current facts and add new facts.</p>
 <p>See <a href="../samples/testfact_raw1.xml">samples/testfact_raw1.xml</a> for an example of a fact "file". The operations are "add", "update" and "delete". A result XML file will be returned. Note that an update changes the fact handle.</p>
+<p>If a session is created with "Include SystemTime" then an instance of uk.ac.horizon.ug.commonfacts.SystemTime will be added as a fact. This object has fields "time" (long, UNIX time, millis) and "tickCount" (incremented each time tick is called).
+These facts are updated each time the "tick" URL is accessed (get or post), <a href="http://localhost:8080/droolstest/1/tick">http://localhost:8080/droolstest/1/tick</a>.</p>
 </body></html>

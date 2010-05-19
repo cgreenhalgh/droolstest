@@ -62,7 +62,7 @@ public class TemplatesResource extends BaseResource {
         SessionTemplate st = new SessionTemplate();
         st.setName(form.getFirstValue("name"));   
         st.setRulesetUrls(form.getValuesArray("rulesetUrls"));   
-        st.setFactUrls(form.getValuesArray("factUrls"));   
+        st.setFactUrls(form.getValuesArray("factUrls"));  
         logger.info("acceptItem: "+form.getValuesMap());
         logger.info("Name = "+st.getName());
         

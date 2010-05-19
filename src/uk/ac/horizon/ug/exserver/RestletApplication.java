@@ -38,6 +38,7 @@ public class RestletApplication extends Application {
         Router router = new Router(getContext());   
 
         router.attach("/test", TestResource.class);   
+        router.attach("/tick", TickHandler.class);   
         router.attach("/templates", TemplatesResource.class);   
         router.attach("/sessions", SessionsResource.class);   
         router.attach("/sessions/{sessionId}/facts", SessionResource.class);   

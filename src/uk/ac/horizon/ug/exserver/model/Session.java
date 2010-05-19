@@ -26,6 +26,10 @@ public class Session {
 	protected Date createdDate;
 	/** drools session type */
 	protected SessionType sessionType = SessionType.JPA_SERIALIZED;
+	/** ticks should update SystemTime? */
+	protected boolean updateSystemTime;
+	/** SystemTime FactHandle (external form) (null if unset) */
+	protected String systemTimeHandle;
 	/** 
 	 * cons
 	 */
@@ -103,6 +107,30 @@ public class Session {
 	 */
 	public void setSessionType(SessionType sessionType) {
 		this.sessionType = sessionType;
+	}
+	/**
+	 * @return the updateSystemTime
+	 */
+	public boolean isUpdateSystemTime() {
+		return updateSystemTime;
+	}
+	/**
+	 * @param updateSystemTime the updateSystemTime to set
+	 */
+	public void setUpdateSystemTime(boolean updateSystemTime) {
+		this.updateSystemTime = updateSystemTime;
+	}
+	/**
+	 * @return the systemTimeHandle
+	 */
+	public String getSystemTimeHandle() {
+		return systemTimeHandle;
+	}
+	/**
+	 * @param systemTimeHandle the systemTimeHandle to set
+	 */
+	public void setSystemTimeHandle(String systemTimeHandle) {
+		this.systemTimeHandle = systemTimeHandle;
 	}
 	
 }

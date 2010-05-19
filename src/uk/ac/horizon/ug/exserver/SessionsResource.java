@@ -6,8 +6,11 @@ package uk.ac.horizon.ug.exserver;
 import java.util.List;
 import java.util.Date;
 
+import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
 import org.restlet.data.MediaType;
@@ -21,11 +24,13 @@ import org.restlet.data.Form;
 import org.restlet.data.MediaType;   
 import org.restlet.data.Status;   
 
+import uk.ac.horizon.ug.commonfacts.SystemTime;
 import uk.ac.horizon.ug.exserver.RestletApplication;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.Session;
 import uk.ac.horizon.ug.exserver.model.SessionType;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -38,20 +43,29 @@ public class SessionsResource extends BaseResource {
 //    @Get  
  //   public String toString() {   
   //  }   
-	/** XML list of all rep */
+	/** XML list of all rep 
+	 * @throws NamingException 
+	 * @throws SystemException 
+	 * @throws NotSupportedException */
     @Get("xml")   
-    public Representation toXml() throws java.io.IOException, javax.naming.NamingException, javax.transaction.SystemException, javax.transaction.NotSupportedException, javax.transaction.RollbackException, javax.transaction.HeuristicRollbackException, javax.transaction.HeuristicMixedException {   
-    	EntityManager em = getEntityManager();
-    	UserTransaction ut = getTransaction();
-    	
+    public Representation toXml() throws NamingException, NotSupportedException, SystemException {
+     	UserTransaction ut = getTransaction();
 		ut.begin();
-		Query q = em.createQuery ("SELECT x FROM Session x");
-		List<Session> results = (List<Session>) q.getResultList ();
-		ut.commit();
-		
-    	XstreamRepresentation<List<Session>> xml = new XstreamRepresentation<List<Session>>(MediaType.APPLICATION_XML, results);
-    	xml.getXstream().alias("session", Session.class);
-    	return xml;
+    	try {
+    		EntityManager em = getEntityManager();
+
+    		Query q = em.createQuery ("SELECT x FROM Session x");
+    		List<Session> results = (List<Session>) q.getResultList ();
+    		ut.commit();
+
+    		XstreamRepresentation<List<Session>> xml = new XstreamRepresentation<List<Session>>(MediaType.APPLICATION_XML, results);
+    		xml.getXstream().alias("session", Session.class);
+    		return xml;
+    	} catch (Exception e) {
+    		logger.log(Level.WARNING, "error getting/marshalling sessions", e);
+    		setStatus(Status.SERVER_ERROR_INTERNAL, e);
+    		return null;
+    	}
     }
     
     /**  
@@ -81,6 +95,7 @@ public class SessionsResource extends BaseResource {
     		this.setStatus(Status.CLIENT_ERROR_BAD_REQUEST, "Unknown session type: "+type);
     		return null;
     	}
+        String updateSystemTime = form.getFirstValue("updateSystemTime");
 
     	UserTransaction ut = getTransaction();
     	// get SessionTemplate
@@ -124,7 +139,16 @@ public class SessionsResource extends BaseResource {
 			// TODO: GUID
 			s.setId(""+s.getDroolsId());
 			s.setCreatedDate(new Date());
+	        if (updateSystemTime!=null && updateSystemTime.length()>0)
+	        	s.setUpdateSystemTime(true);
 			
+	        if (s.isUpdateSystemTime()) {
+	        	SystemTime systemTime = new SystemTime();
+	        	systemTime.setTickCount(0);
+	        	systemTime.setTime(System.currentTimeMillis());
+	        	s.setSystemTimeHandle(ds.getKsession().insert(systemTime).toExternalForm());
+	        }
+	        
 			em.persist(s);
 
 			ut.commit();
