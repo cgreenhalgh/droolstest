@@ -89,7 +89,8 @@ the real (changed) hash code, and it still doesn't match.</p>
 the object hash code, but the implementation in DefaultFactHandle DOESN'T. Let's try changing that...</p>
 
 <p>Yes, that seems to do the job for equality matching for DRL & "real" classes. Incidentally the DRL
-hashcode "implementation" breaks efficiency of lookup.</p>
+hashcode "implementation" breaks efficiency of lookup. Well, actually this seems to depend on whether a field
+is "key" - perhaps a standard annotation?!</p>
 
 <p>Tests...</p>
 <pre>
