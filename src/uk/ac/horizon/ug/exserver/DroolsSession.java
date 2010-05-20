@@ -98,7 +98,9 @@ public class DroolsSession {
 		KnowledgeBaseConfiguration conf = KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
 		// identity changes when persistent session is re-read so we need to use equality for facts
 		// (make sure you define it correctly and don't intend to add multiple copies of the same fact).
-		conf.setProperty("drools.assertBehaviour", "equality");
+		// this doesn't work at least up to 5.1.0.M2 because the EqualityAssertMapComparator is (IMO) broken.
+		// so requires custom fix :-(
+		//conf.setProperty("drools.assertBehaviour", "equality");
 		final KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase(conf);
 		
 		kbase.addKnowledgePackages(pkgs);
