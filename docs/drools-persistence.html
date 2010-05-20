@@ -79,8 +79,203 @@ Former uses
 which succeeds for DisconnectedFactHandle but only if the identityHashCode is the same in both handles.
 EqualitAssertMapComparator doesn't seem to be used elsewhere so presumably it is safe to change...</p>
 
+<p>After this change it still doesn't work. It appears that the "object hash code" for all DRL defined
+classes is always 1, so it works for them. But for non-DRL classes it doesn't work: it appears that the Handle object 
+hash code DOESN'T change when the object is
+updated (the object's actual hash code DOES). So when re-loaded the handle object hash code becomes
+the real (changed) hash code, and it still doesn't match.</p>
+
+<p>The code in AbstractWorkingMemory uses factHandle.setObject( newval ) noting that this should update
+the object hash code, but the implementation in DefaultFactHandle DOESN'T. Let's try changing that...</p>
+
+<p>Yes, that seems to do the job for equality matching for DRL & "real" classes. Incidentally the DRL
+hashcode "implementation" breaks efficiency of lookup.</p>
+
+<p>Tests...</p>
+<pre>
+EQUALITY (modified)
+
+init 
+<list>
+  <holder>
+    <handle>0:1:28442012:-1229718314:1</handle>
+    <fact class="uk.ac.horizon.ug.commonfacts.SystemTime">
+      <time>1274375567421</time>
+      <tickCount>0</tickCount>
+    </fact>
+    <operation>add</operation>
+  </holder>
+</list>
+tick 1
+<list>
+  <holder>
+    <handle>0:1:11300970:-1229718314:2</handle>
+    <fact class="uk.ac.horizon.ug.commonfacts.SystemTime">
+      <time>1274375604171</time>
+      <tickCount>1</tickCount>
+    </fact>
+    <operation>add</operation>
+  </holder>
+</list>
+restart
+<list>
+  <holder>
+    <handle>0:1:6259269:-1229681981:2</handle>
+    <fact class="uk.ac.horizon.ug.commonfacts.SystemTime">
+      <time>1274375604171</time>
+      <tickCount>1</tickCount>
+    </fact>
+    <operation>add</operation>
+  </holder>
+</list>
 
 
+2...
+<list>
+  <holder>
+    <handle>0:1:17325754:-1229450469:5</handle>
+    <fact class="uk.ac.horizon.ug.commonfacts.SystemTime">
+      <time>1274375841203</time>
+      <tickCount>5</tickCount>
+    </fact>
+    <operation>add</operation>
+  </holder>
+</list>
+
+<list>
+  <holder>
+    <handle>0:1:9719114:-1229450469:6</handle>
+    <fact class="uk.ac.horizon.ug.commonfacts.SystemTime">
+      <time>1274375860765</time>
+      <tickCount>6</tickCount>
+    </fact>
+    <operation>add</operation>
+  </holder>
+</list>
+
+
+my fact
+<list>
+  <result>
+    <status>SUCCESS</status>
+    <holder>
+      <fact class="uk.ac.horizon.exserver.test1.User">
+        <ival>5</ival>
+        <bval>true</bval>
+        <name>Chris</name>
+        <dval>3.5</dval>
+      </fact>
+      <operation>add</operation>
+    </holder>
+    <handle>0:2:9368677:1:7</handle>
+  </result>
+</list>
+update
+<list>
+  <result>
+    <status>SUCCESS</status>
+    <holder>
+      <handle>0:2:9368677:1:7</handle>
+      <fact class="uk.ac.horizon.exserver.test1.User">
+        <ival>5</ival>
+        <bval>true</bval>
+        <name>Chris2</name>
+        <dval>3.5</dval>
+      </fact>
+      <operation>update</operation>
+    </holder>
+    <handle>0:2:4562683:1:9</handle>
+  </result>
+</list>
+
+restart
+ <holder>
+    <handle>0:2:6259269:1:9</handle>
+    <fact class="uk.ac.horizon.exserver.test1.User">
+      <ival>5</ival>
+      <bval>true</bval>
+      <name>Chris2</name>
+      <dval>3.5</dval>
+    </fact>
+    <operation>add</operation>
+  </holder>
+
+IDENTITY
+
+<list>
+  <holder>
+    <handle>0:1:17678065:-1224151825:1</handle>
+    <fact class="uk.ac.horizon.ug.commonfacts.SystemTime">
+      <time>1274381133830</time>
+      <tickCount>0</tickCount>
+    </fact>
+    <operation>add</operation>
+  </holder>
+  <holder>
+    <handle>0:2:11790937:1:2</handle>
+    <fact class="uk.ac.horizon.exserver.test1.User">
+      <ival>5</ival>
+      <bval>true</bval>
+      <name>Chris</name>
+      <dval>3.5</dval>
+    </fact>
+    <operation>add</operation>
+  </holder>
+</list>
+
+update/tick
+<list>
+  <holder>
+    <handle>0:2:17648350:1:5</handle>
+    <fact class="uk.ac.horizon.exserver.test1.User">
+      <ival>5</ival>
+      <bval>true</bval>
+      <name>Chris2</name>
+      <dval>3.5</dval>
+    </fact>
+    <operation>add</operation>
+  </holder>
+  <holder>
+    <handle>0:1:3664555:-1224151825:4</handle>
+    <fact class="uk.ac.horizon.ug.commonfacts.SystemTime">
+      <time>1274381241611</time>
+      <tickCount>1</tickCount>
+    </fact>
+    <operation>add</operation>
+  </holder>
+  <holder>
+    <handle>0:4:104199:1:6</handle>
+    <fact class="uk.ac.horizon.exserver.test1.Output">
+      <message>Hello Chris2</message>
+    </fact>
+    <operation>add</operation>
+  </holder>
+</list>
+
+restart
+<list>
+  <holder>
+    <handle>0:1:23710114:-1224044541:4</handle>
+    <fact class="uk.ac.horizon.ug.commonfacts.SystemTime">
+      <time>1274381241611</time>
+      <tickCount>1</tickCount>
+    </fact>
+    <operation>add</operation>
+  </holder>
+  <holder>
+    <handle>0:2:8871406:1:5</handle>
+    <fact class="uk.ac.horizon.exserver.test1.User">
+      <ival>5</ival>
+      <bval>true</bval>
+      <name>Chris2</name>
+      <dval>3.5</dval>
+    </fact>
+    <operation>add</operation>
+  </holder>
+</list>
+
+
+</pre>
 <h4>Warning: Doing retract in a JPA session</h4>
 <p>This isn't actually an error; just an unhelpful response: if the fact is no
 longer present (with that handle) then this is what you get. Present in 5.1.0.M1, 
