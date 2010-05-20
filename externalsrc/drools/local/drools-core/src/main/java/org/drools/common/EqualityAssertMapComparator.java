@@ -62,9 +62,14 @@ public class EqualityAssertMapComparator
      */
     public boolean equal(final Object o1,
                          Object o2) {
-        if ( o1 instanceof FactHandle ) {
-            return o1 == o2;
+    	// BEGIN cmg 2010-05-20 use fact handle comparison from IdentityAssertMapComparator, which
+    	// just checks ID - allows it to work with DisconnectedFactHandle
+        if ( o1 instanceof InternalFactHandle ) {
+            return ((InternalFactHandle) o1).getId() == ((InternalFactHandle) o2).getId();
         }
+//        if ( o1 instanceof FactHandle ) {
+//            return o1 == o2;
+//        }
 
         final InternalFactHandle handle = ((InternalFactHandle) o2);
 

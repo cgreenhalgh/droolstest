@@ -30,6 +30,7 @@
 	<classpathentry kind="lib" path="lib/drools-core-5.1.0.M2.jar"/>
 	<classpathentry kind="lib" path="lib/drools-decisiontables-5.1.0.M2.jar"/>
 	<classpathentry kind="lib" path="lib/drools-persistence-jpa-5.1.0.M2.jar"/>
+	<classpathentry kind="lib" path="lib/drools-core-5.1.0.M2-local.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -100,7 +100,7 @@ public class DroolsSession {
 		// (make sure you define it correctly and don't intend to add multiple copies of the same fact).
 		// this doesn't work at least up to 5.1.0.M2 because the EqualityAssertMapComparator is (IMO) broken.
 		// so requires custom fix :-(
-		//conf.setProperty("drools.assertBehaviour", "equality");
+		conf.setProperty("drools.assertBehaviour", "equality");
 		final KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase(conf);
 		
 		kbase.addKnowledgePackages(pkgs);
