@@ -15,6 +15,8 @@ import org.drools.persistence.jpa.JPAKnowledgeService;
 import org.drools.runtime.Environment;
 import org.drools.runtime.EnvironmentName;
 import org.drools.runtime.StatefulKnowledgeSession;
+import org.drools.runtime.KnowledgeSessionConfiguration;
+import org.drools.KnowledgeBaseConfiguration;
 
 import java.util.Collection;
 import java.util.Map;
@@ -93,7 +95,12 @@ public class DroolsSession {
 		final Collection<KnowledgePackage> pkgs = kbuilder.getKnowledgePackages();
 
 		// add the packages to a knowledgebase (deploy the knowledge packages).
-		final KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
+		KnowledgeBaseConfiguration conf = KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
+		// identity changes when persistent session is re-read so we need to use equality for facts
+		// (make sure you define it correctly and don't intend to add multiple copies of the same fact).
+		conf.setProperty("drools.assertBehaviour", "equality");
+		final KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase(conf);
+		
 		kbase.addKnowledgePackages(pkgs);
 
 		UserTransaction ut =
@@ -104,6 +111,7 @@ public class DroolsSession {
 			Environment env = KnowledgeBaseFactory.newEnvironment();
 			env.set( EnvironmentName.ENTITY_MANAGER_FACTORY,
 			         Persistence.createEntityManagerFactory( "droolstest" ) );
+			
 			// bitronix specific... !
 			//env.set( EnvironmentName.TRANSACTION_MANAGER,
 			//         bitronix.tm.TransactionManagerServices.getTransactionManager() );

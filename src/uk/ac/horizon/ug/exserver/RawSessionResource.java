@@ -63,7 +63,7 @@ public class RawSessionResource extends SessionResource {
         		Collection<FactHandle> factHandles = droolsSession.getKsession().getFactHandles();
         		KnowledgeBase kb = droolsSession.ksession.getKnowledgeBase();
         		for (FactHandle fh : factHandles) {
-        			//logger.info("Looking for fact "+fh+" ("+fh.getClass()+")");
+        			logger.info("Looking for fact "+fh+" = "+fh.toExternalForm()+" ("+fh.getClass()+")");
         			// this doesn't work in 5.1.0.M1 but is fixed in SVN
         			//Object fact = droolsSession.getKsession().getObject(fh);
         			//logger.info("Found fact "+fh+": "+fact);
@@ -80,6 +80,7 @@ public class RawSessionResource extends SessionResource {
         		em.close();
         	}
         	catch (Exception e) {
+        		logger.log(Level.WARNING,"getting session state", e);
         		ut.rollback();
         		setStatus(Status.SERVER_ERROR_INTERNAL, e);
         		return null;
@@ -208,7 +209,26 @@ public class RawSessionResource extends SessionResource {
         					continue;
         				Element fieldNode = (Element)fieldNodes.item(fi);
         				String fieldName= fieldNode.getNodeName();
-        				String fieldValue = fieldNode.getTextContent().trim();
+        				String fieldValueText = fieldNode.getTextContent().trim();
+        				Object fieldValue = fieldValueText;
+        				Class<?> fieldClass = factType.getField(fieldName).getType();
+        				if (boolean.class.isAssignableFrom(fieldClass) || Boolean.class.isAssignableFrom(fieldClass)) {
+        					if (fieldValueText.length()==0 || fieldValueText.charAt(0)=='f'  || fieldValueText.charAt(0)=='F' ||fieldValueText.charAt(0)=='n' ||fieldValueText.charAt(0)=='N' ||fieldValueText.charAt(0)=='0')
+        						fieldValue = Boolean.FALSE;
+        					else
+        						fieldValue = Boolean.TRUE;
+        				}
+        				else if (Number.class.isAssignableFrom(fieldClass) || fieldClass.isPrimitive()) {
+        					// not bool (see above)
+        					logger.info("Field "+fieldName+" is Number class "+fieldClass.getName());
+        					if (!fieldValueText.contains("."))
+        						fieldValue = Long.parseLong(fieldValueText);
+        					else
+        						fieldValue= Double.parseDouble(fieldValueText);
+        				}
+        				else
+        					logger.info("Field "+fieldName+" is non-Number class "+fieldClass.getName());
+
         				// type?
         				fields.put(fieldName, fieldValue);
         			}

@@ -59,6 +59,28 @@ ava:26)
 ngleSessionCommandService.java:254)
         ... 59 more</pre>
 
+<h4>Warning/error: changing FactHandle in restored JPA session</h4>
+<p>When a JPA session is restored the fact handles change. The fourth part is the object (fact) hash code. 
+So this implies that all fact types must implement hashCode (and presumably equals). The third part is the
+"identifyHashCode". This appears to come from System.identityHashCode.</p>
+
+<p>A DisconnectedFactHandle is re-attached via org.drools.common.ObjectStore.reconnect( handle ) - 
+perhaps SingleThreadedObjectStore which does a Map get cast to InternalFactHandle. </p>
+
+<p>Object handle map lookup is affected by (RuleBaseConfiguration)conf. assertBehaviour, one of AssertBehaviour,
+set by KnowledgeBaseConfiguration, "drools.assertBehaviour", one or "identity" (default) or "equality". 
+This  determines whether ObjectStore fact map uses org.drools.common.IdentityAssertMapComparator or 
+EqualityAssertMapComparator. The former depends on FactHandle identityHashCode, which will change on restore.
+The latter uses object hashcode, but equals currently has fast part for instanceof FactHandle which uses ==.
+Former uses 
+<pre>if ( o1 instanceof InternalFactHandle ) {
+    return ((InternalFactHandle) o1).getId() == ((InternalFactHandle) o2).getId();
+}</pre>
+which succeeds for DisconnectedFactHandle but only if the identityHashCode is the same in both handles.
+EqualitAssertMapComparator doesn't seem to be used elsewhere so presumably it is safe to change...</p>
+
+
+
 <h4>Warning: Doing retract in a JPA session</h4>
 <p>This isn't actually an error; just an unhelpful response: if the fact is no
 longer present (with that handle) then this is what you get. Present in 5.1.0.M1, 

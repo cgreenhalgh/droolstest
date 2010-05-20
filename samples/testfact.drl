@@ -1,9 +1,15 @@
 package uk.ac.horizon.exserver.test1
 
+import uk.ac.horizon.ug.commonfacts.SystemTime
+
 import java.util.Date
 
 declare User
 	name : String
 	id : String
 	location : String
+	date : Date
+	bval : boolean
+	ival : int
+	dval : double
 end

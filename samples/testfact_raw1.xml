@@ -3,6 +3,9 @@
 
     <fact class="uk.ac.horizon.exserver.test1.User">
       <name>Chris</name>
+      <bval>true</bval>
+      <ival>5</ival>
+      <dval>3.5</dval>
     </fact>
     <operation>add</operation>
   </holder>
