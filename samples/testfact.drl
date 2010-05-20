@@ -13,3 +13,18 @@ declare User
 	ival : int
 	dval : double
 end
+
+declare Output
+	user_id : String
+	message : String
+end
+
+rule "test rule 1"
+	when 
+		u : User ()
+	then
+		Output o = new Output();
+		o.setUser_id( u.getId() );
+		o.setMessage( "Hello "+u.getName() );
+		insert( o );
+end

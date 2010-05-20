@@ -315,6 +315,9 @@ public class RawSessionResource extends SessionResource {
         			}
         			results.add(result);
         		}
+        		
+        		droolsSession.getKsession().fireAllRules();
+        		
         		ut.commit();
         		em.close();
         	}
