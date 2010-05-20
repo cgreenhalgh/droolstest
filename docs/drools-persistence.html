@@ -308,5 +308,20 @@ ngleSessionCommandService.java:254)
 wonder if it is more specifically ones which are not referenced in the
 RuleBase (e.g. through imports), but I haven't tested that.</p>
 <p></p>
+
+<h3>Drools extensions</h3>
+
+<h4>Persisting facts directly with JPA</h4>
+
+<p>A JPA session uses a JPASessionMarshallingHelper to marshall. This essentially uses the DefaultMarshaller. It checks the Environment for EnvironmentName.OBJECT_MARSHALLING_STRATEGIES
+of type (drools-api) org.drools.marshalling.ObjectMarshallingStrategy[]. By default the strategy used is
+(drools-core) org.drools.marshalling.SerializablePlaceholderResolverStrategy - the marshalling strategy is used only
+to read & write fact objects. There is an accepter check allowing several to be combined.</p>
+
+<p>It might be possible to write the fact class and primary key, then use the EntityManager to read the value 
+on restore. This assumes that marshalling occurs within a transaction with EntityManager available (the EntityManager is
+available through the Environment). It also assumes that insert/update/remove persist/delete the fact (insert/update could be
+done "lazily" on snapshot, but delete could not).</p>
+
 </body>
 </html>
