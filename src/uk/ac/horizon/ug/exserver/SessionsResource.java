@@ -60,6 +60,8 @@ public class SessionsResource extends BaseResource {
 
     		XstreamRepresentation<List<Session>> xml = new XstreamRepresentation<List<Session>>(MediaType.APPLICATION_XML, results);
     		xml.getXstream().alias("session", Session.class);
+    		// immediate expire?
+    		xml.setExpirationDate(new Date());
     		return xml;
     	} catch (Exception e) {
     		logger.log(Level.WARNING, "error getting/marshalling sessions", e);
@@ -160,6 +162,42 @@ public class SessionsResource extends BaseResource {
 			return null;
 		}
 		setStatus(Status.SUCCESS_CREATED);
-        return new StringRepresentation(s.getId());   
+		Result res = new Result();
+		res.setStatus("SUCCESS");
+		res.setId(s.getId());
+
+		XstreamRepresentation<Result> xml = new XstreamRepresentation<Result>(MediaType.APPLICATION_XML, res);
+		xml.getXstream().alias("result", Result.class);
+		return xml;
     }   
+    /** result class */
+    static class Result {
+    	protected String status;
+    	protected String id;
+		/**
+		 * @return the status
+		 */
+		public String getStatus() {
+			return status;
+		}
+		/**
+		 * @param status the status to set
+		 */
+		public void setStatus(String status) {
+			this.status = status;
+		}
+		/**
+		 * @return the id
+		 */
+		public String getId() {
+			return id;
+		}
+		/**
+		 * @param id the id to set
+		 */
+		public void setId(String id) {
+			this.id = id;
+		}
+    	
+    }
 }

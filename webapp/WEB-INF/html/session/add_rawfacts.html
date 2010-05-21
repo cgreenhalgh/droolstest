@@ -1,16 +1,69 @@
 <html>
 <head>
 <title>Add raw facts test form</title>
+<script type="text/javascript">
+var req;
+
+function makeResponseCallback(id) {
+	return function () {
+//	alert("callback");
+	//alert(table);
+	//alert("callback for "+id+": "+req.readyState);
+ 	   if (req.readyState == 4) {
+ 	   		//alert("callback for "+id+", ready, "+req.status);
+    		var response = document.getElementById(id);
+			if (req.status == 200) {
+				response.value = req.responseText;
+         	}
+         	else {
+         		response.value = "Error code "+req.status;
+         	}
+    	}
+	}
+}
+
+function submit(httpOperation, path, requestId, responseId) {
+	if (typeof XMLHttpRequest != "undefined") {
+		req = new XMLHttpRequest();
+  	} else if (window.ActiveXObject) {
+    	req = new ActiveXObject("Microsoft.XMLHTTP");
+   	}
+//	alert("get "+req);
+  
+   	req.open(httpOperation, path, true);
+	req.onreadystatechange = makeResponseCallback(responseId);
+   	var response = document.getElementById(responseId);
+   	response.value = "Send "+httpOperation+" request to "+path+"...";   
+  	if (requestId!=null) {
+  		var myRequest = document.getElementById(requestId).value;
+		req.send(myRequest);
+	}
+	else
+		req.send();	
+}
+
+function addFacts() {
+	submit("POST", "../rawfacts", "myRequest", "myResult");
+}
+function getFacts() {
+	submit("GET", "../rawfacts", null, "myFacts");
+}
+
+</script>
 </head>
 <body>
-<h2>Add facts to session</h2>
-<form action="../rawfacts" enctype="application/x-www-form-urlencoded" method="post"><!--  enctype="multipart/form-data"  -->
+<h2>Add facts to session (AJAX)</h2>
 <table>
-<tbody>
-<tr><td>Raw Facts</td><td><textarea name="facts" cols="40" rows="5"></textarea></td></tr>
-<tr><td></td><td><input type="reset"/><input type="submit"/></td></tr>
-</tbody>
+<tr><td>AddFacts (xml)</td>
+<td><textarea id="myRequest" name="facts" cols="40" rows="5"></textarea></td></tr>
+<tr><td><input type="button" onclick="addFacts()" value="Add facts"/></td></tr>
+<tr><td>Result</td><td>
+<textarea id="myResult" name="result" cols="40" rows="5">Results...</textarea>
+</td></tr>
+<tr><td><input type="button" onclick="getFacts()" value="Get all facts"/></td></tr>
+<tr><td>All facts</td><td>
+<textarea id="myFacts" name="result" cols="40" rows="5">Facts...</textarea>
+</td></tr>
 </table>
-</form>
 </body>
 </html>

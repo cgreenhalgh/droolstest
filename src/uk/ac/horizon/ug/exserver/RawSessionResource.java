@@ -3,6 +3,7 @@
  */
 package uk.ac.horizon.ug.exserver;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
@@ -88,6 +89,8 @@ public class RawSessionResource extends SessionResource {
     	}
     	XstreamRepresentation<List<RawFactHolder>> xml = new XstreamRepresentation<List<RawFactHolder>>(MediaType.APPLICATION_XML, facts);
     	addAliases(xml);
+		// immediate expire?
+		xml.setExpirationDate(new Date());
     	return xml;
     }
     public static final String ELEMENT_HOLDER = "holder";
@@ -140,6 +143,19 @@ public class RawSessionResource extends SessionResource {
     }
     
     /**  
+     * Add facts as form - only URL-encoded at present.
+     */  
+    //@Post  
+    public Representation addFactsForm(Representation entity) throws java.io.IOException, javax.naming.NamingException, javax.transaction.SystemException, javax.transaction.NotSupportedException, javax.transaction.RollbackException, javax.transaction.HeuristicRollbackException, javax.transaction.HeuristicMixedException {   
+        // parse ... ?!
+       	Form form = new Form(entity);   
+       	String factText = form.getFirstValue("facts");   
+       	if (factText==null || factText.length()==0) {
+       		return null;
+       	}
+       	return addFacts(new StringRepresentation(factText));
+    }
+    /**  
      * Handle POST requests: create a new session.
      * Long-winded parsing of Xstream-type format, but without using Xstream because of the
      * class loading problem noted above.  
@@ -151,14 +167,9 @@ public class RawSessionResource extends SessionResource {
         LinkedList<RawFactHolder> facts = new LinkedList<RawFactHolder>();
         // parse ... ?!
         try {
-        	Form form = new Form(entity);   
-        	String factText = form.getFirstValue("facts");   
-        	if (factText==null || factText.length()==0) {
-        		return null;
-        	}
     		KnowledgeBase kb = droolsSession.ksession.getKnowledgeBase();
 
-    		Document doc = new XmlConverter().toObject(new StringRepresentation(factText), Document.class, null);
+    		Document doc = new XmlConverter().toObject(entity, Document.class, null);
         	Element root = doc.getDocumentElement();
         	NodeList factHolderNodes = root.getElementsByTagName(ELEMENT_HOLDER);
         	for (int fni=0; fni<factHolderNodes.getLength(); fni++) {

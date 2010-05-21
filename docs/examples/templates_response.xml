@@ -1,0 +1,11 @@
+<list>
+  <template>
+    <name>t1</name>
+    <rulesetUrls>
+      <string>file:///D:\cmg\Horizon\eclipsews\droolstest\samples\testfact.drl</string>
+    </rulesetUrls>
+    <factUrls>
+      <null/>
+    </factUrls>
+  </template>
+</list>

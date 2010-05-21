@@ -1,0 +1,36 @@
+<list>
+  <result>
+    <status>SUCCESS</status>
+    <holder>
+      <handle>0:6:13031451:1:7</handle>
+      <fact class="uk.ac.horizon.exserver.test1.User">
+        <ival>5</ival>
+        <bval>true</bval>
+        <name>Chris2</name>
+        <dval>3.5</dval>
+      </fact>
+      <operation>update</operation>
+    </holder>
+    <handle>0:6:30034361:1:10</handle>
+  </result>
+  <result>
+    <status>SUCCESS</status>
+    <holder>
+      <handle>0:5:25415657:1:6</handle>
+      <operation>delete</operation>
+    </holder>
+  </result>
+  <result>
+    <status>SUCCESS</status>
+    <holder>
+      <fact class="uk.ac.horizon.exserver.test1.User">
+        <ival>0</ival>
+        <bval>false</bval>
+        <name>Brian</name>
+        <dval>0.0</dval>
+      </fact>
+      <operation>add</operation>
+    </holder>
+    <handle>0:8:4836561:1:11</handle>
+  </result>
+</list>

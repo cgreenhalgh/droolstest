@@ -85,7 +85,8 @@ by BTM when Tomcat starts):</p>
   <li>Edit Tomcat <span style="font-family: monospace;">conf/resources.properties</span> (created above) and add configuration so that BTM will create the required datasource;&nbsp;here is an example <a href="btm/resources.properties">resources.properties</a> file creates&nbsp;an H2 embedded database using file(s) in Tomcat <span style="font-family: monospace;">work/db1</span>.* with the name <span style="font-family: monospace;">jdbc/db1</span>. &nbsp;</li>
 </ul>
 <h3>Using a Database in a WebApp</h3>
-To make this datasource accessible to a particular webapp within Tomcat:<br>
+<p>Note: this is already done in the droolstest webapp.</p>
+<p>To make this datasource accessible to a particular webapp within Tomcat:</p>
 <ul>
   <li>Within the webapp (i.e. in the webapp's source <span style="font-family: monospace;">webapp/</span> directory) create a <span style="font-family: monospace;">META-INF/context.xml</span> file with corresponding configuration; here is an example <a href="btm/context.xml">context.xml</a> corresponding to the above datasource.</li>
   <li>Within the webapp <span style="font-family: monospace;">WEB-INF/web.xml</span> file add (immediately after the root <span style="font-family: monospace;">&lt;web-app&gt;</span> tag) something like:<br>
@@ -98,6 +99,7 @@ To make this datasource accessible to a particular webapp within Tomcat:<br>
  <span style="font-family: monospace;" class="code-tag">&lt;/resource-env-ref&gt;</span></li>
 </ul>
 <h3>Configuring Hibernate as a JPA Provider in a WebApp</h3>
+<p>Note: this is already done in the droolstest webapp.</p>
 <p>(See the <a href="http://www.jboss.org/drools/documentation.html">Drools 5 documentation</a> section 3.3.11 Persistence and Transactions)</p>
 <ul>
   <li>Download Hibernate (e.g. 3.5.1-Final - <span style="font-family: monospace;">hibernate-distribution-3.5.1-Final-dist.zip</span>) from <a href="http://sourceforge.net/projects/hibernate/files/hibernate3/">http://sourceforge.net/projects/hibernate/files/hibernate3/</a></li>

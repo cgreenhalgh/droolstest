@@ -1,0 +1,14 @@
+<list>
+  <session>
+    <id>1</id>
+    <droolsId>1</droolsId>
+    <rulesetUrls>
+      <string>file:///D:\cmg\Horizon\eclipsews\droolstest\samples\testfact.drl</string>
+    </rulesetUrls>
+    <templateName>t1</templateName>
+    <createdDate class="sql-timestamp">2010-05-21 09:16:00.248</createdDate>
+    <sessionType>JPA_SERIALIZED</sessionType>
+    <updateSystemTime>true</updateSystemTime>
+    <systemTimeHandle>0:1:8696763:-1173379221:9</systemTimeHandle>
+  </session>
+</list>

@@ -3,6 +3,7 @@
  */
 package uk.ac.horizon.ug.exserver;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -47,6 +48,9 @@ public class TemplatesResource extends BaseResource {
 		ut.commit();
 		
     	XstreamRepresentation<List<SessionTemplate>> xml = new XstreamRepresentation<List<SessionTemplate>>(MediaType.APPLICATION_XML, results);
+    	xml.getXstream().alias("template", SessionTemplate.class);
+		// immediate expire?
+		xml.setExpirationDate(new Date());
     	return xml;
     }
     

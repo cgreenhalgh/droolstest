@@ -67,6 +67,9 @@ public class TickHandler extends BaseResource {
 						} else {
 							session.setSystemTimeHandle(droolsSession.getKsession().insert(systemTime).toExternalForm());	    				
 						}
+						
+						droolsSession.getKsession().fireAllRules();
+						
 						em.persist(session);
 					}
 					updated++;
