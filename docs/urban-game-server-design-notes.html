@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>Urban Game Server Design Notes</title>
+</head>
+<body>
+<h1>Urban Game Server Design Notes</h1>
+<p>2010-05-24, based on tech meeting 2010-05-20.</p>
+<p>Following an approach based on the Drools rule engine...</p>
+<p>The default strategy is to implement logic as rules within the rule engine, executed server-side.</p>
+<p>Migration to the client is a later consideration.</p>
+<p>In the current prototype, a "template" is required for each game/experience, which identifies the DRL file(s) encoding the data types and (Drools) rules.</p>
+<p>A "session" is created for each game instance, which is the complete
+state of that game instance and within which its rules execute.&nbsp;</p>
+<p>The session is initialised with the starting game state. This
+includes non-rule authored content (but authored rich media will be <span style="font-style: italic;">referenced</span> by the session, not loaded into the session).</p>
+<p>Interaction with a game instance is primarily by updating the
+"facts" in that sessions to describe the client/player's actions, which
+in turn cause rules to fire, which further modify the session state to
+reflect the effect of those actions and the progression of the game.</p>
+<p>The client's view of the game state is updated by querying the
+server to obtain&nbsp;"facts" (which may have changed) from the game
+session which are relevant to the client's view of the game. </p>
+<p>Scalability and more nuanced "overlap" between experiences might be achieved by:</p>
+<ul>
+  <li>synchronous: bridging between sessions</li>
+  <li>asynchronous: integration of session content (e.g. user-generated content) into the initial state of subsequent sessions</li>
+</ul>
+<p>Additional issues to be handled outside of the the session/rules:</p>
+<ul>
+  <li>authentication - of "player" and "public" clients and admin/author/orchestration interfaces</li>
+  <li>access control:</li>
+  <ul>
+    <li>to admin facilities for admin roles</li>
+    <li>allowed game state updates by clients</li>
+    <ul>
+      <li>preventing hacking&nbsp;</li>
+      <li>enforcing game rules</li>
+    </ul>
+  </ul>
+  <li>client interaction support,&nbsp;</li>
+  <ul>
+    <li>registration / authentication </li>
+  </ul>
+  <ul>
+    <li>message queueing?</li>
+  </ul>
+  <ul>
+    <li>view specification and maintenance</li>
+    <ul>
+      <li>with bandwidth reduction, e.g. incremental updates, lossless and/or lossy compression, prioritisation</li>
+    </ul>
+  </ul>
+</ul>
+</body>
+</html>
