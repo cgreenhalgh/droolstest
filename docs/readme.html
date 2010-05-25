@@ -3,6 +3,8 @@
 <head>
 
 
+
+  
   
   
   <title>Droolstest readme</title>
@@ -13,11 +15,15 @@
 
 
 
+
 <h1>Droolstest Readme</h1>
 
 
+
 <p>last updated 2010-05-21 Chris Greenhalgh</p>
+
 <p>See also <a href="urban-game-server-design-notes.html">urban-game-server-design-notes.html</a></p>
+
 
 
 
@@ -25,7 +31,9 @@
 
 
 
+
 <p>For webapp / container set-up see <a href="installation.html">installation.html</a>.</p>
+
 
 
 
@@ -33,12 +41,15 @@
 
 
 
+
 <h2>Test / admin web usage</h2>
+
 
 
 
 <p>The default index page give links to create template (form),
 list templates (xml), create session (form) and list sessions (xml).</p>
+
 
 
 
@@ -50,11 +61,14 @@ an existing template then it will be updated/replaced.</p>
 
 
 
+
 <p>Then list the templates to check it is there. The rules are
 NOT checked/read when the template is created, only when a session is
 created.</p>
 
+
 <p style="font-weight: bold;">See also the section below on HTTP Client Usage for more comprehensive details of the suppoerted operations.</p>
+
 
 
 
@@ -66,9 +80,11 @@ timed behaviour leave "Include SystemTime" checked.</p>
 
 
 
+
 <p>To interact with a session you can use URLs of the form <a href="http://localhost:8080/droolstest/1/sessions/1/web/index.html">http://localhost:8080/droolstest/1/sessions/{sessionid}/web/index.html</a>
 where {sessionid} is the session ID. This page give you options to dump
 current facts and add new facts in XML and CSV formats.</p>
+
 
 
 
@@ -76,6 +92,7 @@ current facts and add new facts in XML and CSV formats.</p>
 for an example of a fact "file". The operations are "add", "update" and
 "delete". A result XML file will be returned. Note that an update
 changes the fact handle.</p>
+
 
 
 
@@ -88,7 +105,9 @@ post), <a href="http://localhost:8080/droolstest/1/tick">http://localhost:8080/d
 
 
 
+
 <h2>HTTP Client usage</h2>
+
 
 
 
@@ -96,7 +115,9 @@ post), <a href="http://localhost:8080/droolstest/1/tick">http://localhost:8080/d
 
 
 
+
 <ul>
+
 
 
 
@@ -104,13 +125,17 @@ post), <a href="http://localhost:8080/droolstest/1/tick">http://localhost:8080/d
 
 
 
+
 (or whatever...)</li>
 
 
 
+
+  
   
   
   <ul>
+
 
 
 
@@ -118,13 +143,17 @@ post), <a href="http://localhost:8080/droolstest/1/tick">http://localhost:8080/d
 
 
 
+
 (protocol version 1)</li>
 
 
 
+
+    
     
     
     <ul>
+
 
 
 
@@ -132,9 +161,12 @@ post), <a href="http://localhost:8080/droolstest/1/tick">http://localhost:8080/d
 
 
 
+
+      
       
       
       <ul>
+
 
 
 
@@ -143,14 +175,18 @@ post), <a href="http://localhost:8080/droolstest/1/tick">http://localhost:8080/d
 
 
 
+
         <li>POST - simple URL-encoded form handler (e.g. see <a href="http://localhost:8080/droolstest/static/create_template.html">http://localhost:8080/droolstest/static/create_template.html</a>),
 creates/updates a template, expects paramaters:</li>
 
 
 
+
+        
         
         
         <ul>
+
 
 
 
@@ -160,8 +196,10 @@ already exists</li>
 
 
 
+
           <li><span style="font-family: monospace;">rulesetUrls</span>
 - full URL to DRL file(s) (string, multiple), e.g.&nbsp;<a href="../samples/testfact.drl">../samples/testfact.drl</a></li>
+
 
 
 
@@ -171,15 +209,20 @@ multiple)</li>
 
 
 
+
+        
         
         
         </ul>
 
 
 
+
+      
       
       
       </ul>
+
 
 
 
@@ -187,14 +230,18 @@ multiple)</li>
 
 
 
+
+      
       
       
       <ul>
 
 
 
+
         <li><a href="http://localhost:8080/droolstest/1/sessions">GET</a>
 - simple XML-encoded list of current sessions, e.g. <a href="examples/sessions_response.xml">examples/sessions_response.xml</a></li>
+
 
 
 
@@ -205,9 +252,12 @@ expects paramaters:</li>
 
 
 
+
+        
         
         
         <ul>
+
 
 
 
@@ -216,9 +266,11 @@ expects paramaters:</li>
 
 
 
+
           <li><span style="font-family: monospace;">type</span>
 - session persistence type, should be "JPA_SERIALIZED" ("TRANSIENT" is
 also defined but not fully implemented [id is always 0]) (string)</li>
+
 
 
 
@@ -229,19 +281,25 @@ tick)</li>
 
 
 
+
+        
         
         
         </ul>
 
 
 
+
+      
       
       
       </ul>
 
 
 
+
       <li><span style="font-family: monospace;">sessions/<span style="font-weight: bold;">{sessionId}</span>/</span><br>
+
 
 
 
@@ -251,9 +309,12 @@ longer hash value string.</li>
 
 
 
+
+      
       
       
       <ul>
+
 
 
 
@@ -261,14 +322,18 @@ longer hash value string.</li>
 
 
 
+
+        
         
         
         <ul>
 
 
 
+
           <li>GET (e.g. <a href="http://localhost:8080/droolstest/1/sessions/1/rawfacts">session
 1</a>) - simple XML-encoded dump session facts (state), e.g. <a href="examples/session_response.xml">examples/session_response.xml</a></li>
+
 
 
 
@@ -278,16 +343,23 @@ return a simple XML-encoded list of results, e.g. <a href="examples/session_post
 Note that the valid operations are "add", "update" and "delete". Also
 note that the fact handle changes when a fact is updated.</li>
 
+
+        
         
         </ul>
 
+
         <li><span style="font-family: monospace;">csv/<span style="font-weight: bold;">{className}</span></span></li>
 
+
+        
         
         <ul>
 
+
           <li>GET (e.g. <a href="http://localhost:8080/droolstest/1/sessions/1/csv/uk.ac.horizon.exserver.test1.User">session
 1, uk.ac.horizon.exserver.test1.User</a>) - simple CSV (comma-separated value) dump of session facts (state) of the specified class, e.g.&nbsp;<a href="examples/csv_response.csv">examples/csv_response.csv</a>. Note that giving an unknown class name will result in a&nbsp;server error (status 500).</li>
+
 
           <li>POST - send a simple CSV-encoded list of changes to
 make to session facts of the specified class (same format as GET response, above). Note
@@ -299,9 +371,12 @@ to be an update. The response is identical to that from <span style="font-family
 
 
 
+
+        
         
         
         </ul>
+
 
 
 
@@ -311,9 +386,12 @@ to be an update. The response is identical to that from <span style="font-family
 
 
 
+
+        
         
         
         <ul>
+
 
 
 
@@ -321,9 +399,11 @@ to be an update. The response is identical to that from <span style="font-family
 
 
 
+
           <li><span style="font-family: monospace;">add_rawfacts.html</span>
 (e.g. <a href="http://localhost:8080/droolstest/1/sessions/1/web/add_rawfacts.html">sessions
 1</a>) - simple AJAX example of using the above rawfacts methods.</li>
+
 
           <li><span style="font-family: monospace;">add_csvfacts.html</span>
 (e.g. <a href="http://localhost:8080/droolstest/1/sessions/1/web/add_csvfacts.html">sessions
@@ -332,46 +412,69 @@ that giving an unknown class name will result in a&nbsp;server error
 (status 500). Not specifying a class name at all will result in file
 not found (status 404).</li>
 
+
+        
         
         </ul>
 
+
+      
       
       </ul>
 
+
+    
     
     </ul>
 
+
+  
   
   </ul>
 
+
 </ul>
+
 
 <span style="font-family: monospace;"></span>
 <ul>
 
+
+  
   
   <ul>
 
+
+    
     
     <ul>
 
+
+      
       
       <ul>
 
+
+        
         
         <ul>
 
 
 
+
+        
         
         
         </ul>
 
 
 
+
+      
       
       
       </ul>
+
 
 
 
@@ -379,9 +482,12 @@ not found (status 404).</li>
 
 
 
+
+      
       
       
       <ul>
+
 
 
 
@@ -390,64 +496,86 @@ all sessions; returns simple text response on success.</li>
 
 
 
+
+      
       
       
       </ul>
 
 
 
+
+    
     
     
     </ul>
 
 
 
+
+  
   
   
   </ul>
+
 
 
 
 </ul>
 
 
+
 <h2>Source code</h2>
+
 
 
 <p>In github: <a href="http://github.com/cgreenhalgh/droolstest/">http://github.com/cgreenhalgh/droolstest/</a></p>
 
 
+
 <p>in <span style="font-family: monospace;">src/</span></p>
+
 
 
 <ul>
 
 
+
   <li>package <span style="font-family: monospace;">uk.ac.horizon.apptest.desktop</span> / <span style="font-family: monospace;">model</span> / <span style="font-family: monospace;">server</span> - old code, no longer relevant (except perhaps for tests / examples)</li>
+
 
 
   <li>package <span style="font-family: monospace;">uk.ac.horizon.ug.commonfacts</span> - common (server-provided) facts for use in Drools sessions, currently:</li>
 
 
+
+  
   
   
   <ul>
+
 
 
     <li><span style="font-family: monospace;">SystemTime</span> - server's exposing of system time to session facts to allow time-driven rules. Updated by tick URL (above).</li>
 
 
+
+  
   
   
   </ul>
 
 
+
   <li>package uk.ac.horizon.ug.exserver - the main web server classes, including:</li>
 
 
+
+  
   
   
   <ul>
+
 
 
     <li><span style="font-family: monospace;">RestletApplication</span>
@@ -456,9 +584,12 @@ mapping of URL paths (under /1/) to the various restlet Resource
 classes that implement them</li>
 
 
+
+    
     
     
     <ul>
+
 
 
       <li><span style="font-family: monospace;">BaseResource</span> -
@@ -467,40 +598,55 @@ EntityManager and current Java User&nbsp;Transaction (persistence and
 transaction support for the application)</li>
 
 
+
+    
     
     
     </ul>
 
 
+
+    
     
     
     <ul>
+
 
 
       <li><span style="font-family: monospace;">TemplatesResource</span> - the Resource implementing the /templates GET/POST, i.e. all session templates</li>
 
 
+
+    
     
     
     </ul>
 
 
+
+    
     
     
     <ul>
+
 
 
       <li><span style="font-family: monospace;">SessionsResource</span> - implementing /sessions GET/POST, i.e. all sessions</li>
 
 
+
+    
     
     
     </ul>
 
 
+
+    
     
     
     <ul>
+
 
 
       <li><span style="font-family: monospace;">SessionResource</span>
@@ -509,29 +655,39 @@ underlying DroolsSession, and supporting format-independent parts of
 (e.g.) add facts handling.</li>
 
 
+
+    
     
     
     </ul>
 
 
+
+    
     
     
     <ul>
 
 
+
       <li><span style="font-family: monospace;">RawSessionResource</span> - a Resource representing a session using basic XML encoding, implementing /sessions/{id}/rawfacts GET/POST</li>
+
 
       <li><span style="font-family: monospace;">SessionAsCsvResource</span>
 - a Resource representing a fact class within a session using basic CSV
 enoding, implementing /sessions/{id}/csv/{classname} GET/POST.</li>
 
 
+
       <li><span style="font-family: monospace;">TickHandler</span> - Resource implementing /tick</li>
 
 
+
+    
     
     
     </ul>
+
 
 
     <li><span style="font-family: monospace;">DroolsSession</span> -
@@ -539,75 +695,103 @@ manager class and wrapper for using Drools sessions from Resources;
 manages a static (application-wide) cache of drools sessions.</li>
 
 
+
     <li>Various simple data holder types:</li>
 
 
+
+    
     
     
     <ul>
+
 
 
       <li><span style="font-family: monospace;">Operation </span>- enum of operation types</li>
 
 
+
+    
     
     
     </ul>
 
 
+
+    
     
     
     <ul>
+
 
 
       <li><span style="font-family: monospace;">OperationStatus</span> - enum of operation result status</li>
 
 
+
+    
     
     
     </ul>
 
 
+
+    
     
     
     <ul>
+
 
 
       <li><span style="font-family: monospace;">OperationResult</span> - bean for operation result</li>
 
 
+
+    
     
     
     </ul>
 
 
+
+    
     
     
     <ul>
 
 
+
       <li><span style="font-family: monospace;">RawFactHolder</span> - bean for holding a fact, its handle and an operation</li>
 
 
+
+    
     
     
     </ul>
 
 
+
+  
   
   
   </ul>
 
 
+
   <li>package <span style="font-family: monospace;">uk.ac.horizon.ug.exserver.model</span> - persistent classes for implementing the server, including</li>
 
 
+
+  
   
   
   <ul>
 
 
+
     <li><span style="font-family: monospace;">SessionTemplate</span> - the persistent record of a template</li>
+
 
 
     <li><span style="font-family: monospace;">Session </span>- the
@@ -615,93 +799,126 @@ persistent record of the existence of a session (the persistence of the
 drools session state itself is separately handled by drools)</li>
 
 
+
+    
     
     
     <ul>
 
 
+
       <li><span style="font-family: monospace;">SessionType</span> - enum of session types</li>
 
 
+
+    
     
     
     </ul>
 
 
+
+  
   
   
   </ul>
 
 
+
 </ul>
+
 
 
 in <span style="font-family: monospace;">webapp/</span><br>
 
 
+
 <ul>
+
 
 
   <li><span style="font-family: monospace;">static/</span> - various statically served files</li>
 
 
+
   <li style="font-family: monospace;">WEB-INF/</li>
 
 
+
+  
   
   
   <ul>
+
 
 
     <li><span style="font-family: monospace;">web.xml</span> - the standard servlet configuration file</li>
 
 
+
+  
   
   
   </ul>
 
 
+
+  
   
   
   <ul>
 
 
+
     <li><span style="font-family: monospace;">classes/META-INF/persistence.xml</span> - the JPA persistence configuration file for the webapp&nbsp;(see&nbsp;<a href="installation.html">installation.html</a>) </li>
+
 
 
     <li><span style="font-family: monospace;">html/session/</span> - various static files served dynamically under 1/sessions/{sessionid}/web/</li>
 
 
+
+  
   
   
   </ul>
 
 
+
   <li><span style="font-family: monospace;">META-INF/context.xml</span> - container resource configuration file (see&nbsp;<a href="installation.html">installation.html</a>)&nbsp;</li>
 
 
+
 </ul>
+
 
 
 in <span style="font-family: monospace;">samples/</span><br>
 
 
+
 <ul>
+
 
 
   <li><span style="font-family: monospace;">testfact.drl</span> - initial testing DRL file - 2 classes and one rule at present</li>
 
 
+
   <li><span style="font-family: monospace;">testfact_raw1.xml</span> - initial testing addfacts XML to add a single User</li>
+
 
 
 </ul>
 
 
+
 <h2>Known Issues</h2>
 
 
+
 <ul>
+
 
 
   <li>The XML unmarshalling for POSTing fact changes to RawSessionResource
@@ -710,10 +927,13 @@ field types: String, numbers (int, double, etc.) and boolean. I haven't
 managed to make Xstream work yet with Drools-defined classes to
 unmarshall... (see <a href="drools-persistence.html">drools-persistence.html</a>)</li>
 
+
   <li>The CSV marshalling/unmarshalling for SessionAsCsvResource is similarly limited in the field type(s) it will handle. </li>
 
 
+
   <li>Drools JPA persistence has been rather painful - see <a href="drools-persistence.html">drools-persistence.html</a></li>
+
 
 
   <li>Drools JPA persistence is rather inefficient - each use of a
@@ -721,11 +941,14 @@ session will re-serialize the whole session and write it to the
 database.</li>
 
 
+
   <li>Add facts and tick currently call fireAllRules; not sure if this
 should be something else (e.g. if rules create new objects and cascade).</li>
 
 
+
   <li>User-defined Java classes used as facts must: implement Serializable and have hashCode and equals correctly defined.</li>
+
 
 
   <li>DRL-defined classes might work more efficiently with the key
@@ -733,9 +956,11 @@ attribute defined for their fields (not sure what this means, yet
 -&nbsp;see  <a href="drools-persistence.html">drools-persistence.html</a>)</li>
 
 
+
   <li>There is no security / access control / authentication - any
 client can add templates / create sessions / read any session / add any
 facts to any session.</li>
+
 
 
   <li>The unmarshalling of addFacts (RawSessionResource) does not
@@ -745,10 +970,13 @@ opening a security hole which allowed objects of arbitrary (system)
 classes to be created with possible bad consequences. </li>
 
 
+
   <li>The only fact retrieval is all facts in a session - very inefficient for many scenarios.</li>
 
 
+
   <li>Changes to Drools library versions can render old sessions unloadable.</li>
+
 
 
   <li>Changes to DRL-defined classes (in the rule file used by that
@@ -757,9 +985,16 @@ I think different concurrent sessions using different DRL files can
 have independent versions of the "same" classes, at least at the moment
 (in the future with a different form of persistence this might become
 more difficult).&nbsp;</li>
+  <li>The tickCount field of the server-maintained SystemTime facts
+starts again from 1 when the app is redeployed or the server restarted
+(the system time itself is ok). It should really keep counting up (it
+didn't before because of the getObject bug which hopefully is fixed in
+the version of drools now being used).</li>
+
 
 
 </ul>
+
 
 
 
