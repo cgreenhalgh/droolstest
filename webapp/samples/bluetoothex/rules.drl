@@ -1,0 +1,53 @@
+// Bluetooth Example Drools Rule File
+package uk.ac.horizon.ug.samples.bluetoothex;
+
+// imports
+import uk.ac.horizon.ug.commonfacts.SystemTime;
+
+// type definitions
+
+// region definition
+declare Region 
+	id : String
+	title : String
+	description : String
+end
+
+// region content definition
+declare RegionContentUrl
+	region_id : String
+	content_url : String
+end
+
+// user definition/declaration
+declare User
+	id : String
+	name : String
+	client_id : String
+end
+
+// user region report
+declare UserRegion
+	user_id : String
+	region_id : String
+end
+
+// user content notification
+declare UserContentNotification 
+	user_id : String
+	content_url : String
+	time : long
+end
+
+// rules
+rule "notify on entry"
+	when
+		$ur : UserRegion( $uid : user_id, $rid : region_id )
+		$rc : RegionContentUrl ( region_id == $rid, $url : content_url )
+	then
+		UserContentNotification ucn = new UserContentNotification();
+		ucn.setUser_id( $uid );
+		ucn.setContent_url( $url );
+		ucn.setTime( System.currentTimeMillis() );
+		insert( ucn );
+end

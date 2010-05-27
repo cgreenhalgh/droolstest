@@ -1,0 +1,16 @@
+<!--  initial bluetoothex facts to add -->
+<list>
+	<holder>
+		<fact class="uk.ac.horizon.ug.samples.bluetoothex.Region">
+			<id>R1</id>
+			<title>The office</title>
+			<description>Its an office</description>
+		</fact>
+	</holder>
+	<holder>
+		<fact class="uk.ac.horizon.ug.samples.bluetoothex.RegionContentUrl">
+			<region_id>R1</region_id>
+			<content_url>office_content.html</content_url>
+		</fact>
+	</holder>
+</list>

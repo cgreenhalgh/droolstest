@@ -1,0 +1,23 @@
+<html>
+<head>
+<title>Bluetoothex AJAX client</title></head>
+<script type="text/javascript" src="client.js"></script>
+<body>
+<h1>Bluetoothex AJAX Client</h1>
+<table>
+<tbody>
+<tr><td>Session:</td><td><input type="text" name="session" id="sessionId"/></td></tr>
+<tr><td><input type="button" onclick="initFacts()" value="Load initial facts"/></td></tr>
+<tr><td><input type="button" onclick="getFacts()" value="Get all facts"/></td></tr>
+<tr><td>All facts</td><td>
+<textarea id="myFacts" name="result" cols="40" rows="5">Facts...</textarea>
+</td></tr>
+<tr><td><input type="button" onclick="getUsers()" value="Get current users"/></td><td>
+<textarea id="myUsers" name="result" cols="40" rows="5">Users...</textarea>
+</td></tr>
+<tr><td><input type="button" onclick="getRegions()" value="Get current regions"/></td><td>
+<textarea id="myRegions" name="result" cols="40" rows="5">Users...</textarea>
+</td></tr>
+</tbody>
+</table></body>
+</html> 

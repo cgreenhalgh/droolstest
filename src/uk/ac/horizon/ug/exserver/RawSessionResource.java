@@ -220,6 +220,11 @@ public class RawSessionResource extends SessionResource {
         			}
         			fh.setFact(fact);
         		}
+        		else if (fh.getOperation()!=Operation.delete) {
+    				logger.log(Level.WARNING,"Holder element without fact element for "+fh.getOperation());
+        			setStatus(Status.CLIENT_ERROR_BAD_REQUEST,"Holder element without fact element for "+fh.getOperation());
+        			return null;
+        		}
         		facts.add(fh);
         	}
         }
