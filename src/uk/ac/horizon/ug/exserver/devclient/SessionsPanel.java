@@ -37,7 +37,7 @@ public class SessionsPanel extends JPanel {
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		add(new JScrollPane(table), BorderLayout.CENTER);
 		JPanel buttons = new JPanel(new FlowLayout());
-		add(buttons, BorderLayout.SOUTH);
+		add(buttons, BorderLayout.NORTH);
 		JButton refresh = new JButton(new AbstractAction("Refresh") {	
 			public void actionPerformed(ActionEvent ae) {
 				doRefresh();
@@ -66,7 +66,7 @@ public class SessionsPanel extends JPanel {
 		try {
 			table.clearSelection();
 			applet.setCursor(applet.getBusyCursor());
-			Protocol p = new Protocol(applet.getServer());
+			Protocol p = applet.getProtocol();
 			sessions = p.getSessions();
 			model.fireTableDataChanged();
 		}
@@ -80,7 +80,7 @@ public class SessionsPanel extends JPanel {
 	}
 	/** "open" a session - swing thread */
 	void doOpen(Session session) {
-		
+		applet.openSession(session);
 	}
 	static String COLUMN_NAMES[] = new String[] { "ID", "template", "created" };
 	class TableModel extends AbstractTableModel {

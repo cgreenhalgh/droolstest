@@ -6,6 +6,8 @@ package uk.ac.horizon.ug.exserver;
 import org.drools.KnowledgeBase;
 import org.drools.KnowledgeBaseFactory;
 import org.drools.builder.KnowledgeBuilder;
+import org.drools.builder.KnowledgeBuilderError;
+import org.drools.builder.KnowledgeBuilderErrors;
 import org.drools.builder.KnowledgeBuilderFactory;
 import org.drools.builder.ResourceType;
 import org.drools.definition.KnowledgePackage;
@@ -19,6 +21,7 @@ import org.drools.runtime.KnowledgeSessionConfiguration;
 import org.drools.KnowledgeBaseConfiguration;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -55,16 +58,29 @@ public class DroolsSession {
 	/** map of DroolsSessions (weak refs) */
 	protected static Map<Integer,DroolsSession> sessions = new HashMap<Integer,DroolsSession>();
 	/** create a new drools session 
-	 * @throws NamingException */
-	public synchronized static DroolsSession createSession(SessionTemplate template, SessionType sessionType) throws NamingException {
+	 * @throws NamingException 
+	 * @throws RulesetException */
+	public synchronized static DroolsSession createSession(SessionTemplate template, SessionType sessionType) throws NamingException, RulesetException {
 		DroolsSession ds = new DroolsSession(template.getRulesetUrls(), true, 0, sessionType);
 		sessions.put(ds.ksession.getId(), ds);
 		ds.addFacts(template.getFactUrls());
 		return ds;
 	}
+	/** force reloading of an existing session 
+	 * @return 
+	 * @throws NamingException 
+	 * @throws RulesetException */
+	public synchronized static DroolsSession reloadSession(Session session) throws NamingException, RulesetException {
+		if (session.getSessionType()==SessionType.TRANSIENT)
+			throw new RuntimeException("Cannot restore a transient session ("+session.getId()+")");
+		DroolsSession ds = new DroolsSession(session.getRulesetUrls(), false, session.getDroolsId(), session.getSessionType());
+		sessions.put(ds.ksession.getId(), ds);
+		return ds;
+	}
 	/** get existing session 
-	 * @throws NamingException */
-	public synchronized static DroolsSession getSession(Session session) throws NamingException {
+	 * @throws NamingException 
+	 * @throws RulesetException */
+	public synchronized static DroolsSession getSession(Session session) throws NamingException, RulesetException {
 		DroolsSession ds = sessions.get(session.getDroolsId());
 		if (ds!=null)
 			return ds;
@@ -74,21 +90,46 @@ public class DroolsSession {
 		sessions.put(ds.ksession.getId(), ds);
 		return ds;
 	}
+	/** session building exception */
+	static class RulesetException extends Exception {
+		String rulesetUrl;
+		KnowledgeBuilderError errors[];
+		/**
+		 * @param rulesetUrl
+		 * @param errors
+		 */
+		public RulesetException(String rulesetUrl, KnowledgeBuilderError errors[]) {
+			super();
+			this.rulesetUrl = rulesetUrl;
+			this.errors = errors;
+		}
+	}
 	/** cons 
-	 * @throws NamingException */
-	private DroolsSession(String rulesetUrls[], boolean newFlag, int sessionId, SessionType sessionType) throws NamingException {	
+	 * @throws NamingException 
+	 * @throws RulesetException */
+	private DroolsSession(String rulesetUrls[], boolean newFlag, int sessionId, SessionType sessionType) throws NamingException, RulesetException {	
 		// force use of JANINO
 		System.setProperty("drools.dialect.java.compiler", "JANINO");
 
 		KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
 
 		// this will parse and compile in one step
-		for (int i=0; i<rulesetUrls.length; i++) 			
+		for (int i=0; i<rulesetUrls.length; i++) {			
 			kbuilder.add(ResourceFactory.newUrlResource(rulesetUrls[i]), ResourceType.DRL);
 
-		// Check the builder for errors
-		if (kbuilder.hasErrors()) {
-			throw new RuntimeException("Unable to compile rules: "+kbuilder.getErrors());
+			// Check the builder for errors
+			if (kbuilder.hasErrors()) {
+				
+				KnowledgeBuilderErrors errors = kbuilder.getErrors();
+				Iterator<KnowledgeBuilderError> it = errors.iterator();
+				KnowledgeBuilderError eout [] = new KnowledgeBuilderError[errors.size()];
+				int ei = 0;
+				while(it.hasNext()) {
+					KnowledgeBuilderError error = it.next();
+					eout[ei++] = error;
+				}
+				throw new RulesetException(rulesetUrls[i], eout);
+			}
 		}
 
 		// get the compiled packages (which are serializable)

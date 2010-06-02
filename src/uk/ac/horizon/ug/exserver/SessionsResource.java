@@ -13,6 +13,9 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
+import org.drools.builder.KnowledgeBuilderError;
+import org.drools.builder.KnowledgeBuilderErrors;
+import org.drools.compiler.DescrBuildError;
 import org.restlet.data.MediaType;
 import org.restlet.ext.xstream.XstreamRepresentation;
 import org.restlet.resource.Get;   
@@ -29,6 +32,9 @@ import uk.ac.horizon.ug.exserver.RestletApplication;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.Session;
 import uk.ac.horizon.ug.exserver.model.SessionType;
+import uk.ac.horizon.ug.exserver.protocol.RulesetError;
+import uk.ac.horizon.ug.exserver.protocol.RulesetErrors;
+import uk.ac.horizon.ug.exserver.protocol.SessionBuildResult;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -122,9 +128,16 @@ public class SessionsResource extends BaseResource {
 			ut.rollback();
 			return null;
 		}
-		// Now we can make the drools session (outside transaction!)
-		DroolsSession ds = DroolsSession.createSession(st, sessionType);
-
+		DroolsSession ds = null;
+		try {
+			// Now we can make the drools session (outside transaction!)
+			ds = DroolsSession.createSession(st, sessionType);
+		}
+		catch (DroolsSession.RulesetException re) {
+			logger.log(Level.WARNING, "Error creating session", re);
+			setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+			return errorResponse(re);
+		}
 		// now make our record - risk of leak, but non-nested transactions limits us
 		ut.begin();
 		Session s = new Session();
@@ -162,42 +175,49 @@ public class SessionsResource extends BaseResource {
 			return null;
 		}
 		setStatus(Status.SUCCESS_CREATED);
-		Result res = new Result();
+		return successResponse(s);
+    }
+    static Representation successResponse(Session s) {
+		SessionBuildResult res = new SessionBuildResult();
 		res.setStatus("SUCCESS");
 		res.setId(s.getId());
 
-		XstreamRepresentation<Result> xml = new XstreamRepresentation<Result>(MediaType.APPLICATION_XML, res);
-		xml.getXstream().alias("result", Result.class);
+		XstreamRepresentation<SessionBuildResult> xml = new XstreamRepresentation<SessionBuildResult>(MediaType.APPLICATION_XML, res);
+		xml.getXstream().alias("result", SessionBuildResult.class);
+		xml.setExpirationDate(new Date());
 		return xml;
     }   
-    /** result class */
-    static class Result {
-    	protected String status;
-    	protected String id;
-		/**
-		 * @return the status
-		 */
-		public String getStatus() {
-			return status;
+    /** rule builder error response */
+    static Representation errorResponse(DroolsSession.RulesetException re) {
+		SessionBuildResult res = new SessionBuildResult();
+		res.setStatus("ERROR");
+		//res.setId(s.getId());
+		RulesetErrors errors[] = new RulesetErrors[re.errors.length];
+		for (int ei=0; ei<errors.length; ei++) 
+		{
+			errors[ei] = new RulesetErrors();
+			errors[ei].setRulesetUrl(re.rulesetUrl);
+			RulesetError details[] = new RulesetError[re.errors.length];
+			for (int di=0; di<details.length; di++) {
+				KnowledgeBuilderError kbe = re.errors[di];
+				//logger.info("KBError: "+kbe);
+				details[di] = new RulesetError(kbe.getClass().getName(), kbe.getErrorLines(), kbe.getMessage(), kbe.toString());
+				if (kbe instanceof DescrBuildError) {
+					DescrBuildError dbe = (DescrBuildError)kbe;
+					//logger.info("DescrBuildError: line="+dbe.getLine()+", descr="+dbe.getDescr()+", object="+dbe.getObject()+", parent="+dbe.getParentDescr()+" ("+dbe+")");
+					if (details[di].getErrorLines()==null || details[di].getErrorLines().length==0)
+						details[di].setErrorLines(new int [] { dbe.getLine() });
+				}
+			}
+			errors[ei].setErrors(details);
 		}
-		/**
-		 * @param status the status to set
-		 */
-		public void setStatus(String status) {
-			this.status = status;
-		}
-		/**
-		 * @return the id
-		 */
-		public String getId() {
-			return id;
-		}
-		/**
-		 * @param id the id to set
-		 */
-		public void setId(String id) {
-			this.id = id;
-		}
-    	
+		res.setErrors(errors);
+
+		XstreamRepresentation<SessionBuildResult> xml = new XstreamRepresentation<SessionBuildResult>(MediaType.APPLICATION_XML, res);
+		xml.getXstream().alias("result", SessionBuildResult.class);
+		xml.getXstream().alias("errors", RulesetErrors.class);
+		xml.getXstream().alias("error", RulesetError.class);
+		xml.setExpirationDate(new Date());
+		return xml;
     }
 }
