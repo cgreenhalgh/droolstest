@@ -1,0 +1,17 @@
+<html><head><title>DevClient help</title></head>
+<body>
+<h1>DevClient help</h1>
+<h2>Security</h2>
+<p>The applet requires some additional permissions to work due to use of XStream: e.g.</p>
+<pre>
+grant codeBase "http://localhost:8080/droolstest/devclient/*" {
+  permission java.lang.RuntimePermission "createClassLoader";
+  permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+  permission java.lang.RuntimePermission "accessDeclaredMembers";
+}
+</pre>
+<p>in the user's Applet policy file - use the Java console to check (dump properties,
+check "deployment.user.security.policy"), e.g.
+file:////keats/staff$/cmg/Application%20Data/Sun/Java/Deployment/security/java.policy
+</p>
+</body></html>

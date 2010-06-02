@@ -1,0 +1,7 @@
+/* AUTOMATICALLY GENERATED ON Wed Jun 02 11:43:37 BST 2010*/
+/* DO NOT EDIT */
+
+grant codeBase "http://localhost:8080/droolstest/devclient/" {
+  permission java.lang.RuntimePermission "createClassLoader";
+};
+
