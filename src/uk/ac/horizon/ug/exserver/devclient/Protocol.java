@@ -21,6 +21,8 @@ import uk.ac.horizon.ug.exserver.model.Session;
 import uk.ac.horizon.ug.exserver.protocol.RulesetError;
 import uk.ac.horizon.ug.exserver.protocol.RulesetErrors;
 import uk.ac.horizon.ug.exserver.protocol.SessionBuildResult;
+import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
+import uk.ac.horizon.ug.exserver.protocol.TypeFieldDescription;
 
 /** Protocol/API for communicating with server.
  * Note that using Xstream in an application requires additional permissions.
@@ -49,6 +51,7 @@ public class Protocol {
 	/** get sessions relative path */
 	static String GET_SESSIONS_PATH = "1/sessions";
 	static String RELOAD_RULES_PATH = "1/sessions/{sessionId}/reload";
+	static String TYPES_PATH = "1/sessions/{sessionId}/types";
 	static String SESSION_ID_PATTERN = "{sessionId}";
 	static String HTTP_GET = "GET";
 	static String HTTP_POST = "POST";
@@ -108,6 +111,18 @@ public class Protocol {
 		SessionBuildResult result = (SessionBuildResult) xs.fromXML(is);
 		is.close();		
 		
+		return result;
+	}
+	
+	/** get types 
+	 * @throws IOException */
+	public List<TypeDescription> getTypes(String sessionId) throws IOException {
+		InputStream is = this.doRequest(HTTP_GET, TYPES_PATH.replace(SESSION_ID_PATTERN, sessionId));
+		XStream xs = new XStream(new PureJavaReflectionProvider(), new DomDriver());
+		xs.alias("type", TypeDescription.class);
+		xs.alias("field", TypeFieldDescription.class);
+		List<TypeDescription> result = (List<TypeDescription>) xs.fromXML(is);
+		is.close();		
 		return result;
 	}
 	

@@ -53,6 +53,8 @@ public class TypesResource extends SessionResource {
 		List<TypeDescription> tds = new LinkedList<TypeDescription>();
 		for (TypeDeclarationDescr type : types) {
 			TypeDescription td = new TypeDescription();
+			td.setNamespace(type.getNamespace());
+			td.setTypeName(type.getTypeName());
 			td.setTypeMeta(type.getMetaAttributes());
 			Map<String,TypeFieldDescr> fields = type.getFields();
 			Map<String,TypeFieldDescription> tfds = new HashMap<String,TypeFieldDescription>();

@@ -52,7 +52,7 @@
 			<src path="src"/>		
     	</javac>
     	<!-- test client -->
-    	<jar basedir="build/WEB-INF/classes" destfile="build/devclient/devclient.jar" includes="uk/ac/horizon/ug/exserver/devclient/**,uk/ac/horizon/ug/exserver/model/**"/>
+    	<jar basedir="build/WEB-INF/classes" destfile="build/devclient/devclient.jar" includes="uk/ac/horizon/ug/exserver/devclient/**,uk/ac/horizon/ug/exserver/model/**,uk/ac/horizon/ug/exserver/protocol/**"/>
     	<copy tofile="build/devclient/xstream.jar" file="lib/xstream-1.3.1.jar"/>
     	<!--<copy tofile="build/devclient/xpp.jar" file="lib/xstream-*.jar"/>-->
         	

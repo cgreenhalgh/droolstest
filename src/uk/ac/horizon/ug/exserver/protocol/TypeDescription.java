@@ -13,6 +13,10 @@ import org.drools.lang.descr.TypeFieldDescr;
  *
  */
 public class TypeDescription {
+	/** package */
+	protected String namespace;
+	/** name */
+	protected String typeName;
 	/** type-wide metadata */
 	protected Map<String,String> typeMeta;
 	/** map of fields */
@@ -32,6 +36,30 @@ public class TypeDescription {
 		super();
 		this.typeMeta = typeMeta;
 		this.fields = fields;
+	}
+	/**
+	 * @return the namespace
+	 */
+	public String getNamespace() {
+		return namespace;
+	}
+	/**
+	 * @param namespace the namespace to set
+	 */
+	public void setNamespace(String namespace) {
+		this.namespace = namespace;
+	}
+	/**
+	 * @return the typeName
+	 */
+	public String getTypeName() {
+		return typeName;
+	}
+	/**
+	 * @param typeName the typeName to set
+	 */
+	public void setTypeName(String typeName) {
+		this.typeName = typeName;
 	}
 	/**
 	 * @return the typeMeta

@@ -76,6 +76,8 @@ public class MainPanel extends JPanel {
 	}
 	/** sessions */
 	Map<String,SessionPanel> sessionPanels = new HashMap<String,SessionPanel>();
+	/** session facts */
+	Map<String,FactsPanel> factsPanels = new HashMap<String,FactsPanel>();
 	/** open session tab - called from SessionsPanel in Swing Thread */
 	void openSession(Session session) {
 		synchronized(sessionPanels) {
@@ -86,6 +88,15 @@ public class MainPanel extends JPanel {
 				tabbedPane.add("Session "+session.getId(), panel);
 			}
 			tabbedPane.setSelectedComponent(panel);
+		}
+		synchronized(factsPanels) {
+			FactsPanel panel = factsPanels.get(session.getId());
+			if (panel==null) {
+				panel = new FactsPanel(applet, session);
+				factsPanels.put(session.getId(), panel);
+				tabbedPane.add("Facts "+session.getId(), panel);
+			}
+			//tabbedPane.setSelectedComponent(panel);
 		}
 	}
 }
