@@ -5,9 +5,13 @@ import uk.ac.horizon.ug.commonfacts.SystemTime
 import java.util.Date
 
 declare User
+	@Client
+	@Input
+	@Single
+	@Required
 	name : String
-	id : String
-	location : String
+	id : String @ClientId
+	location : String @Dimension("location")
 	date : Date
 	bval : boolean
 	ival : int
@@ -15,7 +19,11 @@ declare User
 end
 
 declare Output
-	user_id : String
+	@Client
+	@Output
+	@Multiple
+	@Optional
+	user_id : String @ClientId
 	message : String
 end
 

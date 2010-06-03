@@ -46,6 +46,7 @@ public class RestletApplication extends Application {
         router.attach("/sessions/{sessionId}/csv/{className}", SessionClassAsCsvResource.class);   
         router.attach("/sessions/{sessionId}/reload", ReloadRulesResource.class);   
         router.attach("/sessions/{sessionId}/logs/events/latest", GetEventLogResource.class);
+        router.attach("/sessions/{sessionId}/types", TypesResource.class);   
 
         // static file serving, e.g. static forms...
         ServletContext servletContext = (ServletContext)this.getContext().getAttributes().get("org.restlet.ext.servlet.ServletContext");
