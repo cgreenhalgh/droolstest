@@ -32,6 +32,8 @@ public class Session {
 	protected String systemTimeHandle;
 	/** log? */
 	protected boolean logged;
+	/** last/current log id */
+	protected int logId;
 	/** 
 	 * cons
 	 */
@@ -145,6 +147,18 @@ public class Session {
 	 */
 	public void setLogged(boolean logged) {
 		this.logged = logged;
+	}
+	/**
+	 * @return the logId
+	 */
+	public int getLogId() {
+		return logId;
+	}
+	/**
+	 * @param logId the logId to set
+	 */
+	public void setLogId(int logId) {
+		this.logId = logId;
 	}
 	
 }

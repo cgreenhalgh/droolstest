@@ -109,10 +109,14 @@ public class SessionResource extends BaseResource {
     		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND);
 
     	try {
-    		this.droolsSession = DroolsSession.getSession(this.sessionInfo);
-    	}   
+    		this.droolsSession = DroolsSession.getSession(this.sessionInfo, em);
+    	} catch (DroolsSession.RulesetException re) {
+    		logger.log(Level.WARNING, "Error (rules) creating session "+sessionInfo.getDroolsId()+": "+re);
+    		throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Could not create internal session state for "+sessionInfo.getDroolsId()+": "+re);
+    	}
     	catch (Exception e) {
-    		throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Could not find internal session state for "+sessionInfo.getDroolsId());
+    		logger.log(Level.WARNING, "Error creating drools session "+sessionInfo.getDroolsId(), e);
+    		throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Could not create internal session state for "+sessionInfo.getDroolsId()+": "+e);
     	}
 	}
 

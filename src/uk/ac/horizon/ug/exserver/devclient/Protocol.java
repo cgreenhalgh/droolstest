@@ -11,11 +11,16 @@ import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.util.List;
 
+import org.drools.builder.KnowledgeBuilderError;
+
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
 import uk.ac.horizon.ug.exserver.model.Session;
+import uk.ac.horizon.ug.exserver.protocol.RulesetError;
+import uk.ac.horizon.ug.exserver.protocol.RulesetErrors;
+import uk.ac.horizon.ug.exserver.protocol.SessionBuildResult;
 
 /** Protocol/API for communicating with server.
  * Note that using Xstream in an application requires additional permissions.
@@ -24,7 +29,7 @@ import uk.ac.horizon.ug.exserver.model.Session;
  *   permission java.lang.RuntimePermission "createClassLoader";
  *   permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
  *   permission java.lang.RuntimePermission "accessDeclaredMembers";
- * }
+ * };
  * </pre>
  * in the user's Applet policy file - use the Java console to check (dump properties,
  * check "deployment.user.security.policy"), e.g.
@@ -43,7 +48,10 @@ public class Protocol {
 
 	/** get sessions relative path */
 	static String GET_SESSIONS_PATH = "1/sessions";
+	static String RELOAD_RULES_PATH = "1/sessions/{sessionId}/reload";
+	static String SESSION_ID_PATTERN = "{sessionId}";
 	static String HTTP_GET = "GET";
+	static String HTTP_POST = "POST";
 	
 	/** do request 
 	 * @throws IOException */
@@ -86,6 +94,21 @@ public class Protocol {
 		if (!server.endsWith("/"))
 			server = server+"/";
 		this.server = server;
+	}
+
+	/** reload rules 
+	 * @throws IOException */
+	public SessionBuildResult reloadRules(String sessionId) throws IOException {
+		InputStream is = this.doRequest(HTTP_POST, RELOAD_RULES_PATH.replace(SESSION_ID_PATTERN, sessionId));
+		XStream xs = new XStream(new PureJavaReflectionProvider(), new DomDriver());
+		xs.alias("result", SessionBuildResult.class);
+		xs.alias("errors", RulesetErrors.class);
+		xs.alias("error", RulesetError.class);
+
+		SessionBuildResult result = (SessionBuildResult) xs.fromXML(is);
+		is.close();		
+		
+		return result;
 	}
 	
 }

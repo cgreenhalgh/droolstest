@@ -53,7 +53,7 @@ public class TickHandler extends BaseResource {
 				if (!session.isUpdateSystemTime())
 					continue;
 				try {
-					DroolsSession droolsSession = DroolsSession.getSession(session);
+					DroolsSession droolsSession = DroolsSession.getSession(session, em);
 					synchronized(droolsSession) {
 						SystemTime systemTime = new SystemTime();
 						systemTime.setTickCount(tickCount);

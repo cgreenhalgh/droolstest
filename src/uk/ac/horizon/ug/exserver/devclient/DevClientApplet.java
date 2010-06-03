@@ -7,6 +7,7 @@ import java.awt.Cursor;
 
 import javax.swing.JApplet;
 import javax.swing.SwingUtilities;
+import uk.ac.horizon.ug.exserver.model.Session;
 
 /** Development/test applet client for Drools server
  * 
@@ -73,4 +74,14 @@ public class DevClientApplet extends JApplet {
 		return Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
 	}
 
+	/** open session tab - called from SessionsPanel in Swing Thread */
+	void openSession(Session session) {
+		mainPanel.openSession(session);
+	}
+	/** get a Protocol object to use */
+	Protocol getProtocol() {
+		// TODO: cache?
+		return new Protocol(this.getServer());
+	}
 }
+

@@ -44,6 +44,8 @@ public class RestletApplication extends Application {
         router.attach("/sessions/{sessionId}/facts", SessionResource.class);   
         router.attach("/sessions/{sessionId}/rawfacts", RawSessionResource.class);   
         router.attach("/sessions/{sessionId}/csv/{className}", SessionClassAsCsvResource.class);   
+        router.attach("/sessions/{sessionId}/reload", ReloadRulesResource.class);   
+        router.attach("/sessions/{sessionId}/logs/events/latest", GetEventLogResource.class);
 
         // static file serving, e.g. static forms...
         ServletContext servletContext = (ServletContext)this.getContext().getAttributes().get("org.restlet.ext.servlet.ServletContext");
@@ -53,6 +55,7 @@ public class RestletApplication extends Application {
         	if (!path.endsWith("/"))
         		path = path+"/";
             router.attach("/sessions/{sessionId}/web/", new Directory(getContext(), "file:///"+path+"WEB-INF/html/session/"));
+            DroolsSession.setLogFileDir(path+"WEB-INF/logs/");
         }
         else
         	logger.info("Could not get ServletContext - "+this.getContext().getAttributes());

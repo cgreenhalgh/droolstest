@@ -20,11 +20,12 @@ declare Output
 end
 
 rule "test rule 1"
+	dialect "mvel"
 	when 
-		u : User ()
+		u : User ( )
 	then
-		Output o = new Output();
-		o.setUser_id( u.getId() );
-		o.setMessage( "Hello "+u.getName() );
+ 		Output o = new Output();
+		o.user_id = u.id;
+		o.message = "Hello "+u.name;
 		insert( o );
 end

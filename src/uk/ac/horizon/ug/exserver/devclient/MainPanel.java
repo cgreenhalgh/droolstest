@@ -13,17 +13,25 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JScrollPane;
 import javax.swing.JApplet;
+
+import uk.ac.horizon.ug.exserver.model.Session;
+
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
+import java.util.HashMap;
+import java.util.Map;
 /**
  * @author cmg
  *
  */
 public class MainPanel extends JPanel {
+	DevClientApplet applet;
+	JTabbedPane tabbedPane;
 	/** cons - build */
 	public MainPanel(DevClientApplet applet) {
 		super(new BorderLayout());
-		JTabbedPane tabbedPane = new JTabbedPane();
+		this.applet = applet;
+		tabbedPane = new JTabbedPane();
 		add(tabbedPane, BorderLayout.CENTER);
 		
 		settings = new SettingsPanel(applet);
@@ -64,6 +72,20 @@ public class MainPanel extends JPanel {
 			
 			//JScrollPane sp = new JScrollPane(p);
 			add(p, BorderLayout.CENTER);
+		}
+	}
+	/** sessions */
+	Map<String,SessionPanel> sessionPanels = new HashMap<String,SessionPanel>();
+	/** open session tab - called from SessionsPanel in Swing Thread */
+	void openSession(Session session) {
+		synchronized(sessionPanels) {
+			SessionPanel panel = sessionPanels.get(session.getId());
+			if (panel==null) {
+				panel = new SessionPanel(applet, session);
+				sessionPanels.put(session.getId(), panel);
+				tabbedPane.add("Session "+session.getId(), panel);
+			}
+			tabbedPane.setSelectedComponent(panel);
 		}
 	}
 }
