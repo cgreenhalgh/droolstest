@@ -55,9 +55,10 @@ public class DroolsSession {
 	/** map of DroolsSessions (weak refs) */
 	protected static Map<Integer,DroolsSession> sessions = new HashMap<Integer,DroolsSession>();
 	/** create a new drools session 
+	 * @param logged 
 	 * @throws NamingException */
-	public synchronized static DroolsSession createSession(SessionTemplate template, SessionType sessionType) throws NamingException {
-		DroolsSession ds = new DroolsSession(template.getRulesetUrls(), true, 0, sessionType);
+	public synchronized static DroolsSession createSession(SessionTemplate template, SessionType sessionType, boolean logged) throws NamingException {
+		DroolsSession ds = new DroolsSession(template.getRulesetUrls(), true, 0, sessionType, logged);
 		sessions.put(ds.ksession.getId(), ds);
 		ds.addFacts(template.getFactUrls());
 		return ds;
@@ -70,13 +71,14 @@ public class DroolsSession {
 			return ds;
 		if (session.getSessionType()==SessionType.TRANSIENT)
 			throw new RuntimeException("Cannot restore a transient session ("+session.getId()+")");
-		ds = new DroolsSession(session.getRulesetUrls(), false, session.getDroolsId(), session.getSessionType());
+		ds = new DroolsSession(session.getRulesetUrls(), false, session.getDroolsId(), session.getSessionType(), session.isLogged());
 		sessions.put(ds.ksession.getId(), ds);
 		return ds;
 	}
 	/** cons 
+	 * @param logged 
 	 * @throws NamingException */
-	private DroolsSession(String rulesetUrls[], boolean newFlag, int sessionId, SessionType sessionType) throws NamingException {	
+	private DroolsSession(String rulesetUrls[], boolean newFlag, int sessionId, SessionType sessionType, boolean logged) throws NamingException {	
 		// force use of JANINO
 		System.setProperty("drools.dialect.java.compiler", "JANINO");
 

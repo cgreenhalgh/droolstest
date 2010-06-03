@@ -30,6 +30,8 @@ public class Session {
 	protected boolean updateSystemTime;
 	/** SystemTime FactHandle (external form) (null if unset) */
 	protected String systemTimeHandle;
+	/** log? */
+	protected boolean logged;
 	/** 
 	 * cons
 	 */
@@ -131,6 +133,18 @@ public class Session {
 	 */
 	public void setSystemTimeHandle(String systemTimeHandle) {
 		this.systemTimeHandle = systemTimeHandle;
+	}
+	/**
+	 * @return the logged
+	 */
+	public boolean isLogged() {
+		return logged;
+	}
+	/**
+	 * @param logged the logged to set
+	 */
+	public void setLogged(boolean logged) {
+		this.logged = logged;
 	}
 	
 }

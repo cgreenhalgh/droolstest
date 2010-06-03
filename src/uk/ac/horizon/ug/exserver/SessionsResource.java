@@ -98,6 +98,8 @@ public class SessionsResource extends BaseResource {
     		return null;
     	}
         String updateSystemTime = form.getFirstValue("updateSystemTime");
+        String loggedText = form.getFirstValue("logged");
+        boolean logged = (loggedText!=null && loggedText.length()>0);
 
     	UserTransaction ut = getTransaction();
     	// get SessionTemplate
@@ -123,7 +125,7 @@ public class SessionsResource extends BaseResource {
 			return null;
 		}
 		// Now we can make the drools session (outside transaction!)
-		DroolsSession ds = DroolsSession.createSession(st, sessionType);
+		DroolsSession ds = DroolsSession.createSession(st, sessionType, logged);
 
 		// now make our record - risk of leak, but non-nested transactions limits us
 		ut.begin();
@@ -143,6 +145,8 @@ public class SessionsResource extends BaseResource {
 			s.setCreatedDate(new Date());
 	        if (updateSystemTime!=null && updateSystemTime.length()>0)
 	        	s.setUpdateSystemTime(true);
+	        if (logged!=null && logged.length()>0)
+	        	s.setLogged(true);
 			
 	        if (s.isUpdateSystemTime()) {
 	        	SystemTime systemTime = new SystemTime();
