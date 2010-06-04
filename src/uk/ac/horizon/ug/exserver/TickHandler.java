@@ -60,8 +60,11 @@ public class TickHandler extends BaseResource {
 						systemTime.setTime(System.currentTimeMillis());
 						if (session.getSystemTimeHandle()!=null) {
 							FactHandle fh = new DisconnectedFactHandle(session.getSystemTimeHandle());
-							droolsSession.getKsession().update(fh, systemTime);
-							FactHandle newfh = droolsSession.getKsession().getFactHandle(systemTime);
+							// update fails on JPA ?!
+							//droolsSession.getKsession().update(fh, systemTime);
+							//FactHandle newfh = droolsSession.getKsession().getFactHandle(systemTime);
+							droolsSession.getKsession().retract(fh);
+							FactHandle newfh = droolsSession.getKsession().insert(systemTime);
 							if (newfh!=null) 
 								session.setSystemTimeHandle(newfh.toExternalForm());
 						} else {

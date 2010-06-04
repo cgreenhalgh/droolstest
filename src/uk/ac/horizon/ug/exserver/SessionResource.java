@@ -161,9 +161,12 @@ public class SessionResource extends BaseResource {
 							} else {
 								fh = new DisconnectedFactHandle(rfh.getHandle());
 							}
-							droolsSession.getKsession().update(fh, rfh.getFact());
+							// fails on JPA?!
+							//droolsSession.getKsession().update(fh, rfh.getFact());
 							// return handle??
-							FactHandle newfh = droolsSession.getKsession().getFactHandle(rfh.getFact());
+							//FactHandle newfh = droolsSession.getKsession().getFactHandle(rfh.getFact());
+							droolsSession.getKsession().retract(fh);
+							FactHandle newfh = droolsSession.getKsession().insert(rfh.getFact());
 							if (newfh!=null)
 								result.setHandle(newfh.toExternalForm());
 							result.setStatus(OperationStatus.SUCCESS);
