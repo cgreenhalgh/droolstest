@@ -177,11 +177,6 @@ public class RawSessionResource extends SessionResource {
         			fh.setOperation(Operation.valueOf(operation));
         		else if (factHandleText!=null && factHandleText.length()>0)
         			fh.setOperation(Operation.update);
-        		if (fh.getOperation()!=Operation.add && fh.getHandle()==null) {
-        			logger.log(Level.WARNING,"Holder element for "+fh.getOperation()+" does not have handle element");
-        			setStatus(Status.CLIENT_ERROR_BAD_REQUEST,"Holder element for "+fh.getOperation()+" does not have handle element");
-        			return null;
-        		}
         		
         		Element factNode = getElementByTagName(factHolderNode, ELEMENT_FACT);
         		if (factNode!=null) {
@@ -225,6 +220,12 @@ public class RawSessionResource extends SessionResource {
         		else if (fh.getOperation()!=Operation.delete) {
     				logger.log(Level.WARNING,"Holder element without fact element for "+fh.getOperation());
         			setStatus(Status.CLIENT_ERROR_BAD_REQUEST,"Holder element without fact element for "+fh.getOperation());
+        			return null;
+        		}
+        		// option to try to get handle for object
+        		if (fh.getOperation()!=Operation.add && fh.getHandle()==null && fh.getFact()==null) {
+        			logger.log(Level.WARNING,"Holder element for "+fh.getOperation()+" does not have handle (or fact) element");
+        			setStatus(Status.CLIENT_ERROR_BAD_REQUEST,"Holder element for "+fh.getOperation()+" does not have handle (or fact) element");
         			return null;
         		}
         		facts.add(fh);

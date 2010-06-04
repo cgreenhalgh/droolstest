@@ -150,7 +150,17 @@ public class SessionResource extends BaseResource {
 							break;
 						}
 						case update: {
-							FactHandle fh = new DisconnectedFactHandle(rfh.getHandle());
+							FactHandle fh = null;
+							if (rfh.getHandle()==null) {
+								fh = droolsSession.getKsession().getFactHandle(rfh.getFact());
+								if (fh==null) {
+									logger.log(Level.WARNING, "Update without handle could not getFactHandle for "+rfh.getFact());
+									result.setStatus(OperationStatus.FAILURE);
+									break;
+								}
+							} else {
+								fh = new DisconnectedFactHandle(rfh.getHandle());
+							}
 							droolsSession.getKsession().update(fh, rfh.getFact());
 							// return handle??
 							FactHandle newfh = droolsSession.getKsession().getFactHandle(rfh.getFact());
@@ -161,7 +171,17 @@ public class SessionResource extends BaseResource {
 							break;
 						}
 						case delete: {
-							FactHandle fh = new DisconnectedFactHandle(rfh.getHandle());
+							FactHandle fh = null;
+							if (rfh.getHandle()==null) {
+								fh = droolsSession.getKsession().getFactHandle(rfh.getFact());
+								if (fh==null) {
+									logger.log(Level.WARNING, "Delete without handle could not getFactHandle for "+rfh.getFact());
+									result.setStatus(OperationStatus.FAILURE);
+									break;
+								}
+							} else {
+								fh = new DisconnectedFactHandle(rfh.getHandle());
+							}
 							droolsSession.getKsession().retract(fh);
 							result.setStatus(OperationStatus.SUCCESS);
 							logger.info("deleted "+fh);

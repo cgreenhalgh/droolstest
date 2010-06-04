@@ -10,7 +10,7 @@ declare User
 	@Single
 	@Required
 	name : String
-	id : String @ClientId
+	id : String @ClientId @key
 	location : String @Dimension("location")
 	date : Date
 	bval : boolean
@@ -36,4 +36,20 @@ rule "test rule 1"
 		o.user_id = u.id;
 		o.message = "Hello "+u.name;
 		insert( o );
+end
+
+rule "test output"
+	dialect "mvel"
+	when
+		o : Output ( $m : message )
+	then
+		System.out.println("Output: "+$m);
+end
+
+rule "tick" 
+	dialect "mvel"
+	when 
+		$st : SystemTime ( $t : time )
+	then 
+		System.out.println("Time is now "+$t);
 end
