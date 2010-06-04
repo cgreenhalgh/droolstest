@@ -1,7 +1,8 @@
 /**
  * 
  */
-package uk.ac.horizon.ug.exserver;
+package uk.ac.horizon.ug.exserver.protocol;
+
 
 /**
  * @author cmg

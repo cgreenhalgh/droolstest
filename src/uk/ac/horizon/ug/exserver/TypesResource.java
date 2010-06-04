@@ -40,9 +40,10 @@ public class TypesResource extends SessionResource {
 		List<TypeDeclarationDescr> types = new LinkedList<TypeDeclarationDescr>();
 		String ruleSetUrls [] = this.sessionInfo.getRulesetUrls();
 		DrlParser parser = new DrlParser();
+		PackageDescr packageDescr = null;
 		for (int ti=0; ruleSetUrls!=null && ti<ruleSetUrls.length; ti++) {
 			try {
-				PackageDescr packageDescr = parser.parse(true, new URL(ruleSetUrls[ti]).openStream());
+				packageDescr = parser.parse(true, new URL(ruleSetUrls[ti]).openStream());
 				types.addAll(packageDescr.getTypeDeclarations());
 			} catch (Exception e) {
 				logger.log(Level.WARNING, "Error parsing rule set "+ruleSetUrls[ti], e);
@@ -54,6 +55,8 @@ public class TypesResource extends SessionResource {
 		for (TypeDeclarationDescr type : types) {
 			TypeDescription td = new TypeDescription();
 			td.setNamespace(type.getNamespace());
+			if (type.getNamespace()==null)
+				td.setNamespace(packageDescr.getNamespace());
 			td.setTypeName(type.getTypeName());
 			td.setTypeMeta(type.getMetaAttributes());
 			Map<String,TypeFieldDescr> fields = type.getFields();

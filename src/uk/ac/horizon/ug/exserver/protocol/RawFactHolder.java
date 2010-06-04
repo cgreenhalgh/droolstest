@@ -1,13 +1,14 @@
 /**
  * 
  */
-package uk.ac.horizon.ug.exserver;
+package uk.ac.horizon.ug.exserver.protocol;
 
 import java.util.Map;
 
 import org.drools.runtime.rule.FactHandle;
 
 import org.drools.definition.type.FactType;
+
 
 /**
  * @author cmg

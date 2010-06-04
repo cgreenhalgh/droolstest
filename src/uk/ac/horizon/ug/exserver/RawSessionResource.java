@@ -39,6 +39,8 @@ import org.w3c.dom.NodeList;
 import uk.ac.horizon.ug.exserver.RestletApplication;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.Session;
+import uk.ac.horizon.ug.exserver.protocol.Operation;
+import uk.ac.horizon.ug.exserver.protocol.RawFactHolder;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
