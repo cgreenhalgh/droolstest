@@ -555,12 +555,26 @@ to be an update. The response is identical to that from <span style="font-family
         
         
         </ul>
+        <li style="font-family: monospace;">query/<span style="font-weight: bold;">{queryName}</span></li>
+        <ul>
+          <li>GET/POST - return results from a Drools query, named
+{queryName}, specified in the session's DRL file(s); takes optional
+query parameter(s) named "parameter" as query input values (should match the signature of the query). Don't forget to escape spaces in the Query name (as "%20"). <span style="font-weight: bold;">Note: the return information is curently in a useless format. Note: parameters don't seem to work at present </span></li>
+        </ul>
 
 
 
 
 
 
+        <li style="font-family: monospace;">query/<span style="font-weight: bold;">{queryName}/{p1}...</span></li>
+        <ul>
+          <li>GET/POST
+- return results from a Drools query, named {queryName}, specified in
+the session's DRL file(s); parameters are included in order in the URL
+separated by '/'.&nbsp;Don't forget to escape spaces in the Query name
+and parameters (as "%20"). <span style="font-weight: bold;">Note: the return information is curently in a useless format. </span><span style="font-weight: bold;">Note: parameters don't seem to work actually work at present </span></li>
+        </ul>
         <li><span style="font-family: monospace;">web/</span>
 (e.g. <a href="http://localhost:8080/droolstest/1/sessions/1/web/">sessions
 1</a>) - simple web test pages/forms</li>
@@ -1520,6 +1534,10 @@ starts again from 1 when the app is redeployed or the server restarted
 (the system time itself is ok). It should really keep counting up (it
 didn't before because of the getObject bug which hopefully is fixed in
 the version of drools now being used).</li>
+  <li>query probably only support string-type input parameters.</li>
+  <li>query doesn't seem to pick up HTML query parameters</li>
+  <li>query doesn't seem to make use of URL-encoded parameters correctly.&nbsp;</li>
+  <li>query response format is currently useless.</li>
 
 
 

@@ -48,6 +48,12 @@ public class RestletApplication extends Application {
         router.attach("/sessions/{sessionId}/logs/events/latest", GetEventLogResource.class);
         router.attach("/sessions/{sessionId}/types", TypesResource.class);   
         router.attach("/sessions/{sessionId}/fire", FireRulesHandler.class);   
+        router.attach("/sessions/{sessionId}/query/{queryName}", QueryHandler.class);   
+        // hack!
+        router.attach("/sessions/{sessionId}/query/{queryName}/{p1}", QueryHandler.class);   
+        router.attach("/sessions/{sessionId}/query/{queryName}/{p1}/{p2}", QueryHandler.class);   
+        router.attach("/sessions/{sessionId}/query/{queryName}/{p1}/{p2}/{p3}", QueryHandler.class);   
+        router.attach("/sessions/{sessionId}/query/{queryName}/{p1}/{p2}/{p3}/{p4}", QueryHandler.class);   
 
         // static file serving, e.g. static forms...
         ServletContext servletContext = (ServletContext)this.getContext().getAttributes().get("org.restlet.ext.servlet.ServletContext");

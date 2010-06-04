@@ -62,3 +62,16 @@ rule "agenda group test"
 	then 
 		System.out.println("Agenda group test fired!");		
 end
+
+query "testQuery"
+	user : User ()
+end
+
+query "test query all users"
+	user : User ()
+end
+
+query "test query user by id" ( String queryid ) 
+	user : User ( id == queryid )
+end
+
