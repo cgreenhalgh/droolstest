@@ -53,3 +53,12 @@ rule "tick"
 	then 
 		System.out.println("Time is now "+$t);
 end
+
+rule "agenda group test"
+	dialect "mvel"
+	agenda-group "test"
+	when
+		s : SystemTime()
+	then 
+		System.out.println("Agenda group test fired!");		
+end

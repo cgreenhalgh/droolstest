@@ -181,6 +181,18 @@ public class SessionsResource extends BaseResource {
 			ut.rollback();
 			return null;
 		}
+		// fire rules - first time
+		ut.begin();
+		try {
+			ds.getKsession().fireAllRules();
+			ut.commit();
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "Error firing rules in new session", e);
+			setStatus(Status.SERVER_ERROR_INTERNAL, e);
+			ut.rollback();
+			return null;
+		}
 		setStatus(Status.SUCCESS_CREATED);
 		return successResponse(s);
     }
