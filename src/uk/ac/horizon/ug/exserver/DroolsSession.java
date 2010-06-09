@@ -105,8 +105,10 @@ public class DroolsSession {
 		if (session.getSessionType()==SessionType.TRANSIENT)
 			throw new RuntimeException("Cannot restore a transient session ("+session.getId()+")");
 		DroolsSession ds = sessions.get(session.getDroolsId());
-		if (ds!=null)
+		if (ds!=null) {
 			ds.closeLog();
+			ds.getKsession().dispose();
+		}
 		ds = new DroolsSession(session.getRulesetUrls(), false, session.getDroolsId(), session.getSessionType(), session.isLogged());
 		try {
 			ds.startLog(nextLogId(em, session.getId()));
