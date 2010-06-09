@@ -4,18 +4,23 @@
 package uk.ac.horizon.ug.authorapp;
 
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.io.File;
 import java.util.List;
 
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 
 import uk.ac.horizon.ug.authorapp.model.Project;
+import uk.ac.horizon.ug.exserver.protocol.RulesetError;
+import uk.ac.horizon.ug.exserver.protocol.RulesetErrors;
 
 /**
  * @author cmg
@@ -27,6 +32,8 @@ public class ProjectInfoPanel extends JPanel {
 	protected JFileChooser ruleFileChooser = null;
 	protected JTable ruleFileTable;
 	protected RuleFileTableModel ruleFileTableModel = new RuleFileTableModel();
+	protected JTable ruleErrorTable;
+	protected RuleErrorTableModel ruleErrorTableModel = new RuleErrorTableModel();
 	/** get/make file chooser */
 	JFileChooser getRuleFileChooser() {
 		if (ruleFileChooser!=null)
@@ -38,15 +45,28 @@ public class ProjectInfoPanel extends JPanel {
 	/** cons */
 	public ProjectInfoPanel(Project project) {
 		super(new BorderLayout());
-		setProject(project);
-		add(new JLabel("Rule files"), BorderLayout.NORTH);
+		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		add(splitPane, BorderLayout.CENTER);
+		JPanel top = new JPanel(new BorderLayout());
+		splitPane.setTopComponent(top);
+		top.add(new JLabel("Rule files"), BorderLayout.NORTH);
 		ruleFileTable = new JTable(ruleFileTableModel);
-		add(new JScrollPane(ruleFileTable), BorderLayout.CENTER);
+		top.add(new JScrollPane(ruleFileTable), BorderLayout.CENTER);
+		JPanel bottom = new JPanel(new BorderLayout());
+		splitPane.setBottomComponent(bottom);
+		bottom.add(new JLabel("Errors"), BorderLayout.NORTH);
+		ruleErrorTable = new JTable(ruleErrorTableModel);
+		bottom.add(new JScrollPane(ruleErrorTable), BorderLayout.CENTER);
+		
+		setProject(project);
 	}
 	/** swing thread - refresh */
 	public void setProject(Project project) {
 		this.project = project;
 		ruleFileTableModel.fireTableDataChanged();
+		if (project!=null)
+			project.reloadRuleFiles();
+		ruleErrorTableModel.fireTableDataChanged();
 	}
 	/** swing thread */
 	public void handleAddRuleFile() {
@@ -64,8 +84,20 @@ public class ProjectInfoPanel extends JPanel {
 				return;
 		currentFiles.add(newFile.getPath());
 		ruleFileTableModel.fireTableRowsInserted(currentFiles.size()-1, currentFiles.size()-1);
+		handleReloadRules();
 	}
-	
+	/** swing thread */
+	public void handleReloadRules() {		
+		Cursor c = this.getCursor();
+		try {
+			setCursor(Cursor.getPredefinedCursor(JFrame.WAIT_CURSOR));
+			project.reloadRuleFiles();
+			ruleErrorTableModel.fireTableDataChanged();
+		}
+		finally {
+			setCursor(c);
+		}
+	}
 	/** rule file table model */
 	class RuleFileTableModel extends AbstractTableModel {
 
@@ -101,6 +133,73 @@ public class ProjectInfoPanel extends JPanel {
 			case 0:
 				return filename;
 			}
+			return null;
+		}
+		
+	}
+	
+	static String ERROR_COLUMNS [] = new String[] {"Rule file", "Line", "Error", "Message"};
+	/** rule error model */
+	class RuleErrorTableModel extends AbstractTableModel {
+		
+		/* (non-Javadoc)
+		 * @see javax.swing.table.AbstractTableModel#getColumnName(int)
+		 */
+		@Override
+		public String getColumnName(int col) {
+			return ERROR_COLUMNS[col];
+		}
+
+		@Override
+		public int getColumnCount() {
+			return ERROR_COLUMNS.length;
+		}
+
+		@Override
+		public int getRowCount() {
+			if (project==null || project.getProjectInfo()==null || project.getRulesetErrors()==null)
+				return 0;
+			int row = 0;
+			RulesetErrors ress [] = project.getRulesetErrors();
+			for (int i=0; i<ress.length; i++)
+				row += ress[i].getErrors().length;
+			return row;
+		}
+
+		@Override
+		public Object getValueAt(int row, int col) {
+			RulesetErrors ress [] = project.getRulesetErrors();
+			for (int i=0; i<ress.length; i++) {
+				RulesetError res[] = ress[i].getErrors();
+				if (row<res.length) {
+					switch(col) {
+					case 0: 
+						// file
+						return ress[i].getRulesetUrl();
+					case 1: {
+						// lines
+						StringBuilder sb = new StringBuilder();
+						int [] lines = res[row].getErrorLines();
+						for (int j=0; lines!=null && j<lines.length; j++)
+						{
+							if (j>0)
+								sb.append(",");
+							sb.append(lines[j]);
+						}
+						return sb.toString();
+					}
+					case 2:
+						// type
+						return res[row].getErrorType();
+					case 3:
+						// message
+						return res[row].getMessage();
+					}
+					// default
+					return null;
+				}
+				row -= res.length;
+			}			
 			return null;
 		}
 		

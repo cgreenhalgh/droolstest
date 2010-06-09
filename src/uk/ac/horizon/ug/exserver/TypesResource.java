@@ -37,41 +37,10 @@ public class TypesResource extends SessionResource {
 	@Post("xml")
 	@Get("xml")
 	public Representation getTypes() {
-		List<TypeDeclarationDescr> types = new LinkedList<TypeDeclarationDescr>();
-		String ruleSetUrls [] = this.sessionInfo.getRulesetUrls();
-		DrlParser parser = new DrlParser();
-		PackageDescr packageDescr = null;
-		for (int ti=0; ruleSetUrls!=null && ti<ruleSetUrls.length; ti++) {
-			try {
-				packageDescr = parser.parse(true, new URL(ruleSetUrls[ti]).openStream());
-				types.addAll(packageDescr.getTypeDeclarations());
-			} catch (Exception e) {
-				logger.log(Level.WARNING, "Error parsing rule set "+ruleSetUrls[ti], e);
-				setStatus(Status.SERVER_ERROR_INTERNAL);
-				return null;
-			}
-		}
-		List<TypeDescription> tds = new LinkedList<TypeDescription>();
-		for (TypeDeclarationDescr type : types) {
-			TypeDescription td = new TypeDescription();
-			td.setNamespace(type.getNamespace());
-			if (type.getNamespace()==null)
-				td.setNamespace(packageDescr.getNamespace());
-			td.setTypeName(type.getTypeName());
-			td.setTypeMeta(type.getMetaAttributes());
-			Map<String,TypeFieldDescr> fields = type.getFields();
-			Map<String,TypeFieldDescription> tfds = new HashMap<String,TypeFieldDescription>();
-			for (Map.Entry<String,TypeFieldDescr> entry : fields.entrySet()) {
-				TypeFieldDescription tfd = new TypeFieldDescription();
-				TypeFieldDescr field = entry.getValue();
-				tfd.setFieldMeta(field.getMetaAttributes());
-				// pattern has id & objectType; latter seems to be java type.
-				logger.info("Field "+entry.getKey()+": pattern="+field.getPattern()+", initExpr="+field.getInitExpr()+", ="+field.getText());
-				tfd.setTypeName(field.getPattern().getObjectType());
-				tfds.put(entry.getKey(), tfd);
-			}
-			td.setFields(tfds);
-			tds.add(td);
+		List<TypeDescription> tds = DroolsUtils.getTypeDescriptions(this.sessionInfo.getRulesetUrls());
+		if (tds==null) {
+			setStatus(Status.SERVER_ERROR_INTERNAL);
+			return null;
 		}
 		XstreamRepresentation<List<TypeDescription>> xml = new XstreamRepresentation<List<TypeDescription>>(MediaType.APPLICATION_XML, tds);
 		xml.getXstream().alias("type", TypeDescription.class);

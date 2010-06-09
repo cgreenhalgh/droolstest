@@ -99,7 +99,7 @@ public class Main {
 		final JTabbedPane tabbedPane = new JTabbedPane();
 		mainFrame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
 		projectInfoPanel = new ProjectInfoPanel(project);
-		tabbedPane.add("Rule files", projectInfoPanel);
+		tabbedPane.add("Rule Files", projectInfoPanel);
 		
 		JMenu editMenu = new JMenu("Edit");
 		menuBar.add(editMenu);
@@ -110,8 +110,17 @@ public class Main {
 				projectInfoPanel.handleAddRuleFile();
 			}
 		}));
+		editMenu.add(new JMenuItem(new AbstractAction("Reload rules") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				tabbedPane.setSelectedComponent(projectInfoPanel);
+				projectInfoPanel.handleReloadRules();
+			}
+		}));
 
-		
+		browserPanel = new BrowserPanel(project);
+		tabbedPane.add("Browser", browserPanel);
+
 		mainFrame.pack();
 		mainFrame.setVisible(true);
 		
@@ -119,6 +128,7 @@ public class Main {
 		newProject();
 	}
 	protected ProjectInfoPanel projectInfoPanel;
+	protected BrowserPanel browserPanel;
 	
 	protected JFileChooser projectFileChooser = null;
 	/** get/make file chooser */
@@ -242,5 +252,6 @@ public class Main {
 	
 	void refresh() {
 		projectInfoPanel.setProject(project);
+		browserPanel.setProject(project);
 	}
 }

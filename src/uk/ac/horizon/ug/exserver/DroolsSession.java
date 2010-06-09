@@ -171,7 +171,7 @@ public class DroolsSession {
 		return ds;
 	}
 	/** session building exception */
-	static class RulesetException extends Exception {
+	public static class RulesetException extends Exception {
 		String rulesetUrl;
 		KnowledgeBuilderError errors[];
 		/**
@@ -189,43 +189,8 @@ public class DroolsSession {
 	 * @throws NamingException 
 	 * @throws RulesetException */
 	private DroolsSession(String rulesetUrls[], boolean newFlag, int sessionId, SessionType sessionType, boolean logged) throws NamingException, RulesetException {	
-		// force use of JANINO
-		System.setProperty("drools.dialect.java.compiler", "JANINO");
 
-		KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
-
-		// this will parse and compile in one step
-		for (int i=0; i<rulesetUrls.length; i++) {			
-			kbuilder.add(ResourceFactory.newUrlResource(rulesetUrls[i]), ResourceType.DRL);
-
-			// Check the builder for errors
-			if (kbuilder.hasErrors()) {
-				
-				KnowledgeBuilderErrors errors = kbuilder.getErrors();
-				Iterator<KnowledgeBuilderError> it = errors.iterator();
-				KnowledgeBuilderError eout [] = new KnowledgeBuilderError[errors.size()];
-				int ei = 0;
-				while(it.hasNext()) {
-					KnowledgeBuilderError error = it.next();
-					eout[ei++] = error;
-				}
-				throw new RulesetException(rulesetUrls[i], eout);
-			}
-		}
-
-		// get the compiled packages (which are serializable)
-		final Collection<KnowledgePackage> pkgs = kbuilder.getKnowledgePackages();
-
-		// add the packages to a knowledgebase (deploy the knowledge packages).
-		KnowledgeBaseConfiguration conf = KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
-		// identity changes when persistent session is re-read so we need to use equality for facts
-		// (make sure you define it correctly and don't intend to add multiple copies of the same fact).
-		// this doesn't work at least up to 5.1.0.M2 because the EqualityAssertMapComparator is (IMO) broken.
-		// so requires custom fix :-(
-		conf.setProperty("drools.assertBehaviour", "equality");
-		final KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase(conf);
-		
-		kbase.addKnowledgePackages(pkgs);
+		final KnowledgeBase kbase = DroolsUtils.getKnowledgeBase(rulesetUrls);
 
 		UserTransaction ut =
 			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );

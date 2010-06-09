@@ -211,25 +211,7 @@ public class SessionsResource extends BaseResource {
 		SessionBuildResult res = new SessionBuildResult();
 		res.setStatus("ERROR");
 		//res.setId(s.getId());
-		RulesetErrors errors[] = new RulesetErrors[re.errors.length];
-		for (int ei=0; ei<errors.length; ei++) 
-		{
-			errors[ei] = new RulesetErrors();
-			errors[ei].setRulesetUrl(re.rulesetUrl);
-			RulesetError details[] = new RulesetError[re.errors.length];
-			for (int di=0; di<details.length; di++) {
-				KnowledgeBuilderError kbe = re.errors[di];
-				//logger.info("KBError: "+kbe);
-				details[di] = new RulesetError(kbe.getClass().getName(), kbe.getErrorLines(), kbe.getMessage(), kbe.toString());
-				if (kbe instanceof DescrBuildError) {
-					DescrBuildError dbe = (DescrBuildError)kbe;
-					//logger.info("DescrBuildError: line="+dbe.getLine()+", descr="+dbe.getDescr()+", object="+dbe.getObject()+", parent="+dbe.getParentDescr()+" ("+dbe+")");
-					if (details[di].getErrorLines()==null || details[di].getErrorLines().length==0)
-						details[di].setErrorLines(new int [] { dbe.getLine() });
-				}
-			}
-			errors[ei].setErrors(details);
-		}
+		RulesetErrors errors[] = DroolsUtils.getRulesetErros(re);
 		res.setErrors(errors);
 
 		XstreamRepresentation<SessionBuildResult> xml = new XstreamRepresentation<SessionBuildResult>(MediaType.APPLICATION_XML, res);
