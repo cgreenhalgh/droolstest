@@ -59,5 +59,18 @@
     	<!-- final war -->
     	<jar basedir="build" destfile="droolstest.war" includes="**"/>
     </target>
-
+	
+	<target name="authorapp">
+		<javac destdir="build/WEB-INF/classes" debug="true" target="1.5" source="1.5">
+    		<classpath refid="cp"/>
+			<src path="src"/>		
+    	</javac>
+		<java classname="uk.ac.horizon.ug.authorapp.Main" fork="true">
+			<classpath>
+				<path refid="cp"/>
+				<pathelement location="build/WEB-INF/classes"/>
+			</classpath>
+		</java>
+	</target>
+	
 </project>
