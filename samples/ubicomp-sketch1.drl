@@ -1,0 +1,178 @@
+# sketching ubicomp IDE types/rules
+# Chris Greenhalgh
+#created on: 09-Jun-2010
+package uk.ac.horizon.ug.ubicomp
+
+#list any import classes here.
+
+
+
+#declare any global variables here
+
+declare MobileDevice
+	@physical // it is a (description of a) physical thing
+	@entity // it is a first-class "thing"
+	@describedbyself // it describes itself
+	@client // it is a (potential) client
+	id : String @key
+end
+
+declare SimulatedMobileDevice
+	@type("MobileDevice") // this is a subclass of MobileDevice
+	@simulated // it is simulated
+	id : String @key
+end
+
+declare BluetoothRadio
+	@physical
+	@entity
+	@inferred // facts are automatically inferred via rules 
+				// in this case from HasRadio and/or BluetoothSighting
+	mac : String @key @range("MAC")
+end
+
+declare HasRadio 
+	@physical
+	@property("*") // it is a property, with min occurs 0 and max occurs infinity ('*')
+	id : String @fk("MobileDevice,Beacon") // the value is a foreign key of @key in MobileDevice or Bean
+			    @subject // this is the subject of the @property
+	mac : String @fk("BluetoothRadio") 
+				@value // this is the primary value of the @property
+				@required // it is not optional
+	scanner : boolean
+	permanent : boolean  
+end
+
+declare ScanConfigurationRequest
+	@digital // it is a digital thing (or a description of a digital thing)
+	@message // it is a message
+	@stateful // its retraction is also significant (or just don't label it @event?)
+	device_id : String @fk("MobileDevice") @required 
+					@destination // this is the destination of the the @message
+	interval_s : int @range("IntervalSeconds") 
+					@content // this is the content of the @message
+end
+
+declare Beacon
+	@physical
+	@entity
+	@describedbysurvey // it is survey, i.e. based on measurements of the "world"
+	@requires("HasRadio") // it requires fact(s) of type HasRadio (?!)
+	id : String @key
+end
+
+declare BeaconContent 
+	@digital
+	@relationship("*:*") // it is a many to many relationship, min card. 0, max infinite
+	@describedbyauthor // it is authored
+	beacon_id : String @fk("Beacon") @required 
+						@subject // this is the subject of the @relationship
+	content_url : String @range("URL") @required 
+						@object // this is the object of the @relationship	
+end
+
+declare BluetoothSighting
+	@sensed // it is sensed, i.e. a digital approximation of something physical
+	@relationship("*:*")
+	@event // it is an event, i.e. a momentary (or time-limited) fact
+	device_id : String @fk("MobileDevice") @subject @required
+	beacon_mac : String @fk("BluetoothRadio") @object @required
+	time : long @required @range("SystemTimeMillis")
+end
+
+declare ShowContentRequest
+	@digital
+	@message
+	@event
+	device_id : String @fk("MobileDevice") @required @destination
+	content_url : String @range("URL") @required @content
+	time : long @required @range("SystemTimeMillis")
+end
+
+declare Accepts
+	@digital
+	@describedbyself
+	@property("*")
+	@fixed // it does not change over the lifetime of the subject
+	device_id : String @fk("MobileDevice") @required @subject
+	request_type : String @range("Class[@message]") @required @value
+end
+
+declare Publishes
+	@digital
+	@describedbyself
+	@property("*")
+	@fixed
+	device_id : String @fk("MobileDevice") @required @subject
+	fact_type : String @range("Class") @required @value
+end
+
+declare SuitableMobileDevice
+	@digital
+	@inferred
+	device_id : String @key
+end
+
+
+rule "1(a) Request regular scanning from capable MobileDevices (using HasRadio)"
+	dialect "mvel"
+	when
+		$md : MobileDevice( )
+		HasRadio( id==$md.id, scanner==true, $mac : mac )
+	then
+		ScanConfigurationRequest req = new ScanConfigurationRequest();
+		req.device_id = $md.id;
+		req.interval_s = 30;
+		insertLogical( req );
+end
+
+rule "1(b) Request regular scanning from capable MobileDevices (using Accepts)"
+	dialect "mvel"
+	when
+		$md : MobileDevice( )
+		Accepts( device_id==$md.id, request_type=="ScanConfigurationRequest" )
+	then
+		ScanConfigurationRequest req = new ScanConfigurationRequest();
+		req.device_id = $md.id;
+		req.interval_s = 30;
+		insertLogical( req );
+end
+
+rule "2 Create ShowContentRequest on BluetoothSighting of Beacon"
+	dialect "mvel"
+	when
+		$md : MobileDevice( )
+		$sighting : BluetoothSighting( device_id==$md.id )
+		HasRadio( mac==$sighting.beacon_mac, $beacon_id : id )
+		$bc : BeaconContent( beacon_id==$beacon_id )
+	then
+		ShowContentRequest req = new ShowContentRequest();
+		req.device_id = $md.id;
+		req.content_url = $bc.content_url;
+		req.time = System.currentTimeMillis();
+		insert( req );
+end
+
+rule "3 retract ShowContentRequests for SimulatedMobileDevices"
+	dialect "mvel"
+	agenda-group "simulate"
+	when
+		$smd : SimulatedMobileDevice ()
+		$req : ShowContentRequest( device_id==$smd.id, $url : content_url )
+	then
+		System.out.println("Show "+$url+" on "+$smd);
+		retract( $req );
+end
+
+rule "4 Admission test for MobileDevice"
+	dialect "mvel"
+	agenda-group "admission-test"
+	when 
+		$md : MobileDevice( )
+		Accepts( device_id==$md.id, request_type=="ShowContentRequest" )
+		Publishes ( device_id==$md.id, fact_type=="BluetoothSighting" )
+	then
+		SuitableMobileDevice suitable = new SuitableMobileDevice();
+		suitable.device_id = $md.id;
+		insertLogical( suitable );
+end
