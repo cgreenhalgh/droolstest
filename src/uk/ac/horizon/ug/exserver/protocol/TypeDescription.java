@@ -26,7 +26,7 @@ public class TypeDescription {
 		type,
 		client,
 		entity, relationship, property,
-		describedbyauthor, describedbyself, describedbyother, inferred, sensed,
+		describedbyauthor, describedbyself, describedbyother, describedbysurvey, inferred, sensed,
 		fixed,
 		requires,
 		event, message, 
@@ -144,6 +144,10 @@ public class TypeDescription {
 	/** get describedbyother metadata */
 	public boolean isDescribedbyother() {
 		return typeMeta.containsKey(TypeMetaKeys.describedbyother.name());
+	}
+	/** get describedbysurvey metadata */
+	public boolean isDescribedbysurvey() {
+		return typeMeta.containsKey(TypeMetaKeys.describedbysurvey.name());
 	}
 	/** get inferred metadata */
 	public boolean isInferred() {

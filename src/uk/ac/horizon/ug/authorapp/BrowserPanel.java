@@ -10,6 +10,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -96,6 +98,8 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				TreePath path = tree.getSelectionPath();
+				if (path==null || path.getPathCount()==0)
+					return;
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
 				Object object = node.getUserObject();
 				if (!(object instanceof TypeDescription))
@@ -280,6 +284,25 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 		return node;
 	}
 
+	/** create node as folder for types, filtered by metadata */
+	public static DefaultMutableTreeNode makeRangeTypesNode(String title, List<TypeDescription> types) {
+		DefaultMutableTreeNode node = new DefaultMutableTreeNode(title);
+		Set<String> rangeNames = new TreeSet<String>();
+		nexttype:
+		for (TypeDescription type : types) {
+			nextfield:
+			for (Map.Entry<String,TypeFieldDescription> field : type.getFields().entrySet()) {
+				String range = field.getValue().getFieldMeta().get(TypeFieldDescription.FieldMetaKeys.range.name());
+				if (range==null) 
+					continue nextfield;
+				rangeNames.add(range);
+			}
+		}
+		for (String rangeName : rangeNames)
+			node.add(new DefaultMutableTreeNode(rangeName));
+		return node;
+	}
+
 	void rebuildTree() {
 		root.removeAllChildren();
 		if (project!=null && project.getTypes()!=null) {
@@ -287,7 +310,11 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 			root.add(makeFilteredTypesNode(CLIENTS, new String[]{TypeDescription.TypeMetaKeys.client.name()}, types));
 			root.add(makeFilteredTypesNode("Physical Entities", new String[]{TypeDescription.TypeMetaKeys.physical.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
 			root.add(makeFilteredTypesNode("Digital Entities", new String[]{TypeDescription.TypeMetaKeys.digital.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
+			root.add(makeFilteredTypesNode("Surveyed Entities", new String[]{TypeDescription.TypeMetaKeys.describedbysurvey.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
+			root.add(makeFilteredTypesNode("Authored Entities", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
+			root.add(makeFilteredTypesNode("Authored Properties", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.property.name()}, types));
 			root.add(makeFilteredTypesNode("Authored Relationships", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.relationship.name()}, types));
+			root.add(makeRangeTypesNode("Range Types", types));
 		}
 		treeModel.reload();
 	}

@@ -14,6 +14,7 @@ declare MobileDevice
 	@entity // it is a first-class "thing"
 	@describedbyself // it describes itself
 	@client // it is a (potential) client
+	@type("Located")
 	id : String @key
 end
 
@@ -46,18 +47,54 @@ declare BluetoothRadio
 	@entity
 	@inferred // facts are automatically inferred via rules 
 				// in this case from HasRadio and/or BluetoothSighting
-	mac : String @key @range("MAC")
+	mac : String @key @range("BluetoothMAC")
+end
+
+declare Local2DCoordinateSystem
+	@digital
+	@entity
+	@describedbyauthor // survey?
+	id : String @key
+	min_x : double @range("Local2DCoordinateSystem/x")
+	max_x : double @range("Local2DCoordinateSystem/x")
+//	x_scale : double @range("metres")
+	min_y : double @range("Local2DCoordinateSystem/y")
+	max_y : double @range("Local2DCoordinateSystem/y")
+	map_url : String @range("URL")
+	// WGS84 definition...?
+end
+
+declare Located
+	@entity
+	@physical
+	@digital
+	id : String @key 
+end
+
+declare Local2DCoordinate
+	@digital
+	@property("1")
+	@sensed
+	@describedbysurvey
+	located_id : String @key @fk("Located") @subject
+	system_id : String @key @fk("Local2DCoordinateSystem")
+	x : double @value @range("Local2DCoordinateSystem/x")
+	y : double @value @range("Local2DCoordinateSystem/y")
+	radius : double @qualifier @default(0)  @range("Local2DCoordinateSystem/radius") // of value(s) ?!
+	confidence : double @qualifier @default(1) @range("confidence") // of value(s) ?!
 end
 
 declare HasRadio 
 	@physical
 	//@haspart("*")
 	@property("*") // it is a property, with min occurs 0 and max occurs infinity ('*')
+	//@describedby...?
 	id : String @fk("BluetoothScanningDevice,Beacon") // the value is a foreign key of @key in MobileDevice or Bean
 			    @subject // this is the subject of the @property
 	mac : String @fk("BluetoothRadio") 
 				@value // this is the primary value of the @property
 				@required // it is not optional
+				@range("BluetoothMAC")
 	scanner : boolean
 	permanent : boolean  
 end
@@ -75,6 +112,7 @@ end
 declare Beacon
 	@physical
 	@entity
+	@type("Located")
 	@describedbysurvey // it is survey, i.e. based on measurements of the "world"
 	@requires("HasRadio") // it requires fact(s) of type HasRadio (?!)
 	id : String @key
@@ -82,12 +120,12 @@ end
 
 declare BeaconContent 
 	@digital
-	@relationship("*:*") // it is a many to many relationship, min card. 0, max infinite
+	@property("*") // it is a many to many relationship, min card. 0, max infinite
 	@describedbyauthor // it is authored
 	beacon_id : String @fk("Beacon") @required 
-						@subject // this is the subject of the @relationship
+						@subject // this is the subject of the @property
 	content_url : String @range("URL") @required 
-						@object // this is the object of the @relationship	
+						@value // this is the value of the @property	
 end
 
 declare BluetoothSighting
@@ -95,7 +133,7 @@ declare BluetoothSighting
 	@relationship("*:*")
 	@event // it is an event, i.e. a momentary (or time-limited) fact
 	device_id : String @fk("BluetoothScanningDevice") @subject @required
-	beacon_mac : String @fk("BluetoothRadio") @object @required
+	beacon_mac : String @fk("BluetoothRadio") @object @required @range("BluetoothMAC")
 	time : long @required @range("SystemTimeMillis")
 end
 
