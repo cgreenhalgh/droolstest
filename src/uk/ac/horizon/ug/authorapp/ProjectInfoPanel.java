@@ -57,7 +57,9 @@ public class ProjectInfoPanel extends JPanel {
 		bottom.add(new JLabel("Errors"), BorderLayout.NORTH);
 		ruleErrorTable = new JTable(ruleErrorTableModel);
 		bottom.add(new JScrollPane(ruleErrorTable), BorderLayout.CENTER);
-		
+
+		splitPane.setAlignmentY(0.5f);
+
 		setProject(project);
 	}
 	/** swing thread - refresh */

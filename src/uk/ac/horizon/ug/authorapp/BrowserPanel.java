@@ -91,10 +91,10 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 		}		
 	}
 	/** get view client action - swing thread*/
-	AbstractAction getViewClientAction(final Main main) {
-		if (viewClientAction!=null)
-			return viewClientAction;
-		viewClientAction = new AbstractAction("View client...") {
+	AbstractAction getViewAction(final Main main) {
+		if (viewAction!=null)
+			return viewAction;
+		viewAction = new AbstractAction("View...") {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				TreePath path = tree.getSelectionPath();
@@ -105,17 +105,18 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 				if (!(object instanceof TypeDescription))
 					return;
 				TypeDescription type = (TypeDescription)object;
-				if (!type.isClient()) {
-					logger.log(Level.WARNING, "viewClientAction for non-client "+type);
-					return;
+				if (type.isClient()) {
+					main.openClientTypePanel(type);
 				}
-				main.openClientTypePanel(type);
+				else if (type.isEntity()) {
+					main.openEntityTablePanel(type);
+				}
 			}
 		};
-		return viewClientAction;
+		return viewAction;
 	}
 	/** view client action */
-	protected AbstractAction viewClientAction;
+	protected AbstractAction viewAction;
 	/** type file node user object type */
 	static class TypeFilter {
 		protected String name;

@@ -128,7 +128,7 @@ public class Main {
 		
 		browserPanel = new BrowserPanel(project);
 		tabbedPane.add("Types", browserPanel);
-		viewMenu.add(new JMenuItem(browserPanel.getViewClientAction(this)));
+		viewMenu.add(new JMenuItem(browserPanel.getViewAction(this)));
 
 		mainFrame.pack();
 		mainFrame.setVisible(true);
@@ -282,5 +282,19 @@ public class Main {
 		clientTypePanels.put(name, clientTypePanel);
 		tabbedPane.add(name,clientTypePanel);
 		tabbedPane.setSelectedComponent(clientTypePanel);		
+	}
+	/** client panels, key by type name */
+	protected Map<String,EntityTablePanel> entityTablePanels = new HashMap<String,EntityTablePanel>();
+	/** open/to front client panel for type - swing thread */
+	public void openEntityTablePanel(TypeDescription type) {
+		String name = type.getTypeName();
+		if (entityTablePanels.containsKey(name)) {
+			tabbedPane.setSelectedComponent(entityTablePanels.get(name));
+			return;
+		}
+		EntityTablePanel entityTablePanel = new EntityTablePanel(name, project, type);
+		entityTablePanels.put(name, entityTablePanel);
+		tabbedPane.add(name,entityTablePanel);
+		tabbedPane.setSelectedComponent(entityTablePanel);		
 	}
 }
