@@ -7,6 +7,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -17,6 +18,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
 import uk.ac.horizon.ug.authorapp.model.Project;
+import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 
 /**
  * @author cmg
@@ -39,6 +41,7 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 		root = new DefaultMutableTreeNode("Root");
 		treeModel = new DefaultTreeModel(root);
 		tree = new JTree(treeModel);
+		tree.setRootVisible(false);
 		DefaultTreeCellRenderer cellRenderer = new DefaultTreeCellRenderer() {
 
 			/* (non-Javadoc)
@@ -50,8 +53,17 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 					int row, boolean hasFocus) {
 				if (value instanceof DefaultMutableTreeNode) {
 					DefaultMutableTreeNode cell = (DefaultMutableTreeNode)value;
-					if ("Root".equals(cell.getUserObject()))
+					Object object = cell.getUserObject();
+					if ("Root".equals(object))
 						leaf = false;
+					else if (object instanceof TypeFilter)
+					{
+						leaf = false;
+						value = ((TypeFilter)object).getName();
+					}
+					else if (object instanceof TypeDescription) {
+						value = ((TypeDescription)object).getTypeName();
+					}
 				}
 				return super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row,
 						hasFocus);
@@ -63,7 +75,50 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 		
 		setProject(project);
 	}
-
+	static class TypeFilter {
+		protected String name;
+		protected String metadataKeys[];
+		/**
+		 * @param name
+		 * @param metadataKey
+		 */
+		public TypeFilter(String name, String metadataKeys[]) {
+			super();
+			this.name = name;
+			this.metadataKeys = metadataKeys;
+		}
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+			return name;
+		}
+		/**
+		 * @return the metadataKey
+		 */
+		public String[] getMetadataKeys() {
+			return metadataKeys;
+		}
+	}
+	/** create node as folder for types, filtered by metadata */
+	public static DefaultMutableTreeNode makeFilteredTypesNode(String name, String metadataKeys[], List<TypeDescription> types) {
+		TypeFilter filter = new TypeFilter(name, metadataKeys);
+		DefaultMutableTreeNode node = new DefaultMutableTreeNode(filter);
+		nexttype:
+		for (TypeDescription type : types) {
+			for (int i=0; i<metadataKeys.length; i++)
+				if (!type.getTypeMeta().containsKey(metadataKeys[i]))
+					continue nexttype;
+			node.add(makeTypeNode(type));
+		}
+		return node;
+	}
+	/** create node for type */
+	public static DefaultMutableTreeNode makeTypeNode(TypeDescription type) {
+		DefaultMutableTreeNode node = new DefaultMutableTreeNode(type);
+		// TODO ....
+		return node;
+	}
 	/**
 	 * @param project the project to set
 	 */
@@ -85,6 +140,12 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 	
 	void rebuildTree() {
 		root.removeAllChildren();
+		if (project!=null && project.getTypes()!=null) {
+			List<TypeDescription> types = project.getTypes();
+			root.add(makeFilteredTypesNode("Physical Entities", new String[]{TypeDescription.TypeMetaKeys.physical.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
+			root.add(makeFilteredTypesNode("Digital Entities", new String[]{TypeDescription.TypeMetaKeys.digital.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
+			root.add(makeFilteredTypesNode("Authored Relationships", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.relationship.name()}, types));
+		}
 		treeModel.reload();
 	}
 }

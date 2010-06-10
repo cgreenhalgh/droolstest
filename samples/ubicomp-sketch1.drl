@@ -33,6 +33,7 @@ end
 
 declare HasRadio 
 	@physical
+	//@haspart("*")
 	@property("*") // it is a property, with min occurs 0 and max occurs infinity ('*')
 	id : String @fk("MobileDevice,Beacon") // the value is a foreign key of @key in MobileDevice or Bean
 			    @subject // this is the subject of the @property
