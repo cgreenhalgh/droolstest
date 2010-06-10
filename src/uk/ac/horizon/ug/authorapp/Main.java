@@ -22,10 +22,13 @@ import javax.swing.JTabbedPane;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import uk.ac.horizon.ug.authorapp.model.*;
+import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 
 /** Desktop authoring tool (work in progress)
  * 
@@ -47,6 +50,8 @@ public class Main {
 	}
 	/** main frame */
 	protected JFrame mainFrame;
+	/** tabbed pane */
+	protected JTabbedPane tabbedPane;
 	/** current project */
 	protected Project project = null;
 	
@@ -96,7 +101,7 @@ public class Main {
 		}));
 		
 		// tabs
-		final JTabbedPane tabbedPane = new JTabbedPane();
+		tabbedPane = new JTabbedPane();
 		mainFrame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
 		projectInfoPanel = new ProjectInfoPanel(project);
 		tabbedPane.add("Rule Files", projectInfoPanel);
@@ -118,8 +123,12 @@ public class Main {
 			}
 		}));
 
+		JMenu viewMenu = new JMenu("View");
+		menuBar.add(viewMenu);
+		
 		browserPanel = new BrowserPanel(project);
-		tabbedPane.add("Browser", browserPanel);
+		tabbedPane.add("Types", browserPanel);
+		viewMenu.add(new JMenuItem(browserPanel.getViewClientAction(this)));
 
 		mainFrame.pack();
 		mainFrame.setVisible(true);
@@ -253,5 +262,25 @@ public class Main {
 	void refresh() {
 		projectInfoPanel.setProject(project);
 		browserPanel.setProject(project);
+		for (ClientTypePanel clientTypePanel : clientTypePanels.values()) {
+			String name = clientTypePanel.getName();
+			TypeDescription type = project.getClientTypeDescription(name);
+			clientTypePanel.setType(project, type);
+		}
+	}
+
+	/** client panels, key by type name */
+	protected Map<String,ClientTypePanel> clientTypePanels = new HashMap<String,ClientTypePanel>();
+	/** open/to front client panel for type - swing thread */
+	public void openClientTypePanel(TypeDescription type) {
+		String name = type.getTypeName();
+		if (clientTypePanels.containsKey(name)) {
+			tabbedPane.setSelectedComponent(clientTypePanels.get(name));
+			return;
+		}
+		ClientTypePanel clientTypePanel = new ClientTypePanel(name, project, type);
+		clientTypePanels.put(name, clientTypePanel);
+		tabbedPane.add(name,clientTypePanel);
+		tabbedPane.setSelectedComponent(clientTypePanel);		
 	}
 }

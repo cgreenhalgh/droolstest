@@ -162,5 +162,15 @@ public class Project {
 		propertyChangeSupport.removePropertyChangeListener(propertyName,
 				listener);
 	}
+	/** get TypeDescription for client of given type name */
+	public TypeDescription getClientTypeDescription(String name) {
+		if (types==null)
+			return null;
+		for (TypeDescription type: types) {
+			if (type.isClient() && name.equals(type.getTypeName()))
+				return type;
+		}
+		return null;
+	}
 	
 }

@@ -26,10 +26,10 @@ public class TypeDescription {
 		type,
 		client,
 		entity, relationship, property,
-		describedbyauthor, describedbyself, describedbyother, inferred, 
+		describedbyauthor, describedbyself, describedbyother, inferred, sensed,
 		fixed,
 		requires,
-		event
+		event, message, 
 		};
 	/** map of fields */
 	protected Map<String,TypeFieldDescription> fields;

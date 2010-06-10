@@ -5,10 +5,15 @@ package uk.ac.horizon.ug.authorapp;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import javax.swing.AbstractAction;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
@@ -16,15 +21,21 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
+//import uk.ac.horizon.ug.authorapp.ClientTypePanel.ClientFilterObject;
 import uk.ac.horizon.ug.authorapp.model.Project;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
+import uk.ac.horizon.ug.exserver.protocol.TypeFieldDescription;
+import uk.ac.horizon.ug.exserver.protocol.TypeDescription.TypeMetaKeys;
+import uk.ac.horizon.ug.exserver.protocol.TypeFieldDescription.FieldMetaKeys;
 
 /**
  * @author cmg
  *
  */
 public class BrowserPanel extends JPanel implements PropertyChangeListener {
+	static Logger logger = Logger.getLogger(BrowserPanel.class.getName());
 	/** project */
 	protected Project project;
 	/** browser tree */
@@ -42,39 +53,66 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 		treeModel = new DefaultTreeModel(root);
 		tree = new JTree(treeModel);
 		tree.setRootVisible(false);
-		DefaultTreeCellRenderer cellRenderer = new DefaultTreeCellRenderer() {
-
-			/* (non-Javadoc)
-			 * @see javax.swing.tree.DefaultTreeCellRenderer#getTreeCellRendererComponent(javax.swing.JTree, java.lang.Object, boolean, boolean, boolean, int, boolean)
-			 */
-			@Override
-			public Component getTreeCellRendererComponent(JTree tree,
-					Object value, boolean sel, boolean expanded, boolean leaf,
-					int row, boolean hasFocus) {
-				if (value instanceof DefaultMutableTreeNode) {
-					DefaultMutableTreeNode cell = (DefaultMutableTreeNode)value;
-					Object object = cell.getUserObject();
-					if ("Root".equals(object))
-						leaf = false;
-					else if (object instanceof TypeFilter)
-					{
-						leaf = false;
-						value = ((TypeFilter)object).getName();
-					}
-					else if (object instanceof TypeDescription) {
-						value = ((TypeDescription)object).getTypeName();
-					}
-				}
-				return super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row,
-						hasFocus);
-			}
-			
-		};
-		tree.setCellRenderer(cellRenderer);
+		tree.setShowsRootHandles(true);
+		tree.setCellRenderer(new BrowserTreeCellRenderer());
 		add(new JScrollPane(tree), BorderLayout.CENTER);
 		
 		setProject(project);
 	}
+	/** tree cell renderer */
+	static class BrowserTreeCellRenderer extends DefaultTreeCellRenderer {
+		@Override
+		public Component getTreeCellRendererComponent(JTree tree,
+				Object value, boolean sel, boolean expanded, boolean leaf,
+				int row, boolean hasFocus) {
+			if (value instanceof DefaultMutableTreeNode) {
+				DefaultMutableTreeNode cell = (DefaultMutableTreeNode)value;
+				Object object = cell.getUserObject();
+				if ("Root".equals(object))
+					leaf = false;
+				else if (object instanceof TypeFilter)
+				{
+					leaf = false;
+					value = ((TypeFilter)object).getName();
+				}
+				else if (object instanceof ClientFilterObject)
+				{
+					leaf = false;
+					value = ((ClientFilterObject)object).getTitle();
+				}
+				else if (object instanceof TypeDescription) {
+					value = ((TypeDescription)object).getTypeName();
+				}
+			}
+			return super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row,
+					hasFocus);
+		}		
+	}
+	/** get view client action - swing thread*/
+	AbstractAction getViewClientAction(final Main main) {
+		if (viewClientAction!=null)
+			return viewClientAction;
+		viewClientAction = new AbstractAction("View client...") {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				TreePath path = tree.getSelectionPath();
+				DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+				Object object = node.getUserObject();
+				if (!(object instanceof TypeDescription))
+					return;
+				TypeDescription type = (TypeDescription)object;
+				if (!type.isClient()) {
+					logger.log(Level.WARNING, "viewClientAction for non-client "+type);
+					return;
+				}
+				main.openClientTypePanel(type);
+			}
+		};
+		return viewClientAction;
+	}
+	/** view client action */
+	protected AbstractAction viewClientAction;
+	/** type file node user object type */
 	static class TypeFilter {
 		protected String name;
 		protected String metadataKeys[];
@@ -100,6 +138,7 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 			return metadataKeys;
 		}
 	}
+	public static final String CLIENTS = "Clients";
 	/** create node as folder for types, filtered by metadata */
 	public static DefaultMutableTreeNode makeFilteredTypesNode(String name, String metadataKeys[], List<TypeDescription> types) {
 		TypeFilter filter = new TypeFilter(name, metadataKeys);
@@ -109,15 +148,18 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 			for (int i=0; i<metadataKeys.length; i++)
 				if (!type.getTypeMeta().containsKey(metadataKeys[i]))
 					continue nexttype;
-			node.add(makeTypeNode(type));
+			if (CLIENTS.equals(name))
+				node.add(makeTypeNode(type, types));
+			else
+				node.add(makeSimpleTypeNode(type));
 		}
 		return node;
 	}
 	/** create node for type */
-	public static DefaultMutableTreeNode makeTypeNode(TypeDescription type) {
-		DefaultMutableTreeNode node = new DefaultMutableTreeNode(type);
-		// TODO ....
-		return node;
+	public static DefaultMutableTreeNode makeTypeNode(TypeDescription type, List<TypeDescription> types) {
+		if (type.isClient())
+			return makeClientTypeNode(type, types);
+		return makeSimpleTypeNode(type);
 	}
 	/**
 	 * @param project the project to set
@@ -138,10 +180,111 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 			rebuildTree();
 	}
 	
+	/** client type filter node */
+	static class ClientFilterObject {
+		protected String title;
+		protected TypeDescription clientType;
+		/** type must have this metadata key */
+		protected TypeDescription.TypeMetaKeys requiredTypeKey;
+		/** a field my have this key and the clientType in the key value (list) */
+		protected TypeFieldDescription.FieldMetaKeys requiredFieldReferenceKey;
+		/**
+		 * @param clientType
+		 * @param requiredTypeKey
+		 * @param requiredFieldReferenceKey
+		 */
+		public ClientFilterObject(String title, TypeDescription clientType,
+				TypeMetaKeys requiredTypeKey,
+				FieldMetaKeys requiredFieldReferenceKey) {
+			super();
+			this.title = title;
+			this.clientType = clientType;
+			this.requiredTypeKey = requiredTypeKey;
+			this.requiredFieldReferenceKey = requiredFieldReferenceKey;
+		}
+		/**
+		 * @return the title
+		 */
+		public String getTitle() {
+			return title;
+		}
+		/**
+		 * @return the clientType
+		 */
+		public TypeDescription getClientType() {
+			return clientType;
+		}
+		/**
+		 * @return the requiredTypeKey
+		 */
+		public TypeDescription.TypeMetaKeys getRequiredTypeKey() {
+			return requiredTypeKey;
+		}
+		/**
+		 * @return the requiredFieldReferenceKey
+		 */
+		public TypeFieldDescription.FieldMetaKeys getRequiredFieldReferenceKey() {
+			return requiredFieldReferenceKey;
+		}		
+	}
+	/** create node as folder for types, filtered by metadata */
+	public static DefaultMutableTreeNode makeClientFilterNode(String title, TypeDescription clientType, TypeDescription.TypeMetaKeys requiredTypeKey, TypeFieldDescription.FieldMetaKeys requiredFieldReferenceKey, List<TypeDescription> types) {
+		ClientFilterObject clientFilter = new ClientFilterObject(title, clientType, requiredTypeKey, requiredFieldReferenceKey);
+		DefaultMutableTreeNode node = new DefaultMutableTreeNode(clientFilter);
+		nexttype:
+		for (TypeDescription type : types) {
+			if (!type.getTypeMeta().containsKey(requiredTypeKey.name()))
+				continue nexttype;
+			String fieldName = null;
+			nextfield:
+			for (Map.Entry<String,TypeFieldDescription> field : type.getFields().entrySet()) {
+				if (!field.getValue().getFieldMeta().containsKey(requiredFieldReferenceKey.name()))
+					continue nextfield;
+				// all refs in fk (foreign key)?!
+				String value = field.getValue().getFieldMeta().get(TypeFieldDescription.FieldMetaKeys.fk.name());
+				if (value==null) 
+					continue nextfield;
+				//logger.info("Checking field "+field.getKey()+" of type "+type.getTypeName()+" for metadata "+requiredFieldReferenceKey+"="+value+" for type name "+clientType.getTypeName());
+				String values [] = value.split("[\", |]");
+				for (int i=0; i<values.length; i++) 
+					if (values[i].equals(clientType.getTypeName()))
+					{
+						//logger.info("Found");
+						fieldName = field.getKey();
+						break nextfield;
+					}
+					//else
+					//	logger.info("Not found ("+clientType.getTypeName()+") in ["+i+"]: "+values[i]);
+			}
+			if (fieldName!=null) {
+				node.add(makeSimpleTypeNode(type));
+			}
+		}
+		return node;
+	}
+	/** create node for type */
+	public static DefaultMutableTreeNode makeSimpleTypeNode(TypeDescription type) {
+		DefaultMutableTreeNode node = new DefaultMutableTreeNode(type);
+		// TODO ....
+		return node;
+	}
+	/** make client type node */
+	public static DefaultMutableTreeNode makeClientTypeNode(TypeDescription type, List<TypeDescription> types) {
+		DefaultMutableTreeNode node = new DefaultMutableTreeNode(type);
+		
+		node.add(makeClientFilterNode("sensed", type, TypeDescription.TypeMetaKeys.sensed, TypeFieldDescription.FieldMetaKeys.subject, types));
+		node.add(makeClientFilterNode("property", type, TypeDescription.TypeMetaKeys.property, TypeFieldDescription.FieldMetaKeys.subject, types));
+		node.add(makeClientFilterNode("relationship", type, TypeDescription.TypeMetaKeys.relationship, TypeFieldDescription.FieldMetaKeys.subject, types));
+		node.add(makeClientFilterNode("message/to", type, TypeDescription.TypeMetaKeys.message, TypeFieldDescription.FieldMetaKeys.to, types));
+		node.add(makeClientFilterNode("message/from", type, TypeDescription.TypeMetaKeys.message, TypeFieldDescription.FieldMetaKeys.from, types));
+		return node;
+	}
+
 	void rebuildTree() {
 		root.removeAllChildren();
 		if (project!=null && project.getTypes()!=null) {
 			List<TypeDescription> types = project.getTypes();
+			root.add(makeFilteredTypesNode(CLIENTS, new String[]{TypeDescription.TypeMetaKeys.client.name()}, types));
 			root.add(makeFilteredTypesNode("Physical Entities", new String[]{TypeDescription.TypeMetaKeys.physical.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
 			root.add(makeFilteredTypesNode("Digital Entities", new String[]{TypeDescription.TypeMetaKeys.digital.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
 			root.add(makeFilteredTypesNode("Authored Relationships", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.relationship.name()}, types));

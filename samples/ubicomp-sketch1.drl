@@ -17,6 +17,24 @@ declare MobileDevice
 	id : String @key
 end
 
+declare BluetoothScanningDevice
+	@physical // it is a (description of a) physical thing
+	@entity // it is a first-class "thing"
+	@facet // ?!
+	@describedbyself // it describes itself
+	@client // it is a (potential) client
+	id : String @key
+end
+
+declare ContentDisplayDevice
+	@physical // it is a (description of a) physical thing
+	@entity // it is a first-class "thing"
+	@facet // ?!
+	@describedbyself // it describes itself
+	@client // it is a (potential) client
+	id : String @key
+end
+
 declare SimulatedMobileDevice
 	@type("MobileDevice") // this is a subclass of MobileDevice
 	@simulated // it is simulated
@@ -35,7 +53,7 @@ declare HasRadio
 	@physical
 	//@haspart("*")
 	@property("*") // it is a property, with min occurs 0 and max occurs infinity ('*')
-	id : String @fk("MobileDevice,Beacon") // the value is a foreign key of @key in MobileDevice or Bean
+	id : String @fk("BluetoothScanningDevice,Beacon") // the value is a foreign key of @key in MobileDevice or Bean
 			    @subject // this is the subject of the @property
 	mac : String @fk("BluetoothRadio") 
 				@value // this is the primary value of the @property
@@ -48,8 +66,8 @@ declare ScanConfigurationRequest
 	@digital // it is a digital thing (or a description of a digital thing)
 	@message // it is a message
 	@stateful // its retraction is also significant (or just don't label it @event?)
-	device_id : String @fk("MobileDevice") @required 
-					@destination // this is the destination of the the @message
+	device_id : String @fk("BluetoothScanningDevice") @required 
+					@to // this is the destination of the the @message
 	interval_s : int @range("IntervalSeconds") 
 					@content // this is the content of the @message
 end
@@ -76,7 +94,7 @@ declare BluetoothSighting
 	@sensed // it is sensed, i.e. a digital approximation of something physical
 	@relationship("*:*")
 	@event // it is an event, i.e. a momentary (or time-limited) fact
-	device_id : String @fk("MobileDevice") @subject @required
+	device_id : String @fk("BluetoothScanningDevice") @subject @required
 	beacon_mac : String @fk("BluetoothRadio") @object @required
 	time : long @required @range("SystemTimeMillis")
 end
@@ -85,7 +103,7 @@ declare ShowContentRequest
 	@digital
 	@message
 	@event
-	device_id : String @fk("MobileDevice") @required @destination
+	device_id : String @fk("ContentDisplayDevice") @required @to
 	content_url : String @range("URL") @required @content
 	time : long @required @range("SystemTimeMillis")
 end

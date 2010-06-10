@@ -15,6 +15,8 @@ public class ProjectInfo {
 	protected String name;
 	/** rule files */
 	protected List<String> ruleFiles = new LinkedList<String>();
+	/** client types */
+	protected List<ClientTypeInfo> clientTypes = new LinkedList<ClientTypeInfo>();
 	/**
 	 * @return the name
 	 */
@@ -38,6 +40,18 @@ public class ProjectInfo {
 	 */
 	public void setRuleFiles(List<String> ruleFiles) {
 		this.ruleFiles = ruleFiles;
+	}
+	/**
+	 * @return the clientTypes
+	 */
+	public List<ClientTypeInfo> getClientTypes() {
+		return clientTypes;
+	}
+	/**
+	 * @param clientTypes the clientTypes to set
+	 */
+	public void setClientTypes(List<ClientTypeInfo> clientTypes) {
+		this.clientTypes = clientTypes;
 	}
 	
 }

@@ -148,7 +148,7 @@ public class DroolsUtils {
 				TypeFieldDescr field = entry.getValue();
 				tfd.setFieldMeta(field.getMetaAttributes());
 				// pattern has id & objectType; latter seems to be java type.
-				logger.info("Field "+entry.getKey()+": pattern="+field.getPattern()+", initExpr="+field.getInitExpr()+", ="+field.getText());
+				logger.info("Field "+entry.getKey()+": pattern="+field.getPattern()+", initExpr="+field.getInitExpr()+", ="+field.getText()+", meta="+field.getMetaAttributes());
 				tfd.setTypeName(field.getPattern().getObjectType());
 				tfds.put(entry.getKey(), tfd);
 			}
