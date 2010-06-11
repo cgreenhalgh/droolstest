@@ -106,7 +106,7 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 					return;
 				TypeDescription type = (TypeDescription)object;
 				if (type.isClient()) {
-					main.openClientTypePanel(type);
+					// no-op?! main.openClientTypePanel(type);
 				}
 				else if (type.isEntity()) {
 					main.openEntityTablePanel(type);

@@ -19,6 +19,7 @@ import javax.swing.ListSelectionModel;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 /** Panel supporting choice of subset of items from a list.
@@ -27,10 +28,6 @@ import java.beans.PropertyChangeSupport;
  *
  */
 public class ListSubsetPanel extends JPanel {
-	/** all items */
-	protected List<String> items;
-	/** selected items */
-	protected List<String> selectedItems;
 	/** property change support */
 	protected PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 	/** unselected list */
@@ -43,27 +40,16 @@ public class ListSubsetPanel extends JPanel {
 	 * @param items
 	 * @param selectedItems
 	 */
-	public ListSubsetPanel(List<String> items, List<String> selectedItems) {
+	public ListSubsetPanel() {
 		super(new GridBagLayout());
-		this.items = items;
-		this.selectedItems = selectedItems;
 		
 		unselectedListModel = new DefaultListModel();
 		unselectedList = new JList(unselectedListModel);
 		unselectedList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		
-		Collections.sort(items);
-		for (Object item : items)
-			if (!selectedItems.contains(item))
-			unselectedListModel.addElement(item);
-		
 		selectedListModel = new DefaultListModel();
 		selectedList = new JList(selectedListModel);
 		selectedList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		
-		Collections.sort(selectedItems);
-		for (Object item : selectedItems)
-			selectedListModel.addElement(item);
 		
 		GridBagConstraints c = new GridBagConstraints();
 		c.weightx = c.weighty = 1;
@@ -103,8 +89,6 @@ public class ListSubsetPanel extends JPanel {
 		
 		if (items==null || items.length==0)
 			return;
-		List<String> oldItems = new LinkedList<String>();
-		oldItems.addAll(this.items);
 		for (int i=0; i<items.length; i++) {
 			fromListModel.removeElement(items[i]);
 			int j=0;
@@ -112,36 +96,58 @@ public class ListSubsetPanel extends JPanel {
 				if (((String)items[i]).compareTo((String)toListModel.getElementAt(j))<0)
 					break;
 			toListModel.add(j, items[i]);
-			if (selecting)
-				this.items.add((String)items[i]);
-			else
-				this.items.remove((String)items[i]);
 		}
-		propertyChangeSupport.firePropertyChange("items", oldItems, items);
+		propertyChangeSupport.firePropertyChange("selectedListModel", null, selectedListModel);
+	}
+	
+	/**
+	 * @return the unselectedListModel
+	 */
+	public DefaultListModel getUnselectedListModel() {
+		return unselectedListModel;
 	}
 	/**
-	 * @return the items
+	 * @return the selectedListModel
 	 */
-	public List<String> getItems() {
-		return items;
+	public DefaultListModel getSelectedListModel() {
+		return selectedListModel;
+	}
+	
+	public void clear() {
+		selectedListModel.removeAllElements();
+		unselectedListModel.removeAllElements();
 	}
 	/**
-	 * @param items the items to set
+	 * @param arg0
+	 * @see java.beans.PropertyChangeSupport#addPropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
-	public void setItems(List<String> items) {
-		this.items = items;
+	public void addPropertyChangeListener(PropertyChangeListener arg0) {
+		propertyChangeSupport.addPropertyChangeListener(arg0);
 	}
 	/**
-	 * @return the selectedItems
+	 * @param arg0
+	 * @param arg1
+	 * @see java.beans.PropertyChangeSupport#addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
 	 */
-	public List<String> getSelectedItems() {
-		return selectedItems;
+	public void addPropertyChangeListener(String arg0,
+			PropertyChangeListener arg1) {
+		propertyChangeSupport.addPropertyChangeListener(arg0, arg1);
 	}
 	/**
-	 * @param selectedItems the selectedItems to set
+	 * @param arg0
+	 * @see java.beans.PropertyChangeSupport#removePropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
-	public void setSelectedItems(List<String> selectedItems) {
-		this.selectedItems = selectedItems;
+	public void removePropertyChangeListener(PropertyChangeListener arg0) {
+		propertyChangeSupport.removePropertyChangeListener(arg0);
+	}
+	/**
+	 * @param arg0
+	 * @param arg1
+	 * @see java.beans.PropertyChangeSupport#removePropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
+	 */
+	public void removePropertyChangeListener(String arg0,
+			PropertyChangeListener arg1) {
+		propertyChangeSupport.removePropertyChangeListener(arg0, arg1);
 	}
 	
 }

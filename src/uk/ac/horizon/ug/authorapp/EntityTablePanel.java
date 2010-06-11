@@ -7,16 +7,19 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.AbstractAction;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 
 import uk.ac.horizon.ug.authorapp.model.Project;
@@ -55,20 +58,8 @@ public class EntityTablePanel extends JPanel {
 
 		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		add(splitPane, BorderLayout.CENTER);
-
-		// TODO refresh...?
-		List<String> selectedTypes = new LinkedList<String>();
-		List<String> allTypes = new LinkedList<String>();
-		selectedTypes.add(typeName);
-		allTypes.add(typeName);
-		String types = type.getTypeMeta().get(TypeDescription.TypeMetaKeys.type.name());
-		if (types!=null) {
-			String typeNames[] = types.split("[, |\"]");
-			for (int i=0; i<typeNames.length; i++)
-				allTypes.add(typeNames[i]);
-		}
 		
-		typesPanel = new ListSubsetPanel(allTypes, selectedTypes);
+		typesPanel = new ListSubsetPanel();
 		splitPane.setTopComponent(typesPanel);
 		
 		model = new FactTableModel(type);
@@ -134,6 +125,26 @@ public class EntityTablePanel extends JPanel {
 	public void refresh(Project project, TypeDescription type ) {
 		this.project = project;
 		this.type = type; 
-		// TODO ...
+		typesPanel.clear();
+
+		List<String> selectedTypes = new LinkedList<String>();
+		List<String> allTypes = new LinkedList<String>();
+		selectedTypes.add(typeName);
+		allTypes.add(typeName);
+		String types = type.getTypeMeta().get(TypeDescription.TypeMetaKeys.type.name());
+		if (types!=null) {
+			String typeNames[] = types.split("[, |\"]");
+			for (int i=0; i<typeNames.length; i++)
+				allTypes.add(typeNames[i]);
+		}
+		Collections.sort(selectedTypes);
+		Collections.sort(allTypes);
+		DefaultListModel selectedListModel = typesPanel.getSelectedListModel();
+		DefaultListModel unselectedListModel = typesPanel.getUnselectedListModel();
+		for (String item : selectedTypes)
+			selectedListModel.addElement(item);
+		for (String item : allTypes) 
+			if (!selectedTypes.contains(item))
+				unselectedListModel.addElement(item);
 	}
 }

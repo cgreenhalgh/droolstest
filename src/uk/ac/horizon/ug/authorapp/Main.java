@@ -4,25 +4,34 @@
 package uk.ac.horizon.ug.authorapp;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -58,7 +67,13 @@ public class Main {
 	/** create gui */
 	void createGui() {
 		mainFrame = new JFrame("Horizon/UrbanGames/AuthorApp");
-		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		mainFrame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent arg0) {
+				handleExit();
+			}			
+		});
 		mainFrame.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
 		JMenuBar menuBar = new JMenuBar();
 		mainFrame.setJMenuBar(menuBar);
@@ -96,7 +111,7 @@ public class Main {
 			public void actionPerformed(ActionEvent arg0) {
 				if (JOptionPane.showConfirmDialog(mainFrame, "Exit?", "Exit", JOptionPane.YES_NO_CANCEL_OPTION)!=JOptionPane.YES_OPTION)
 					return;
-				System.exit(0);
+				handleExit();
 			}
 		}));
 		
@@ -122,6 +137,12 @@ public class Main {
 				projectInfoPanel.handleReloadRules();
 			}
 		}));
+		editMenu.add(new JMenuItem(new AbstractAction("New client type...") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				newClientType();
+			}
+		}));
 
 		JMenu viewMenu = new JMenu("View");
 		menuBar.add(viewMenu);
@@ -135,6 +156,72 @@ public class Main {
 		
 		// initial project
 		newProject();
+	}
+	protected void handleExit() {
+		if (project.isChanged()) {
+			int opt = JOptionPane.showConfirmDialog(mainFrame, "Project has changed; save?", "Load", JOptionPane.YES_NO_CANCEL_OPTION);
+			if (opt==JOptionPane.CANCEL_OPTION)
+				return;
+			if (opt==JOptionPane.YES_OPTION)
+				if (!saveProject())
+					// failed save
+					return;
+			// otherwise ok (no/saved)
+		}
+		System.exit(0);
+	}
+	/** post dialog to collect a String */
+	public static String getUserInput(Frame parent, String question, String title, String defaultValue) {
+		if (defaultValue!=null)
+			return JOptionPane.showInputDialog(parent, question, defaultValue);
+		else
+			return JOptionPane.showInputDialog(parent, question);
+		/*
+		final JDialog dialog = new JDialog(parent, title, true);
+		dialog.setLayout(new BorderLayout());
+		dialog.add(new JLabel(question), BorderLayout.NORTH);
+		final JTextField textField = new JTextField(80);
+		textField.setEditable(true);
+		if (defaultValue!=null)
+			textField.setText(defaultValue);
+		final boolean confirmed[] = new boolean[1];
+		AbstractAction ok = new AbstractAction("OK") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				confirmed[0] = true;
+				dialog.setVisible(false);
+			}			
+		};
+		textField.setAction(ok);
+		dialog.add(new JButton(ok), BorderLayout.SOUTH);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.setVisible(true);
+		if (!confirmed[0])
+			return null;
+		return textField.getText();
+		*/
+	}
+	/** create a new client type... */
+	protected void newClientType() {
+		getname:
+		while(true) {
+			String name = getUserInput(mainFrame, "New Client Type Name:", "New Client Type", null);
+			if (name==null || name.length()==0)
+				return;
+			List<ClientTypeInfo> clientTypes = project.getProjectInfo().getClientTypes();
+			for (ClientTypeInfo clientType : clientTypes) {
+				if (name.equals(clientType.getName())) {
+					JOptionPane.showMessageDialog(mainFrame, "Client type "+name+" already exists", "New Client Type", JOptionPane.ERROR_MESSAGE);
+					openClientTypePanel(clientType);
+					continue getname;
+				}
+			}
+			ClientTypeInfo clientType = new ClientTypeInfo(name);
+			project.getProjectInfo().getClientTypes().add(clientType);
+			project.setChanged(true);
+			openClientTypePanel(clientType);
+			return;
+		}		
 	}
 	protected ProjectInfoPanel projectInfoPanel;
 	protected BrowserPanel browserPanel;
@@ -175,6 +262,15 @@ public class Main {
 		}
 	}
 
+	void closeProjectInternal() {
+		project = new Project();
+		for (ClientTypePanel clientTypePanel : clientTypePanels.values()) {
+			tabbedPane.remove(clientTypePanel);
+		}
+		for (EntityTablePanel entityTablePanel : entityTablePanels.values()) {
+			tabbedPane.remove(entityTablePanel);
+		}
+	}
 	protected boolean saveAsProject() {
 		JFileChooser fileChooser = getProjectFileChooser();
 		if (project.getFile()!=null)
@@ -219,6 +315,7 @@ public class Main {
 		XStream xs = getProjectXStream();
 		File file = fileChooser.getSelectedFile();
 		// clear
+		closeProjectInternal();
 		project = new Project();
 		try {
 			FileInputStream fis = new FileInputStream(file);
@@ -249,7 +346,7 @@ public class Main {
 					return;
 			// otherwise ok (no/saved)
 		}
-
+		closeProjectInternal();
 		project = new Project();
 		project.setProjectInfo(new ProjectInfo());
 		project.getProjectInfo().setName("");
@@ -264,21 +361,24 @@ public class Main {
 		browserPanel.setProject(project);
 		for (ClientTypePanel clientTypePanel : clientTypePanels.values()) {
 			String name = clientTypePanel.getName();
-			TypeDescription type = project.getClientTypeDescription(name);
-			clientTypePanel.setType(project, type);
+			clientTypePanel.refresh(project);
+		}
+		for (ClientTypeInfo clientTypeInfo : project.getProjectInfo().getClientTypes()) {
+			if (!clientTypePanels.containsKey(clientTypeInfo.getName()))
+				openClientTypePanel(clientTypeInfo);
 		}
 	}
 
 	/** client panels, key by type name */
 	protected Map<String,ClientTypePanel> clientTypePanels = new HashMap<String,ClientTypePanel>();
 	/** open/to front client panel for type - swing thread */
-	public void openClientTypePanel(TypeDescription type) {
-		String name = type.getTypeName();
+	public void openClientTypePanel(ClientTypeInfo clientType) {
+		String name = clientType.getName();
 		if (clientTypePanels.containsKey(name)) {
 			tabbedPane.setSelectedComponent(clientTypePanels.get(name));
 			return;
 		}
-		ClientTypePanel clientTypePanel = new ClientTypePanel(name, project, type);
+		ClientTypePanel clientTypePanel = new ClientTypePanel(clientType, project);
 		clientTypePanels.put(name, clientTypePanel);
 		tabbedPane.add(name,clientTypePanel);
 		tabbedPane.setSelectedComponent(clientTypePanel);		

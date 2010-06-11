@@ -45,6 +45,8 @@ public class ProjectInfo {
 	 * @return the clientTypes
 	 */
 	public List<ClientTypeInfo> getClientTypes() {
+		if (clientTypes==null) 
+			clientTypes = new LinkedList<ClientTypeInfo>();
 		return clientTypes;
 	}
 	/**
