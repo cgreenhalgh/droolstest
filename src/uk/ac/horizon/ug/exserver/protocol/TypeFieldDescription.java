@@ -14,7 +14,9 @@ public class TypeFieldDescription {
 	protected Map<String,String> fieldMeta;
 	/** system field metadata keys */
 	public static enum FieldMetaKeys { range, 
-		fk, 
+		fk, // foreign key 
+		key, // drools built-in; key
+		id, // our own entity PK
 		required, 
 		subject, object, value, // relationship / property
 		content, from, to // message
@@ -84,5 +86,13 @@ public class TypeFieldDescription {
 	/** get to metadata */
 	public boolean isTo() {
 		return fieldMeta.containsKey(FieldMetaKeys.to.name());
+	}
+	/** get key metadata */
+	public boolean isKey() {
+		return fieldMeta.containsKey(FieldMetaKeys.key.name());
+	}
+	/** get id metadata */
+	public boolean isId() {
+		return fieldMeta.containsKey(FieldMetaKeys.id.name());
 	}
 }

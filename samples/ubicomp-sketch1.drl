@@ -16,6 +16,7 @@ declare MobileDevice
 	@client // it is a (potential) client
 	@type("Located")
 	id : String @key
+		@id // for entity; optional if only one key element
 end
 
 declare BluetoothScanningDevice

@@ -172,5 +172,15 @@ public class Project {
 		}
 		return null;
 	}
+	/** get TypeDescription for client of given type name */
+	public TypeDescription getTypeDescription(String name) {
+		if (types==null)
+			return null;
+		for (TypeDescription type: types) {
+			if (name.equals(type.getTypeName()))
+				return type;
+		}
+		return null;
+	}
 	
 }

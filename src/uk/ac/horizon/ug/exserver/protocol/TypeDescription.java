@@ -259,4 +259,38 @@ public class TypeDescription {
 			return sb.toString();
 		}
 	}
+	/** get name of id field (if any). If no @id field then use @key field if
+	 * there is only one.
+	 * 
+	 * @return
+	 */
+	public String getIdFieldName() {
+		if (fields==null)
+			return null;
+		String keyField = null;
+		int keyCount = 0;
+		for (Map.Entry<String, TypeFieldDescription> field : this.fields.entrySet()) {
+			if (field.getValue().isId())
+				return field.getKey();
+			if (field.getValue().isKey()) {
+				keyField = field.getKey();
+				keyCount++;
+			}
+		}
+		if (keyCount==1)
+			return keyField;
+		return null;
+	}
+	/** get @subject field name (if any). */
+	public String getSubjectFieldName() {
+		if (fields==null)
+			return null;
+		String keyField = null;
+		int keyCount = 0;
+		for (Map.Entry<String, TypeFieldDescription> field : this.fields.entrySet()) {
+			if (field.getValue().isSubject())
+				return field.getKey();
+		}
+		return null;
+	}
 }
