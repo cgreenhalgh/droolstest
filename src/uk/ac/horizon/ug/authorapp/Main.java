@@ -380,7 +380,7 @@ public class Main {
 		}
 		ClientTypePanel clientTypePanel = new ClientTypePanel(clientType, project);
 		clientTypePanels.put(name, clientTypePanel);
-		tabbedPane.add(name,clientTypePanel);
+		tabbedPane.add("Client: "+name,clientTypePanel);
 		tabbedPane.setSelectedComponent(clientTypePanel);		
 	}
 	/** client panels, key by type name */
@@ -394,7 +394,7 @@ public class Main {
 		}
 		EntityTablePanel entityTablePanel = new EntityTablePanel(name, project, type);
 		entityTablePanels.put(name, entityTablePanel);
-		tabbedPane.add(name,entityTablePanel);
+		tabbedPane.add("Entity: "+name,entityTablePanel);
 		tabbedPane.setSelectedComponent(entityTablePanel);		
 	}
 }

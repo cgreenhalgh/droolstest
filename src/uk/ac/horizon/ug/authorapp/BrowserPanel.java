@@ -94,7 +94,7 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 	AbstractAction getViewAction(final Main main) {
 		if (viewAction!=null)
 			return viewAction;
-		viewAction = new AbstractAction("View...") {
+		viewAction = new AbstractAction("View") {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				TreePath path = tree.getSelectionPath();

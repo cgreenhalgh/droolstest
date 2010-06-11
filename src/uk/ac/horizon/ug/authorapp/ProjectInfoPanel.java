@@ -5,6 +5,7 @@ package uk.ac.horizon.ug.authorapp;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.io.File;
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class ProjectInfoPanel extends JPanel {
 	protected RuleFileTableModel ruleFileTableModel = new RuleFileTableModel();
 	protected JTable ruleErrorTable;
 	protected RuleErrorTableModel ruleErrorTableModel = new RuleErrorTableModel();
+	protected JSplitPane splitPane;
 	/** get/make file chooser */
 	JFileChooser getRuleFileChooser() {
 		if (ruleFileChooser!=null)
@@ -45,20 +47,23 @@ public class ProjectInfoPanel extends JPanel {
 	/** cons */
 	public ProjectInfoPanel(Project project) {
 		super(new BorderLayout());
-		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		add(splitPane, BorderLayout.CENTER);
 		JPanel top = new JPanel(new BorderLayout());
 		splitPane.setTopComponent(top);
+		splitPane.setResizeWeight(0.5);
 		top.add(new JLabel("Rule files"), BorderLayout.NORTH);
 		ruleFileTable = new JTable(ruleFileTableModel);
-		top.add(new JScrollPane(ruleFileTable), BorderLayout.CENTER);
+		JScrollPane sp = new JScrollPane(ruleFileTable);
+		sp.setPreferredSize(new Dimension(500,300));
+		top.add(sp, BorderLayout.CENTER);
 		JPanel bottom = new JPanel(new BorderLayout());
 		splitPane.setBottomComponent(bottom);
 		bottom.add(new JLabel("Errors"), BorderLayout.NORTH);
 		ruleErrorTable = new JTable(ruleErrorTableModel);
 		bottom.add(new JScrollPane(ruleErrorTable), BorderLayout.CENTER);
 
-		splitPane.setAlignmentY(0.5f);
+		//splitPane.setDividerLocation(0.5);
 
 		setProject(project);
 	}
@@ -66,9 +71,7 @@ public class ProjectInfoPanel extends JPanel {
 	public void setProject(Project project) {
 		this.project = project;
 		ruleFileTableModel.fireTableDataChanged();
-		if (project!=null)
-			project.reloadRuleFiles();
-		ruleErrorTableModel.fireTableDataChanged();
+		handleReloadRules();
 	}
 	/** swing thread */
 	public void handleAddRuleFile() {
@@ -93,7 +96,8 @@ public class ProjectInfoPanel extends JPanel {
 		Cursor c = this.getCursor();
 		try {
 			setCursor(Cursor.getPredefinedCursor(JFrame.WAIT_CURSOR));
-			project.reloadRuleFiles();
+			if (project!=null)
+				project.reloadRuleFiles();
 			ruleErrorTableModel.fireTableDataChanged();
 		}
 		finally {
