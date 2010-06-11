@@ -70,7 +70,7 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 		typesPanel.addPropertyChangeListener("selectedListModel", this);
 		//splitPane.setResizeWeight(0.25);
 		
-		model = new EntityTableModel(type, new LinkedList<TypeDescription>());
+		model = new EntityTableModel(type, new LinkedList<TypeDescription>(), null);
 		table = new JTable(model);
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		splitPane.setBottomComponent(new JScrollPane(table));
@@ -102,10 +102,10 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 				int rows[] = table.getSelectedRows();
 				Arrays.sort(rows);
 				for (int i=rows.length-1; i>=0; i--) {
-//					if (model.markDelete(rows[i]))
-//						model.fireTableRowsDeleted(rows[i], rows[1]);
-//					else
-//						model.fireTableCellUpdated(rows[i], 1);
+					// TODO includeSubFacts?
+					int deleted = model.deleteRow(rows[i], false);
+					if (deleted>=1)
+						model.fireTableRowsDeleted(rows[i], rows[i]+deleted-1);
 				}
 			}
 		}));
@@ -179,7 +179,7 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 			else
 				logger.log(Level.WARNING, "Cannot find facet type "+facetName);
 		}
-		model = new EntityTableModel(type, facets);
+		model = new EntityTableModel(type, facets, project.getProjectInfo().getDefaultFactStore());
 		table.setModel(model);
 	}
 

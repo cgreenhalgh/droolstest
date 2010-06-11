@@ -11,6 +11,7 @@ import java.util.List;
 import org.drools.KnowledgeBase;
 import org.drools.lang.descr.TypeDeclarationDescr;
 
+import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.exserver.DroolsUtils;
 import uk.ac.horizon.ug.exserver.protocol.RulesetErrors;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
@@ -51,13 +52,26 @@ public class Project {
 	 * @return the changed
 	 */
 	public boolean isChanged() {
-		return changed;
+		if (changed)
+			return true;
+		if (projectInfo!=null) {
+			List<FactStore> fss = projectInfo.getFactStores();
+			for (FactStore fs : fss) 
+				if (fs.isChanged())
+					return true;
+		}
+		return false;
 	}
 	/**
 	 * @param changed the changed to set
 	 */
 	public void setChanged(boolean changed) {
 		this.changed = changed;
+		if (projectInfo!=null) {
+			List<FactStore> fss = projectInfo.getFactStores();
+			for (FactStore fs : fss) 
+				fs.setChanged(false);
+		}
 	}
 	/**
 	 * @return the file

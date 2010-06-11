@@ -3,6 +3,7 @@
  */
 package uk.ac.horizon.ug.exserver.devclient;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -44,7 +45,9 @@ public class Fact {
 	 * @return the fieldValues
 	 */
 	public Map<String, Object> getFieldValues() {
-		return fieldValues;
+		if (fieldValues==null)
+			fieldValues = new HashMap<String,Object>();
+		return fieldValues;		
 	}
 	/**
 	 * @param fieldValues the fieldValues to set
