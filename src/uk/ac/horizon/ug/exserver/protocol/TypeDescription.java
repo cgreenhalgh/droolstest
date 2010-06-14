@@ -285,8 +285,6 @@ public class TypeDescription {
 	public String getSubjectFieldName() {
 		if (fields==null)
 			return null;
-		String keyField = null;
-		int keyCount = 0;
 		for (Map.Entry<String, TypeFieldDescription> field : this.fields.entrySet()) {
 			if (field.getValue().isSubject())
 				return field.getKey();

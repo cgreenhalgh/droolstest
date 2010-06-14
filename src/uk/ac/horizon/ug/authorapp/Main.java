@@ -267,9 +267,11 @@ public class Main {
 		for (ClientTypePanel clientTypePanel : clientTypePanels.values()) {
 			tabbedPane.remove(clientTypePanel);
 		}
+		clientTypePanels.clear();
 		for (EntityTablePanel entityTablePanel : entityTablePanels.values()) {
 			tabbedPane.remove(entityTablePanel);
 		}
+		entityTablePanels.clear();
 	}
 	protected boolean saveAsProject() {
 		JFileChooser fileChooser = getProjectFileChooser();

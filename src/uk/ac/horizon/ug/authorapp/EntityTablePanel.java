@@ -121,8 +121,13 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 		model.fireTableDataChanged();
 	}
 	void addFact(Fact fact) {
-		model.addFact(fact);
-		model.fireTableRowsInserted(model.getRowCount()-1, model.getRowCount()-1);
+		try {
+			model.addFact(fact);
+			model.fireTableRowsInserted(model.getRowCount()-1, model.getRowCount()-1);
+		}
+		catch (Exception e) {
+			JOptionPane.showMessageDialog(this, e.getMessage(), "Add fact", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	/**
 	 * @return the typeName

@@ -3,6 +3,7 @@
  */
 package uk.ac.horizon.ug.authorapp;
 
+import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -177,7 +178,7 @@ public class EntityTableModel extends AbstractTableModel {
 				if (subFacts!=null && subFacts.size()>row) {
 					if (ci.columnType==ColumnInfo.ColumnType.exists)
 						return true;
-					return subFacts.get(row).getFieldValues().get(ci.type.getTypeName());
+					return subFacts.get(row).getFieldValues().get(ci.fieldName);
 				}
 				if (ci.columnType==ColumnInfo.ColumnType.exists)
 					return false;
@@ -268,7 +269,7 @@ public class EntityTableModel extends AbstractTableModel {
 						// knock-on effect
 						this.fireTableRowsUpdated(row, row);
 						// extra row?!
-						if (subFacts.size()>=fi.rowCount) {
+						if (subFacts.size()>=fi.rowCount && ci.multiple) {
 							fi.rowCount++;
 							// extra row
 							this.fireTableRowsInserted(rowIndex+1, rowIndex+1);
@@ -284,10 +285,12 @@ public class EntityTableModel extends AbstractTableModel {
 					String sval = aValue.toString();
 					if (sval.length()==0 || sval.startsWith("f") || sval.startsWith("F") || sval.startsWith("0"))
 					{
+						logger.info("delete subfact "+subFact);
 						// delete
 						factStore.removeFact(subFact);
 						subFacts.remove(row);
 						// TODO maybe reduce rowCount
+						this.fireTableRowsUpdated(rowIndex, rowIndex);
 					}
 					// else leave - no-op
 					return;
@@ -303,6 +306,13 @@ public class EntityTableModel extends AbstractTableModel {
 	}
 	/** add a fact/row */
 	public void addFact(Fact fact) {
+		if (pkFieldName!=null) {
+			Object id = fact.getFieldValues().get(pkFieldName);
+			if (id==null)
+				throw new InvalidParameterException("addFact for Fact with no id value ("+fact.getTypeName()+"."+pkFieldName+")");
+			if (factStore.getFact(fact.getTypeName(), pkFieldName, id)!=null)
+				throw new InvalidParameterException("addFact for Fact already present ("+fact.getTypeName()+"."+pkFieldName+"="+id+")");
+		}
 		factStore.addFact(fact);
 		addFactInternal(fact);
 	}
@@ -310,6 +320,43 @@ public class EntityTableModel extends AbstractTableModel {
 		FactInfo fi = new FactInfo();
 		fi.mainFact = fact;
 		fi.rowCount = 1;
+		if(pkFieldName!=null) {
+			// subfacts...
+			Object id = fact.getFieldValues().get(pkFieldName);
+			if (id==null) {
+				logger.log(Level.WARNING,"Add fact with no id ("+pkFieldName+")");
+			}
+			else {
+				for (ColumnInfo ci : this.columns) {
+					// note: only checks/add on exists column...
+					if (ci.type!=this.mainType && ci.columnType==ColumnInfo.ColumnType.exists) {
+						String idField = ci.type.getIdFieldName();
+						if (idField==null)
+							idField = ci.type.getSubjectFieldName();
+						if (idField==null) {
+							logger.log(Level.WARNING,"Add fact with visible type "+ci.type.getTypeName()+" without id/subject");
+							continue;
+						}
+						List<Fact> subFacts = factStore.getFacts(ci.type.getTypeName(), idField, id);
+						List<Fact> knownSubFacts = fi.subFacts.get(ci.type.getTypeName());
+						if (knownSubFacts==null) {
+							knownSubFacts = new LinkedList<Fact>();
+							fi.subFacts.put(ci.type.getTypeName(), knownSubFacts);
+						}
+							// check/add each
+						for (Fact subFact : subFacts) {
+							if (!knownSubFacts.contains(subFact))
+								knownSubFacts.add(subFact);
+						}
+						if (knownSubFacts.size()>fi.rowCount)
+							fi.rowCount = knownSubFacts.size();
+						if (ci.multiple && knownSubFacts.size()==fi.rowCount)
+							fi.rowCount++;
+					}
+				}
+			}
+		}
+		
 		// TODO fi.subFacts
 		facts.add(fi);
 	}
@@ -317,10 +364,13 @@ public class EntityTableModel extends AbstractTableModel {
 	 * @return rows deleted */
 	public int deleteRow(int row, boolean includeSubFacts) {
 		// TODO Auto-generated method stub
-		for (FactInfo fi : facts) {
+		for (int i=0; i<facts.size(); i++) {
+			FactInfo fi = facts.get(i);
 			if (row>=0 && row<fi.rowCount) {
 				if (row==0) {
 					factStore.removeFact(fi.mainFact);
+					facts.remove(i);
+					logger.info("Delete main fact "+fi.mainFact+" ("+fi.rowCount+" rows)");
 					// TODO includeSubFacts
 					return fi.rowCount;
 				}
