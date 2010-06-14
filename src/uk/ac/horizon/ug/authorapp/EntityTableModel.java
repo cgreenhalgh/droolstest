@@ -14,8 +14,15 @@ import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import uk.ac.horizon.ug.authorapp.EntityTableModel.ColumnInfo.ColumnType;
+import uk.ac.horizon.ug.authorapp.customtype.CustomFieldType;
 import uk.ac.horizon.ug.exserver.devclient.Fact;
 import uk.ac.horizon.ug.exserver.protocol.Operation;
 import uk.ac.horizon.ug.exserver.protocol.RawFactHolder;
@@ -131,6 +138,7 @@ public class EntityTableModel extends AbstractTableModel {
 	}
 	public void clear() {
 		facts = new LinkedList<FactInfo>();
+		fireTableDataChanged();
 	}
 	/* (non-Javadoc)
 	 * @see javax.swing.table.TableModel#getColumnCount()
@@ -148,6 +156,34 @@ public class EntityTableModel extends AbstractTableModel {
 		return columns.get(n).title;
 	}
 
+	/* (non-Javadoc)
+	 * @see javax.swing.table.AbstractTableModel#getColumnClass(int)
+	 */
+	@Override
+	public Class<?> getColumnClass(int columnIndex) {
+		ColumnInfo ci = columns.get(columnIndex);
+		if (ci.columnType==ColumnInfo.ColumnType.exists)
+			return Boolean.class;
+		if (ci.fieldName!=null) {
+			TypeFieldDescription field = ci.type.getFields().get(ci.fieldName);
+			// WARNING: underling type in our representation are currently strings, so this won't work
+//			
+//			if (field.getTypeName().equals("boolean"))
+//				return Boolean.class;
+//			else if (field.getTypeName().equals("int"))
+//				return Number.class;
+//			else if (field.getTypeName().equals("long"))
+//				return Number.class;
+//			else if (field.getTypeName().equals("short"))
+//				return Number.class;
+//			else if (field.getTypeName().equals("float"))
+//				return Float.class;
+//			else if (field.getTypeName().equals("double"))
+//				return Double.class;
+			// TODO other field types...?
+		}
+		return super.getColumnClass(columnIndex);
+	}
 	/* (non-Javadoc)
 	 * @see javax.swing.table.TableModel#getRowCount()
 	 */
@@ -295,9 +331,14 @@ public class EntityTableModel extends AbstractTableModel {
 					// else leave - no-op
 					return;
 				} 
-				else {
+				else if (ci.fieldName!=null){
 					// edit
-					subFact.getFieldValues().put(ci.fieldName, aValue.toString());
+					if (aValue==null)
+						subFact.getFieldValues().remove(ci.fieldName);
+					else {
+						String sval = aValue.toString();
+						subFact.getFieldValues().put(ci.fieldName, sval);
+					}
 					factStore.updateFact(subFact);				
 				}
 			}
@@ -355,15 +396,14 @@ public class EntityTableModel extends AbstractTableModel {
 					}
 				}
 			}
-		}
-		
-		// TODO fi.subFacts
+		}		
 		facts.add(fi);
+		fireTableRowsInserted(getRowCount()-fi.rowCount, getRowCount()-1);
 	}
 	/** delete a row !
 	 * @return rows deleted */
-	public int deleteRow(int row, boolean includeSubFacts) {
-		// TODO Auto-generated method stub
+	public int deleteRow(int rowIndex, boolean includeSubFacts) {
+		int row = rowIndex;
 		for (int i=0; i<facts.size(); i++) {
 			FactInfo fi = facts.get(i);
 			if (row>=0 && row<fi.rowCount) {
@@ -372,6 +412,7 @@ public class EntityTableModel extends AbstractTableModel {
 					facts.remove(i);
 					logger.info("Delete main fact "+fi.mainFact+" ("+fi.rowCount+" rows)");
 					// TODO includeSubFacts
+					fireTableRowsDeleted(rowIndex, rowIndex+fi.rowCount-1);
 					return fi.rowCount;
 				}
 				// TODO add'l subfacts
@@ -380,5 +421,31 @@ public class EntityTableModel extends AbstractTableModel {
 			row -= fi.rowCount;
 		}
 		return 0;
+	}
+	protected DefaultTableColumnModel columnModel = null;
+	/** get column model */
+	public synchronized TableColumnModel getColumnModel() {
+		if (columnModel!=null)
+			return columnModel;
+		columnModel = new DefaultTableColumnModel();
+		for (int i=0; i<columns.size(); i++) {
+			ColumnInfo ci = columns.get(i);
+			TableCellRenderer cellRenderer = null;
+			TableCellEditor cellEditor = null;
+			if (ci.columnType==ColumnInfo.ColumnType.field && ci.fieldName!=null) {
+				String type = ci.type.getFields().get(ci.fieldName).getMetaType();
+				if (type!=null) {
+					CustomFieldType cft = PluginManager.getPluginManager().getCustomFieldType(type);
+					if (cft!=null) {
+						logger.info("Found CustomFieldType for table: "+type);
+						cellRenderer = cft.getTableCellRenderer();
+						cellEditor = cft.getTableCellEditor();
+					}
+				}
+			}
+			logger.info("Column "+i+", renderer="+cellRenderer+", editor="+cellEditor);
+			columnModel.addColumn(new TableColumn(i, 75, cellRenderer, cellEditor));
+		}
+		return columnModel;
 	}
 }

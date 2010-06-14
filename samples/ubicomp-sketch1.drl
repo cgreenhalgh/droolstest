@@ -48,7 +48,7 @@ declare BluetoothRadio
 	@entity
 	@inferred // facts are automatically inferred via rules 
 				// in this case from HasRadio and/or BluetoothSighting
-	mac : String @key @range("BluetoothMAC")
+	mac : String @key @type("BluetoothMAC")
 end
 
 declare Local2DCoordinateSystem
@@ -56,12 +56,12 @@ declare Local2DCoordinateSystem
 	@entity
 	@describedbyauthor // survey?
 	id : String @key
-	min_x : double @range("Local2DCoordinateSystem/x")
-	max_x : double @range("Local2DCoordinateSystem/x")
-//	x_scale : double @range("metres")
-	min_y : double @range("Local2DCoordinateSystem/y")
-	max_y : double @range("Local2DCoordinateSystem/y")
-	map_url : String @range("URL")
+	min_x : double @type("Local2DCoordinateSystem:x")
+	max_x : double @type("Local2DCoordinateSystem:x")
+//	x_scale : double @type("metres")
+	min_y : double @type("Local2DCoordinateSystem:y")
+	max_y : double @type("Local2DCoordinateSystem:y")
+	map_url : String @type("URL")
 	// WGS84 definition...?
 end
 
@@ -79,10 +79,10 @@ declare Local2DCoordinate
 	@describedbysurvey
 	located_id : String @key @fk("Located") @subject
 	system_id : String @key @fk("Local2DCoordinateSystem")
-	x : double @value @range("Local2DCoordinateSystem/x")
-	y : double @value @range("Local2DCoordinateSystem/y")
-	radius : double @qualifier @default(0)  @range("Local2DCoordinateSystem/radius") // of value(s) ?!
-	confidence : double @qualifier @default(1) @range("confidence") // of value(s) ?!
+	x : double @value @type("Local2DCoordinateSystem:x")
+	y : double @value @type("Local2DCoordinateSystem:y")
+	radius : double @qualifier @default(0)  @type("Local2DCoordinateSystem/radius") // of value(s) ?!
+	confidence : double @qualifier @default(1) @type("confidence") // of value(s) ?!
 end
 
 declare HasRadio 
@@ -95,7 +95,7 @@ declare HasRadio
 	mac : String @fk("BluetoothRadio") 
 				@value // this is the primary value of the @property
 				@required // it is not optional
-				@range("BluetoothMAC")
+				@type("BluetoothMAC")
 	scanner : boolean
 	permanent : boolean  
 end
@@ -106,7 +106,7 @@ declare ScanConfigurationRequest
 	@stateful // its retraction is also significant (or just don't label it @event?)
 	device_id : String @fk("BluetoothScanningDevice") @required 
 					@to // this is the destination of the the @message
-	interval_s : int @range("IntervalSeconds") 
+	interval_s : int @type("IntervalSeconds") 
 					@content // this is the content of the @message
 end
 
@@ -125,7 +125,7 @@ declare BeaconContent
 	@describedbyauthor // it is authored
 	beacon_id : String @fk("Beacon") @required 
 						@subject // this is the subject of the @property
-	content_url : String @range("URL") @required 
+	content_url : String @type("URL") @required 
 						@value // this is the value of the @property	
 end
 
@@ -134,8 +134,8 @@ declare BluetoothSighting
 	@relationship("*:*")
 	@event // it is an event, i.e. a momentary (or time-limited) fact
 	device_id : String @fk("BluetoothScanningDevice") @subject @required
-	beacon_mac : String @fk("BluetoothRadio") @object @required @range("BluetoothMAC")
-	time : long @required @range("SystemTimeMillis")
+	beacon_mac : String @fk("BluetoothRadio") @object @required @type("BluetoothMAC")
+	time : long @required @type("SystemTimeMillis")
 end
 
 declare ShowContentRequest
@@ -143,8 +143,8 @@ declare ShowContentRequest
 	@message
 	@event
 	device_id : String @fk("ContentDisplayDevice") @required @to
-	content_url : String @range("URL") @required @content
-	time : long @required @range("SystemTimeMillis")
+	content_url : String @type("URL") @required @content
+	time : long @required @type("SystemTimeMillis")
 end
 
 declare Accepts
@@ -153,7 +153,7 @@ declare Accepts
 	@property("*")
 	@fixed // it does not change over the lifetime of the subject
 	device_id : String @fk("MobileDevice") @required @subject
-	request_type : String @range("Class[@message]") @required @value
+	request_type : String @type("Class[@message]") @required @value
 end
 
 declare Publishes
@@ -162,7 +162,7 @@ declare Publishes
 	@property("*")
 	@fixed
 	device_id : String @fk("MobileDevice") @required @subject
-	fact_type : String @range("Class") @required @value
+	fact_type : String @type("Class") @required @value
 end
 
 declare SuitableMobileDevice

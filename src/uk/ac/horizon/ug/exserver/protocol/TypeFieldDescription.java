@@ -13,8 +13,9 @@ public class TypeFieldDescription {
 	/** type-wide metadata */
 	protected Map<String,String> fieldMeta;
 	/** system field metadata keys */
-	public static enum FieldMetaKeys { range, 
+	public static enum FieldMetaKeys { 
 		fk, // foreign key 
+		type, // type/range
 		key, // drools built-in; key
 		id, // our own entity PK
 		required, 
@@ -51,9 +52,9 @@ public class TypeFieldDescription {
 	public void setTypeName(String typeName) {
 		this.typeName = typeName;
 	}
-	/** get range metadata */
-	public String getRange() {
-		return fieldMeta.get(FieldMetaKeys.range.name());
+	/** get type metadata */
+	public String getMetaType() {
+		return fieldMeta.get(FieldMetaKeys.type.name());
 	}
 	/** get fk metadata */
 	public String getFk() {

@@ -293,10 +293,15 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 		for (TypeDescription type : types) {
 			nextfield:
 			for (Map.Entry<String,TypeFieldDescription> field : type.getFields().entrySet()) {
-				String range = field.getValue().getFieldMeta().get(TypeFieldDescription.FieldMetaKeys.range.name());
-				if (range==null) 
+				String metaType = field.getValue().getFieldMeta().get(TypeFieldDescription.FieldMetaKeys.type.name());
+				if (metaType==null) 
 					continue nextfield;
-				rangeNames.add(range);
+				if (metaType.startsWith("\"")) {
+					metaType = metaType.substring(1);
+					if (metaType.lastIndexOf('"')>=0)
+						metaType = metaType.substring(0, metaType.lastIndexOf('"'));
+				}
+				rangeNames.add(metaType);
 			}
 		}
 		for (String rangeName : rangeNames)
@@ -315,7 +320,7 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 			root.add(makeFilteredTypesNode("Authored Entities", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
 			root.add(makeFilteredTypesNode("Authored Properties", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.property.name()}, types));
 			root.add(makeFilteredTypesNode("Authored Relationships", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.relationship.name()}, types));
-			root.add(makeRangeTypesNode("Range Types", types));
+			root.add(makeRangeTypesNode("Custom Types", types));
 		}
 		treeModel.reload();
 	}

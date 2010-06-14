@@ -4,6 +4,7 @@
 package uk.ac.horizon.ug.authorapp;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -26,6 +27,9 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import uk.ac.horizon.ug.authorapp.model.Project;
 import uk.ac.horizon.ug.exserver.devclient.Fact;
@@ -72,7 +76,12 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 		
 		model = new EntityTableModel(type, new LinkedList<TypeDescription>(), null);
 		table = new JTable(model);
+		// Java 1.6
+		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+		table.setRowSorter(sorter);
+
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		table.setDefaultRenderer(Object.class, new FieldCellRenderer());
 		splitPane.setBottomComponent(new JScrollPane(table));
 		JPanel buttons = new JPanel(new FlowLayout());
 		buttons.add(new JButton(new AbstractAction("Add fact") {
@@ -103,9 +112,10 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 				Arrays.sort(rows);
 				for (int i=rows.length-1; i>=0; i--) {
 					// TODO includeSubFacts?
-					int deleted = model.deleteRow(rows[i], false);
-					if (deleted>=1)
-						model.fireTableRowsDeleted(rows[i], rows[i]+deleted-1);
+					// Java 1.6! (rowindextomodel)
+					model.deleteRow(table.convertRowIndexToModel(rows[i]), false);
+					// Pre-1.6 - no TableFiler: 
+					// model.deleteRow(rows[i], false);
 				}
 			}
 		}));
@@ -118,12 +128,10 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 
 	void clear() {
 		model.clear();
-		model.fireTableDataChanged();
 	}
 	void addFact(Fact fact) {
 		try {
 			model.addFact(fact);
-			model.fireTableRowsInserted(model.getRowCount()-1, model.getRowCount()-1);
 		}
 		catch (Exception e) {
 			JOptionPane.showMessageDialog(this, e.getMessage(), "Add fact", JOptionPane.ERROR_MESSAGE);
@@ -186,10 +194,31 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 		}
 		model = new EntityTableModel(type, facets, project.getProjectInfo().getDefaultFactStore());
 		table.setModel(model);
+		table.setColumnModel(model.getColumnModel());
+		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+		table.setRowSorter(sorter);
 	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent pce) {
 		refreshTable();
+	}
+	/** custom cell renderer, e.g. show full value as tooltip */
+	static class FieldCellRenderer extends DefaultTableCellRenderer {
+
+		/* (non-Javadoc)
+		 * @see javax.swing.table.DefaultTableCellRenderer#getTableCellRendererComponent(javax.swing.JTable, java.lang.Object, boolean, boolean, int, int)
+		 */
+		@Override
+		public Component getTableCellRendererComponent(JTable arg0,
+				Object value, boolean arg2, boolean arg3, int arg4, int arg5) {
+			if (value!=null)
+				setToolTipText(value.toString());
+			else
+				this.setToolTipText(null);
+			// TODO Auto-generated method stub
+			return super.getTableCellRendererComponent(arg0, value, arg2, arg3, arg4, arg5);
+		}
+		
 	}
 }
