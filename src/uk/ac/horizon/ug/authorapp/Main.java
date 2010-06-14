@@ -128,6 +128,7 @@ public class Main {
 			public void actionPerformed(ActionEvent arg0) {
 				tabbedPane.setSelectedComponent(projectInfoPanel);
 				projectInfoPanel.handleAddRuleFile();
+				refresh();
 			}
 		}));
 		editMenu.add(new JMenuItem(new AbstractAction("Reload rules") {
@@ -135,12 +136,28 @@ public class Main {
 			public void actionPerformed(ActionEvent arg0) {
 				tabbedPane.setSelectedComponent(projectInfoPanel);
 				projectInfoPanel.handleReloadRules();
+				refresh();
 			}
 		}));
 		editMenu.add(new JMenuItem(new AbstractAction("New client type...") {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				newClientType();
+			}
+		}));
+		editMenu.add(new JMenuItem(new AbstractAction("New view...") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				newCustomView();
+			}
+		}));
+		editMenu.add(new JMenuItem(new AbstractAction("Configure view...") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (tabbedPane.getSelectedComponent() instanceof CustomViewPanel) {
+					CustomViewPanel cvp = (CustomViewPanel)tabbedPane.getSelectedComponent();
+					cvp.showConfigDialog();
+				}
 			}
 		}));
 
@@ -268,6 +285,16 @@ public class Main {
 			tabbedPane.remove(clientTypePanel);
 		}
 		clientTypePanels.clear();
+		closeEntityTablePanels();
+		closeCustomViewPanels();
+	}
+	void closeCustomViewPanels() {
+		for (CustomViewPanel customViewPanel : customViewPanels.values()) {
+			tabbedPane.remove(customViewPanel);
+		}
+		customViewPanels.clear();
+	}
+	void closeEntityTablePanels() {
 		for (EntityTablePanel entityTablePanel : entityTablePanels.values()) {
 			tabbedPane.remove(entityTablePanel);
 		}
@@ -369,6 +396,12 @@ public class Main {
 			if (!clientTypePanels.containsKey(clientTypeInfo.getName()))
 				openClientTypePanel(clientTypeInfo);
 		}
+		closeEntityTablePanels();
+		closeCustomViewPanels();
+		// TODO views
+		for (CustomViewInfo cvi : project.getProjectInfo().getCustomViews()) {
+			openCustomViewPanel(cvi);
+		}
 	}
 
 	/** client panels, key by type name */
@@ -398,5 +431,27 @@ public class Main {
 		entityTablePanels.put(name, entityTablePanel);
 		tabbedPane.add("Entity: "+name,entityTablePanel);
 		tabbedPane.setSelectedComponent(entityTablePanel);		
+	}
+	/** custom view panels, key by name */
+	protected Map<String,CustomViewPanel> customViewPanels = new HashMap<String,CustomViewPanel>();
+	/** open new custom view panel */
+	public void newCustomView() {
+		String name = getUserInput(mainFrame, "New Custom View name?", "New View", null);
+		if (name==null || name.length()==0)
+			return;
+		if(customViewPanels.containsKey(name)) {
+			tabbedPane.setSelectedComponent(customViewPanels.get(name));
+			return;
+		}
+		CustomViewInfo cvi = new CustomViewInfo(name);
+		project.getProjectInfo().getCustomViews().add(cvi);
+		project.setChanged(true);
+		openCustomViewPanel(cvi);
+	}
+	public void openCustomViewPanel(CustomViewInfo cvi) {	
+		CustomViewPanel cvp = new CustomViewPanel(project, cvi);
+		customViewPanels.put(cvi.getName(), cvp);
+		tabbedPane.add("View: "+cvi.getName(), cvp);
+		tabbedPane.setSelectedComponent(cvp);		
 	}
 }

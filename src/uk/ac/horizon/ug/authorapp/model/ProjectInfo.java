@@ -23,6 +23,8 @@ public class ProjectInfo {
 	protected List<FactStore> factStores = new LinkedList<FactStore>();
 	/** default fact store name */
 	protected String defaultFactStoreName = "default";
+	/** custom views */
+	protected List<CustomViewInfo> customViews = new LinkedList<CustomViewInfo>();
 	/**
 	 * @return the name
 	 */
@@ -99,5 +101,19 @@ public class ProjectInfo {
 		fs.setChanged(true);
 		factStores.add(fs);
 		return fs;
+	}
+	/**
+	 * @return the customViews
+	 */
+	public List<CustomViewInfo> getCustomViews() {
+		if (customViews==null)
+			customViews = new LinkedList<CustomViewInfo>();
+		return customViews;
+	}
+	/**
+	 * @param customViews the customViews to set
+	 */
+	public void setCustomViews(List<CustomViewInfo> customViews) {
+		this.customViews = customViews;
 	}
 }
