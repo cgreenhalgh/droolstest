@@ -102,6 +102,14 @@ public class ProjectInfo {
 		factStores.add(fs);
 		return fs;
 	}
+	/** get default fact store */
+	public FactStore getFactStore(String name) {
+		for (FactStore fs : getFactStores()) {
+			if (fs.getName().equals(name))
+				return fs;
+		}
+		return null;
+	}
 	/**
 	 * @return the customViews
 	 */

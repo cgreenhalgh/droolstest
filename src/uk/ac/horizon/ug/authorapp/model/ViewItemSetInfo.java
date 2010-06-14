@@ -15,7 +15,7 @@ public class ViewItemSetInfo {
 	/** Fact type name(s) */
 	protected List<String> typeNames;
 	/** (optional) fact model name */
-	protected String factModelName;
+	protected String factStoreName;
 	/** view layout name */
 	protected String viewLayoutName;
 	/* TODO custom item viewer(s) */
@@ -44,17 +44,17 @@ public class ViewItemSetInfo {
 	}
 
 	/**
-	 * @return the factModelName
+	 * @return the factStoreName
 	 */
-	public String getFactModelName() {
-		return factModelName;
+	public String getFactStoreName() {
+		return factStoreName;
 	}
 
 	/**
-	 * @param factModelName the factModelName to set
+	 * @param factStoreName the factStoreName to set
 	 */
-	public void setFactModelName(String factModelName) {
-		this.factModelName = factModelName;
+	public void setFactStoreName(String factStoreName) {
+		this.factStoreName = factStoreName;
 	}
 
 	/**

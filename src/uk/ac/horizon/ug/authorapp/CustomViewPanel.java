@@ -7,6 +7,9 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -20,6 +23,9 @@ import javax.swing.JTable;
 import javax.swing.WindowConstants;
 import javax.swing.table.AbstractTableModel;
 
+import uk.ac.horizon.ug.authorapp.customview.AbstractViewItem;
+import uk.ac.horizon.ug.authorapp.customview.DefaultViewItem;
+import uk.ac.horizon.ug.authorapp.customview.ViewCanvas;
 import uk.ac.horizon.ug.authorapp.model.CustomViewInfo;
 import uk.ac.horizon.ug.authorapp.model.Project;
 import uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo;
@@ -39,13 +45,59 @@ public class CustomViewPanel extends JPanel {
 	protected Project project;
 	/** custom view info */
 	protected CustomViewInfo customViewInfo;
+	/** view canvas */
+	protected ViewCanvas viewCanvas;
 	/** cons 
 	 * @param cvi */
 	public CustomViewPanel(Project project, CustomViewInfo cvi) {
-		super();
+		super(new BorderLayout());
 		this.customViewInfo = cvi;
 		this.project = project;
+		
+		viewCanvas = new ViewCanvas();
+		JScrollPane viewScrollPane = new JScrollPane(viewCanvas);
+		viewScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		viewScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		add(viewScrollPane, BorderLayout.CENTER);
+		JPanel buttons = new JPanel (new FlowLayout());
+		add(buttons, BorderLayout.SOUTH);
+		buttons.add(new JButton(new AbstractAction("Zoom in") {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				// TODO Auto-generated method stub
+				viewCanvas.setZoomRatio(viewCanvas.getZoomRatio()*2);
+			}
+			
+		}));
+		buttons.add(new JButton(new AbstractAction("Zoom out") {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				// TODO Auto-generated method stub
+				viewCanvas.setZoomRatio(viewCanvas.getZoomRatio()/2);
+				if (viewCanvas.getZoomRatio()>0.55 && viewCanvas.getZoomRatio()<1.9) 
+					viewCanvas.setZoomRatio(1);
+				
+			}
+			
+		}));
+		
+		refresh();
 	}
+	/** regenerate view */
+	protected void refresh() {
+		// TODO for real
+		DefaultViewItem item = new DefaultViewItem();
+		item.setTextRows(new String[] { "Test" });
+		item.setBorderWidth(1);
+		item.setWidth(20);
+		item.setHeight(10);
+		List<AbstractViewItem> items = new LinkedList<AbstractViewItem>();
+		items.add(item);
+		viewCanvas.getViewItems().add(items);
+		viewCanvas.repaint();
+	} 
 	/** config dialog */
 	protected JDialog configDialog;
 	/** config tabbed pane */
@@ -66,7 +118,21 @@ public class CustomViewPanel extends JPanel {
 		configDialog.setLocationRelativeTo(this);
 		configDialog.setModal(true);
 		configDialog.setTitle("Configure view: "+customViewInfo.getName());
-		configDialog.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+		configDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		configDialog.addWindowListener(new WindowAdapter() {
+
+			/* (non-Javadoc)
+			 * @see java.awt.event.WindowAdapter#windowClosing(java.awt.event.WindowEvent)
+			 */
+			@Override
+			public void windowClosing(WindowEvent arg0) {
+				// TODO Auto-generated method stub
+				super.windowClosing(arg0);
+				configDialog.setVisible(false);
+				refresh();
+			}
+			
+		});
 		JPanel p = new JPanel(new BorderLayout());
 		
 		JPanel buttons = new JPanel(new FlowLayout());
@@ -74,6 +140,8 @@ public class CustomViewPanel extends JPanel {
 		
 		configTabbedPane = new JTabbedPane();
 		p.add(configTabbedPane, BorderLayout.CENTER);
+		
+		
 		
 		this.layerTableModel = new LayerTableModel();
 		JTable layerTable = new JTable(layerTableModel);
@@ -107,6 +175,7 @@ public class CustomViewPanel extends JPanel {
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO Auto-generated method stub
 				configDialog.setVisible(false);
+				refresh();
 			}
 			
 		}));

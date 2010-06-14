@@ -17,6 +17,10 @@ public class CustomViewInfo {
 	protected List<ViewLayerInfo> layers;
 	/** layout(s) */
 	protected List<ViewLayoutInfo> layouts;
+	/** minimum width */
+	protected int minimumWidth;
+	/** minimum height */
+	protected int minimumHeight;
 	/**
 	 * 
 	 */
@@ -90,6 +94,34 @@ public class CustomViewInfo {
 	 */
 	public void setLayouts(List<ViewLayoutInfo> layouts) {
 		this.layouts = layouts;
+	}
+
+	/**
+	 * @return the minimumWidth
+	 */
+	public int getMinimumWidth() {
+		return minimumWidth;
+	}
+
+	/**
+	 * @param minimumWidth the minimumWidth to set
+	 */
+	public void setMinimumWidth(int minimumWidth) {
+		this.minimumWidth = minimumWidth;
+	}
+
+	/**
+	 * @return the minimumHeight
+	 */
+	public int getMinimumHeight() {
+		return minimumHeight;
+	}
+
+	/**
+	 * @param minimumHeight the minimumHeight to set
+	 */
+	public void setMinimumHeight(int minimumHeight) {
+		this.minimumHeight = minimumHeight;
 	}
 	
 }
