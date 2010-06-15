@@ -16,6 +16,7 @@
 	<class>uk.ac.horizon.apptest.model.Region</class>
 	<!--  exserver -->
 	<class>uk.ac.horizon.ug.exserver.model.SessionTemplate</class>
+	<class>uk.ac.horizon.ug.exserver.model.Session</class>
 
       <!-- Hibernate over H2 with BTM for Drools -->
       <properties>

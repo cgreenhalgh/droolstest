@@ -8,8 +8,12 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,20 +32,28 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.transaction.UserTransaction;
 
+import org.drools.KnowledgeBase;
+import org.drools.definition.type.FactField;
+import org.drools.definition.type.FactType;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
 
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 
+import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.authorapp.Main;
 import uk.ac.horizon.ug.authorapp.model.Project;
 import uk.ac.horizon.ug.exserver.DroolsSession;
+import uk.ac.horizon.ug.exserver.RawSessionResource;
 import uk.ac.horizon.ug.exserver.RestletApplication;
 import uk.ac.horizon.ug.exserver.SessionResource;
 import uk.ac.horizon.ug.exserver.DroolsSession.RulesetException;
+import uk.ac.horizon.ug.exserver.devclient.Fact;
 import uk.ac.horizon.ug.exserver.model.Session;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.SessionType;
+import uk.ac.horizon.ug.exserver.protocol.Operation;
+import uk.ac.horizon.ug.exserver.protocol.RawFactHolder;
 
 /**
  * @author cmg
@@ -136,9 +148,13 @@ public class SessionFrame extends JFrame {
 			template.setFactUrls(new String[] { project.getFile().getPath() });
 		else
 			template.setFactUrls(new String[] { "unnamed" });
-		template.setRulesetUrls(project.getProjectInfo().getRuleFiles().toArray(new String[0]));
+		List<String> ruleFiles = project.getProjectInfo().getRuleFiles();
+		String rulesetUrls [] = new String[ruleFiles.size()];
+		for (int i=0; i<ruleFiles.size(); i++) 
+			rulesetUrls[i] = new File(ruleFiles.get(i)).toURI().toString();
+		template.setRulesetUrls(rulesetUrls);
 		
-		Session session = new Session();
+		session = new Session();
 		session.setCreatedDate(new Date());
 		session.setDroolsId(0);
 		session.setId("0");
@@ -173,7 +189,7 @@ public class SessionFrame extends JFrame {
 			// NB requires Transaction manager - ensure jndi.properties is in class path to 
 			// configure use of Bitronix JNDI implementation
 			droolsSession = DroolsSession.createSession(template, session.getSessionType(), session.isLogged(), session.getLogId());
-//			SessionResource.setGlobalSession(session, droolsSession);
+//			droolsSession.getKsession().addEventListener(arg0);
 		} catch (Exception e) {
 			// NamingException, RulesetException
 			logger.log(Level.WARNING,"Error creating drools session", e);
@@ -181,8 +197,58 @@ public class SessionFrame extends JFrame {
 			return false;
 		}
 
-		// TODO Auto-generated method stub
+		// load facts...
+		List<FactStore> factStores = project.getProjectInfo().getFactStores();
+		for (FactStore factStore : factStores) {
+			loadFacts(factStore);
+		}
 		return true;
+	}
+
+	private void loadFacts(FactStore factStore) {
+        try {
+    		KnowledgeBase kb = droolsSession.getKsession().getKnowledgeBase();
+            LinkedList<RawFactHolder> facts = new LinkedList<RawFactHolder>();
+    		for (Fact fact : factStore.getFacts()) {
+        		RawFactHolder fh = new RawFactHolder();
+    			FactType factType = kb.getFactType(fact.getNamespace(), fact.getTypeName());
+    			if (factType==null) {
+    				logger.log(Level.WARNING,"Unknonwn fact type "+fact.getNamespace()+"."+fact.getTypeName());
+    				continue;
+    			}    		
+    			Object object = factType.newInstance();
+    			for (Map.Entry<String, Object> fieldEntry : fact.getFieldValues().entrySet()) {
+    				FactField field = factType.getField(fieldEntry.getKey());
+    				if (field==null) {
+        				logger.log(Level.WARNING,"Fact type "+fact.getNamespace()+"."+fact.getTypeName()+" has no field "+fieldEntry.getKey());
+        				continue;
+    				}
+    				Object fieldValue = fieldEntry.getValue();
+    				if (fieldValue instanceof String)
+    					fieldValue = RawSessionResource.coerce((String)fieldValue, field);
+    				// type?
+    				if (fieldValue!=null)
+    					field.set(object, fieldValue);
+    			}
+    			fh.setFact(object);
+    			fh.setOperation(Operation.add);
+    			facts.add(fh);
+    		}			
+
+    		// actually load the facts using the post facts handler in SessionResource
+    		// nasty hack - hope nothing else happens at the same time! (we are starting up, anyway)
+    		SessionResource.setGlobalSession(session, droolsSession);
+    		SessionResource sessionResource = new SessionResource();
+    		sessionResource.doInit();
+    		sessionResource.addFacts(facts);
+    		logger.info("Added "+facts.size()+" facts");
+		}
+        catch (Exception e) {
+        	logger.log(Level.WARNING,"Problem loading facts", e);
+        }
+        finally {
+    		SessionResource.setGlobalSession(null, null);
+        }
 	}
 
 	static boolean oneTimeInitialised = false;

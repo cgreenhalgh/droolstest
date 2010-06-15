@@ -106,15 +106,15 @@ public class SessionResource extends BaseResource {
 	protected static DroolsSession globalDroolsSession;
 	
 	@Override  
-    protected void doInit() throws ResourceException {   
+    public void doInit() throws ResourceException {   
         // Get the "itemName" attribute value taken from the URI template   
         // /items/{itemName}.   
-        this.sessionId = (String) getRequest().getAttributes().get("sessionId");   
 
         if (globalSessionInfo!=null && globalDroolsSession!=null) {
         	sessionInfo = globalSessionInfo;
         	droolsSession = globalDroolsSession;
         } else {
+            this.sessionId = (String) getRequest().getAttributes().get("sessionId");   
         	EntityManager em = getEntityManager();
         	this.sessionInfo = em.find(Session.class, sessionId);
         	if (this.sessionInfo==null)
