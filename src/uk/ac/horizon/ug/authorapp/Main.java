@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import uk.ac.horizon.ug.authorapp.model.*;
+import uk.ac.horizon.ug.authorapp.session.SessionFrame;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 
 /** Desktop authoring tool (work in progress)
@@ -168,6 +169,16 @@ public class Main {
 		tabbedPane.add("Types", browserPanel);
 		viewMenu.add(new JMenuItem(browserPanel.getViewAction(this)));
 
+		JMenu sessionMenu = new JMenu("Session");
+		menuBar.add(sessionMenu);
+		sessionMenu.add(new JMenuItem(new AbstractAction("New...") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				new SessionFrame(mainFrame, project);
+			}
+		}));
+		
 		mainFrame.pack();
 		mainFrame.setVisible(true);
 		

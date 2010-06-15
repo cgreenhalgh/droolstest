@@ -57,19 +57,22 @@
     	<!--<copy tofile="build/devclient/xpp.jar" file="lib/xstream-*.jar"/>-->
         	
     	<!-- final war -->
-    	<jar basedir="build" destfile="droolstest.war" includes="**"/>
+    	<jar basedir="build" destfile="droolstest.war" includes="**" excludes="authorapp/**"/>
     </target>
 	
 	<target name="authorapp">
-		<javac destdir="build/WEB-INF/classes" debug="true" target="1.5" source="1.5">
+		<mkdir dir="build/authorapp"/>
+		<javac destdir="build/authorapp" debug="true" target="1.5" source="1.5">
     		<classpath refid="cp"/>
 			<src path="src"/>		
     	</javac>
 		<java classname="uk.ac.horizon.ug.authorapp.Main" fork="true">
 			<classpath>
 				<path refid="cp"/>
-				<pathelement location="build/WEB-INF/classes"/>
+				<pathelement location="build/authorapp"/>
+				<pathelement location="authorapp"/>
 			</classpath>
+			<jvmarg value="-Dbitronix.tm.configuration=authorapp/btm-config.properties"/>
 		</java>
 	</target>
 	

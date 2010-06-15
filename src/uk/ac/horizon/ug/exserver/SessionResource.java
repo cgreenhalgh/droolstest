@@ -99,30 +99,43 @@ public class SessionResource extends BaseResource {
 	protected Session sessionInfo;
 	/** drools session */
 	protected DroolsSession droolsSession;
+
+	/** for testing/standalone use - a session to always use */
+	protected static Session globalSessionInfo;
+	/** for testing/standalone use - a session to always use */
+	protected static DroolsSession globalDroolsSession;
 	
 	@Override  
     protected void doInit() throws ResourceException {   
         // Get the "itemName" attribute value taken from the URI template   
         // /items/{itemName}.   
         this.sessionId = (String) getRequest().getAttributes().get("sessionId");   
-  
-    	EntityManager em = getEntityManager();
-    	this.sessionInfo = em.find(Session.class, sessionId);
-    	if (this.sessionInfo==null)
-    		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND);
 
-    	try {
-    		this.droolsSession = DroolsSession.getSession(this.sessionInfo, em);
-    	} catch (DroolsSession.RulesetException re) {
-    		logger.log(Level.WARNING, "Error (rules) creating session "+sessionInfo.getDroolsId()+": "+re);
-    		throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Could not create internal session state for "+sessionInfo.getDroolsId()+": "+re);
-    	}
-    	catch (Exception e) {
-    		logger.log(Level.WARNING, "Error creating drools session "+sessionInfo.getDroolsId(), e);
-    		throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Could not create internal session state for "+sessionInfo.getDroolsId()+": "+e);
-    	}
+        if (globalSessionInfo!=null && globalDroolsSession!=null) {
+        	sessionInfo = globalSessionInfo;
+        	droolsSession = globalDroolsSession;
+        } else {
+        	EntityManager em = getEntityManager();
+        	this.sessionInfo = em.find(Session.class, sessionId);
+        	if (this.sessionInfo==null)
+        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND);
+        	try {
+        		this.droolsSession = DroolsSession.getSession(this.sessionInfo, em);
+        	} catch (DroolsSession.RulesetException re) {
+        		logger.log(Level.WARNING, "Error (rules) creating session "+sessionInfo.getDroolsId()+": "+re);
+        		throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Could not create internal session state for "+sessionInfo.getDroolsId()+": "+re);
+        	}
+        	catch (Exception e) {
+        		logger.log(Level.WARNING, "Error creating drools session "+sessionInfo.getDroolsId(), e);
+        		throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Could not create internal session state for "+sessionInfo.getDroolsId()+": "+e);
+        	}	
+        }
 	}
-
+	/** testing use only */
+	public static void setGlobalSession(Session sessionInfo, DroolsSession droolsSession) {
+		globalSessionInfo = sessionInfo;
+		globalDroolsSession = droolsSession;
+	}
 	/** add facts once parsed */
 	public Representation addFacts(List<RawFactHolder> facts) throws java.io.IOException,
 	javax.naming.NamingException, javax.transaction.SystemException,
