@@ -40,8 +40,7 @@ public class ViewCanvas extends JComponent {
 		//this.setBackground(Color.WHITE);
 		this.setForeground(Color.BLACK);
 		// default font
-		setFont(new Font("SansSerif", Font.PLAIN, 11));
-		logger.info("Default font: "+getFont());
+		setFont(getDefaultFont());
 		updateSize();
 	}
 	protected void updateSize() {
@@ -71,6 +70,8 @@ public class ViewCanvas extends JComponent {
 			List<AbstractViewItem> vis = viewItems.get(i);
 			for (int j=0; j<vis.size(); j++) {
 				AbstractViewItem avi = vis.get(j);
+				if (avi.isExcludedByLayout())
+					continue;
 				avi.draw(graphics);
 			}
 		}
@@ -150,5 +151,14 @@ public class ViewCanvas extends JComponent {
 		this.zoomRatio = zoomRatio;
 		updateSize();
 		validate();
+	}
+	protected static Font defaultFont;
+	public static synchronized Font getDefaultFont() {
+		if (defaultFont==null)
+		{	
+			defaultFont = new Font("SansSerif", Font.PLAIN, 11);
+			logger.info("Default font: "+defaultFont);
+		}
+		return defaultFont;
 	}
 }

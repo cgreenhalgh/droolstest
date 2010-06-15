@@ -5,16 +5,28 @@ package uk.ac.horizon.ug.authorapp.customview;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.font.LineMetrics;
+import java.awt.font.TextLayout;
+import java.awt.geom.Rectangle2D;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author cmg
  *
  */
 public class DefaultViewItem extends AbstractViewItem {
+	static Logger logger = Logger.getLogger(DefaultViewItem.class.getName());
+	/** line width */
+	protected float lineWidth;
 	/** border width */
 	protected float borderWidth;
 	/** color */
@@ -25,10 +37,29 @@ public class DefaultViewItem extends AbstractViewItem {
 	protected Color textColor;
 	/** text - rows */
 	protected String textRows[];
+	/** text layouts */
+	protected TextLayout textLayouts[];
 	/** font */
 	protected Font font;
 	/** user object */
 	protected Object userObject;
+	/** reference component, e.g. for Font size */
+	protected Component referenceComponent;
+	/**
+	 * @param referenceComponent
+	 */
+	public DefaultViewItem(Component referenceComponent) {
+		super();
+		this.referenceComponent = referenceComponent;
+	}
+	/** get font to use */
+	protected Font getFontInternal(Graphics2D graphics) {
+		if (font!=null)
+			return font;
+		if (graphics!=null)
+			return graphics.getFont();
+		return ViewCanvas.getDefaultFont();		
+	}
 	/* (non-Javadoc)
 	 * @see uk.ac.horizon.ug.authorapp.customview.AbstractViewItem#draw(java.awt.Graphics)
 	 */
@@ -40,9 +71,9 @@ public class DefaultViewItem extends AbstractViewItem {
 		graphics.clearRect((int)x, (int)y, (int)width, (int)height);
 		if (backgroundColor!=null) 
 			graphics.setBackground(background);
-		if (borderWidth>0) {
+		if (lineWidth>0) {
 			Stroke stroke = graphics.getStroke();
-			Stroke s = new BasicStroke(borderWidth);
+			Stroke s = new BasicStroke(lineWidth);
 			Color foreground = graphics.getColor();
 			if (foregroundColor!=null)
 				graphics.setColor(foregroundColor);
@@ -52,29 +83,33 @@ public class DefaultViewItem extends AbstractViewItem {
 			if (foregroundColor!=null)
 				graphics.setColor(foreground);
 		}
-		if (textRows!=null) {
-			Font f = null;
-			Font oldFont = graphics.getFont();
-			if (font!=null) { 
-				graphics.setFont(font);
-				f = font;
-			}
-			else
-				f = oldFont;
+		if (textLayouts==null && textRows!=null) {
+			logger.log(Level.WARNING, "Creating textLayouts on draw (late!)");
+			updateTextLayouts(graphics);
+		}
+		if (textLayouts!=null) {
+//			Font oldFont = graphics.getFont();
+//			if (font!=null) { 
+//				graphics.setFont(font);
+//			}
 			Color foreground = graphics.getColor();
 			if (foregroundColor!=null)
 				graphics.setColor(foregroundColor);
 			float texty = y+borderWidth;
-			for (int r=0; r<textRows.length; r++) {
-				LineMetrics line = f.getLineMetrics(textRows[r], graphics.getFontRenderContext());
+			for (int r=0; r<textLayouts.length; r++) {
 				if (r==0)
-					texty += line.getAscent();
-				else
-					texty += line.getHeight();
-				graphics.drawString(textRows[r], x, texty);
+					texty += textLayouts[r].getAscent();
+				else {
+					float lineHeight = textLayouts[r].getAscent()+textLayouts[r].getDescent()+textLayouts[r].getLeading();
+					if (lineHeight > textLayouts[r].getBounds().getHeight())
+						texty += lineHeight;
+					else
+						texty += textLayouts[r].getBounds().getHeight();
+				}
+				textLayouts[r].draw(graphics, borderWidth, texty);
 			}
-			if (font!=null)
-				graphics.setFont(oldFont);
+//			if (font!=null)
+//				graphics.setFont(oldFont);
 			if (foregroundColor!=null)
 				graphics.setColor(foreground);
 		}
@@ -90,6 +125,19 @@ public class DefaultViewItem extends AbstractViewItem {
 	 */
 	public void setBorderWidth(float borderWidth) {
 		this.borderWidth = borderWidth;
+		updateVisibleExtent();
+	}
+	/**
+	 * @return the lineWidth
+	 */
+	public float getLineWidth() {
+		return lineWidth;
+	}
+	/**
+	 * @param lineWidth the lineWidth to set
+	 */
+	public void setLineWidth(float lineWidth) {
+		this.lineWidth = lineWidth;
 	}
 	/**
 	 * @return the foregroundColor
@@ -138,6 +186,81 @@ public class DefaultViewItem extends AbstractViewItem {
 	 */
 	public void setTextRows(String[] textRows) {
 		this.textRows = textRows;
+		updateTextLayouts();
+		updateVisibleExtent();
+	}
+	/** update text layouts */
+	protected void updateTextLayouts() {
+		updateTextLayouts((Graphics2D)referenceComponent.getGraphics());
+	}
+	protected void updateTextLayouts(Graphics2D graphics) {
+		if (textRows==null) {
+			textLayouts = null;
+		}
+		else {
+			Font f = getFontInternal(null);
+			if (graphics==null) {
+				textLayouts = null;
+				logger.log(Level.WARNING, "Could not getGraphics for reference component "+referenceComponent);
+			} else {
+				textLayouts = new TextLayout[textRows.length];
+				for (int i=0; i<textRows.length; i++) {
+					textLayouts[i] = new TextLayout(textRows[i], f, graphics.getFontRenderContext());
+				}
+			}
+		}
+	}
+	/** get text width & height */
+	public Rectangle getTextBounds() {
+		Rectangle bounds = new Rectangle();
+		if (textLayouts==null) {
+			if (textRows!=null)
+				logger.log(Level.WARNING, "getTextBounds with null textLayouts");
+			return bounds;
+		}
+		bounds.y = (int)borderWidth;
+		float texty = 0;
+		for (int i=0; i<textLayouts.length; i++) {
+			Rectangle2D b = textLayouts[i].getBounds();
+			if(b.getMinX() < bounds.x) {
+				bounds.width += (int)(bounds.x-b.getMinX());
+				bounds.x = (int)b.getMinX();
+			}
+			if (b.getMaxX() > bounds.getMaxX())
+				bounds.width = (int)b.getMaxX()-bounds.x;
+			float height = (float) b.getHeight();
+			float lineHeight = textLayouts[i].getAscent()+textLayouts[i].getDescent();
+			if (i>0)
+				lineHeight += textLayouts[i].getLeading();
+			if (height < lineHeight)
+				height = lineHeight;
+			texty = texty+height;
+//			logger.info("getTextBounds, i="+i+", height="+height+", texty="+texty+", leading="+textLayouts[i].getLeading()+", bound.height="+b.getHeight());
+		}
+		bounds.height = (int)texty;
+		bounds.x += (int)borderWidth;
+		return bounds;
+	}
+	/* (non-Javadoc)
+	 * @see uk.ac.horizon.ug.authorapp.customview.AbstractViewItem#updateVisibleExtent()
+	 */
+	@Override
+	protected void updateVisibleExtent() {
+		// TODO Auto-generated method stub
+		super.updateVisibleExtent();
+		Rectangle textBounds = getTextBounds();
+		if (textBounds!=null) {
+			Rectangle visibleExtent = getVisibleExtent();
+			if (textBounds.x < visibleExtent.x)
+				visibleExtent.x = textBounds.x;
+			if (textBounds.y < visibleExtent.y)
+				visibleExtent.y = textBounds.y;
+			if (textBounds.getMaxX() > visibleExtent.getMaxX())
+				visibleExtent.width = (int) (textBounds.getMaxX()-visibleExtent.getX());
+			if (textBounds.getMaxY() > visibleExtent.getMaxY())
+				visibleExtent.height = (int) (textBounds.getMaxY()-visibleExtent.getY());
+			setVisibleExtent(visibleExtent);
+		}
 	}
 	/**
 	 * @return the font
@@ -150,6 +273,8 @@ public class DefaultViewItem extends AbstractViewItem {
 	 */
 	public void setFont(Font font) {
 		this.font = font;
+		updateTextLayouts();
+		this.updateVisibleExtent();
 	}
 	/**
 	 * @return the userObject

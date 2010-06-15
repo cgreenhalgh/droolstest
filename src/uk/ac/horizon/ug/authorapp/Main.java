@@ -453,5 +453,6 @@ public class Main {
 		customViewPanels.put(cvi.getName(), cvp);
 		tabbedPane.add("View: "+cvi.getName(), cvp);
 		tabbedPane.setSelectedComponent(cvp);		
+		cvp.refresh();
 	}
 }

@@ -18,6 +18,7 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.WindowConstants;
@@ -25,7 +26,9 @@ import javax.swing.table.AbstractTableModel;
 
 import uk.ac.horizon.ug.authorapp.customview.AbstractViewItem;
 import uk.ac.horizon.ug.authorapp.customview.DefaultViewItem;
+import uk.ac.horizon.ug.authorapp.customview.ViewBuilder;
 import uk.ac.horizon.ug.authorapp.customview.ViewCanvas;
+import uk.ac.horizon.ug.authorapp.customview.ViewItemPaletteCanvas;
 import uk.ac.horizon.ug.authorapp.model.CustomViewInfo;
 import uk.ac.horizon.ug.authorapp.model.Project;
 import uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo;
@@ -47,6 +50,8 @@ public class CustomViewPanel extends JPanel {
 	protected CustomViewInfo customViewInfo;
 	/** view canvas */
 	protected ViewCanvas viewCanvas;
+	/** view item palette */
+	protected ViewItemPaletteCanvas paletteCanvas;
 	/** cons 
 	 * @param cvi */
 	public CustomViewPanel(Project project, CustomViewInfo cvi) {
@@ -54,13 +59,23 @@ public class CustomViewPanel extends JPanel {
 		this.customViewInfo = cvi;
 		this.project = project;
 		
+		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		add(splitPane, BorderLayout.CENTER);
+		splitPane.setResizeWeight(0.1);
+		
+		paletteCanvas = new ViewItemPaletteCanvas();
+		splitPane.setTopComponent(new JScrollPane(paletteCanvas));
+		
+		JPanel bottomPane = new JPanel(new BorderLayout());
+		splitPane.setBottomComponent(bottomPane);
+		
 		viewCanvas = new ViewCanvas();
 		JScrollPane viewScrollPane = new JScrollPane(viewCanvas);
 		viewScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 		viewScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		add(viewScrollPane, BorderLayout.CENTER);
+		bottomPane.add(viewScrollPane, BorderLayout.CENTER);
 		JPanel buttons = new JPanel (new FlowLayout());
-		add(buttons, BorderLayout.SOUTH);
+		bottomPane.add(buttons, BorderLayout.SOUTH);
 		buttons.add(new JButton(new AbstractAction("Zoom in") {
 
 			@Override
@@ -83,20 +98,20 @@ public class CustomViewPanel extends JPanel {
 			
 		}));
 		
-		refresh();
+		viewBuilder = ViewBuilder.getViewBuilder();
+		// can't create usefully in construction as view component doesn't exist
+		// to size things
+		//refresh();
 	}
+	/** view builder */
+	protected ViewBuilder viewBuilder;
 	/** regenerate view */
-	protected void refresh() {
-		// TODO for real
-		DefaultViewItem item = new DefaultViewItem();
-		item.setTextRows(new String[] { "Test" });
-		item.setBorderWidth(1);
-		item.setWidth(20);
-		item.setHeight(10);
-		List<AbstractViewItem> items = new LinkedList<AbstractViewItem>();
-		items.add(item);
-		viewCanvas.getViewItems().add(items);
+	public void refresh() {
+		List<List<AbstractViewItem>> items2 = viewBuilder.getView(project, customViewInfo, this);
+		viewCanvas.setViewItems(items2);
 		viewCanvas.repaint();
+		paletteCanvas.setViewItems(items2);
+		paletteCanvas.updateItems();
 	} 
 	/** config dialog */
 	protected JDialog configDialog;
