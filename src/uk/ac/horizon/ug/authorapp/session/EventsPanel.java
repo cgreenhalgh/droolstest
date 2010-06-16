@@ -32,6 +32,8 @@ import org.drools.event.rule.ObjectUpdatedEvent;
 import org.drools.event.rule.WorkingMemoryEventListener;
 import org.drools.runtime.StatefulKnowledgeSession;
 
+import uk.ac.horizon.ug.authorapp.FieldCellRenderer;
+
 /**
  * @author cmg
  *
@@ -43,16 +45,13 @@ public class EventsPanel extends JPanel implements WorkingMemoryEventListener, A
 	protected EventTableModel tableModel;
 
 	/**
-	 * @param ksession
 	 */
-	public EventsPanel(StatefulKnowledgeSession ksession) {
+	public EventsPanel() {
 		super(new BorderLayout());
-		this.ksession = ksession;
-		ksession.addEventListener((WorkingMemoryEventListener)this);
-		ksession.addEventListener((AgendaEventListener)this);
 		
 		tableModel = new EventTableModel();
 		JTable table = new JTable(tableModel);
+		table.setDefaultRenderer(Object.class, new FieldCellRenderer());
 		add(new JScrollPane(table), BorderLayout.CENTER);
 		
 		JPanel buttons = new JPanel(new FlowLayout());
@@ -65,10 +64,17 @@ public class EventsPanel extends JPanel implements WorkingMemoryEventListener, A
 		}));
 	}
 	
+	public void setKsession(StatefulKnowledgeSession ksession) {
+		this.ksession = ksession;
+		ksession.addEventListener((WorkingMemoryEventListener)this);
+		ksession.addEventListener((AgendaEventListener)this);
+	}
 	/** close */
 	public void dispose() {
-		ksession.removeEventListener((WorkingMemoryEventListener)this);
-		ksession.removeEventListener((AgendaEventListener)this);
+		if(ksession!=null) {
+			ksession.removeEventListener((WorkingMemoryEventListener)this);
+			ksession.removeEventListener((AgendaEventListener)this);
+		}
 	}
 	
 	static final String COLUMNS [] = new String[] { "Time", "Event", "Value" };
@@ -138,48 +144,48 @@ public class EventsPanel extends JPanel implements WorkingMemoryEventListener, A
 	/** WorkingMemoryEventListener */
 	@Override
 	public void objectInserted(ObjectInsertedEvent ev) {
-		tableModel.addEvent("Object inserted", ev);
+		tableModel.addEvent("Object inserted", ev.getObject());
 	}
 
 	/** WorkingMemoryEventListener */
 	@Override
 	public void objectRetracted(ObjectRetractedEvent ev) {
-		tableModel.addEvent("Object retracted", ev);
+		tableModel.addEvent("Object retracted", ev.getOldObject());
 	}
 
 	/** WorkingMemoryEventListener */
 	@Override
 	public void objectUpdated(ObjectUpdatedEvent ev) {
-		tableModel.addEvent("Object updated", ev);
+		tableModel.addEvent("Object updated", ev.getObject());
 	}
 
 	@Override
 	public void activationCancelled(ActivationCancelledEvent ev) {
-		tableModel.addEvent("Activation cancelled", ev);
+		tableModel.addEvent("Activation cancelled", ev.getActivation());
 	}
 
 	@Override
 	public void activationCreated(ActivationCreatedEvent ev) {
-		tableModel.addEvent("Activation created", ev);
+		tableModel.addEvent("Activation created", ev.getActivation());
 	}
 
 	@Override
 	public void afterActivationFired(AfterActivationFiredEvent ev) {
-		tableModel.addEvent("Activation fired", ev);
+		tableModel.addEvent("Activation fired", ev.getActivation());
 	}
 
 	@Override
 	public void agendaGroupPopped(AgendaGroupPoppedEvent ev) {
-		tableModel.addEvent("Activation group popped", ev);
+		tableModel.addEvent("Activation group popped", ev.getAgendaGroup());
 	}
 
 	@Override
 	public void agendaGroupPushed(AgendaGroupPushedEvent ev) {
-		tableModel.addEvent("Activation group pushed", ev);
+		tableModel.addEvent("Activation group pushed", ev.getAgendaGroup());
 	}
 
 	@Override
 	public void beforeActivationFired(BeforeActivationFiredEvent ev) {
-		tableModel.addEvent("Activation before fired", ev);
+		tableModel.addEvent("Activation before fired", ev.getActivation());
 	}
 }

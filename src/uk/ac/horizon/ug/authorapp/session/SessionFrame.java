@@ -51,10 +51,12 @@ import org.restlet.data.Protocol;
 
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 
+import uk.ac.horizon.ug.authorapp.BrowserPanel;
 import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.authorapp.Main;
 import uk.ac.horizon.ug.authorapp.model.ClientTypeInfo;
 import uk.ac.horizon.ug.authorapp.model.Project;
+import uk.ac.horizon.ug.authorapp.model.ProjectInfo;
 import uk.ac.horizon.ug.exserver.DroolsSession;
 import uk.ac.horizon.ug.exserver.RawSessionResource;
 import uk.ac.horizon.ug.exserver.RestletApplication;
@@ -84,15 +86,35 @@ public class SessionFrame extends JFrame {
 	Session session;
 	/** drools session */
 	DroolsSession droolsSession;
+	/** project info */
+	ProjectInfo projectInfo;
 	/** client types */
 	List<ClientTypeInfo> clientTypes;
 	
 	/** cons */
 	public SessionFrame(JFrame parent, Project project) {
 		super("Session");
+		
 		if (currentFrame!=null) {
 			JOptionPane.showMessageDialog(parent, "Session already open (only one can be active at once)", "New Session", JOptionPane.ERROR_MESSAGE);
 			return;
+		}
+		
+		// try reading project info
+		try {
+			projectInfo = DroolsSession.readProjectInfo(project.getFile().toURI().toString());
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "Error loading project "+project.getFile(), e);
+			JOptionPane.showMessageDialog(parent, "Problem re-loading project\n"+e, "New Session", JOptionPane.ERROR_MESSAGE);
+			return;			
+		}
+		Project p = new Project();
+		p.setProjectInfo(projectInfo);
+		if (!p.reloadRuleFiles()) 
+		{
+			JOptionPane.showMessageDialog(parent, "Error parsing rules\n", "New Session", JOptionPane.ERROR_MESSAGE);
+			return;						
 		}
 		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		this.addWindowListener(new WindowAdapter() {
@@ -132,6 +154,9 @@ public class SessionFrame extends JFrame {
 		tabbedPane = new JTabbedPane();
 		getContentPane().add(tabbedPane, BorderLayout.CENTER);
 
+		eventsPanel = new EventsPanel();
+		tabbedPane.add("Events", eventsPanel);		
+
 		// initialise
 		if (!init(parent, project))
 			return;
@@ -140,8 +165,8 @@ public class SessionFrame extends JFrame {
 		PropertiesPanel pp = new PropertiesPanel(this);
 		tabbedPane.add("Properties", pp);
 		
-		eventsPanel = new EventsPanel(this.droolsSession.getKsession());
-		tabbedPane.add("Events", eventsPanel);
+		BrowserPanel browserPanel = new BrowserPanel(p);
+		tabbedPane.add("Types", browserPanel);
 		
 		pack();
 		setVisible(true);
@@ -279,7 +304,7 @@ public class SessionFrame extends JFrame {
 		if (!oneTimeInitialise(parent))
 			return false;
 		
-		clientTypes = project.getProjectInfo().getClientTypes();
+		clientTypes = projectInfo.getClientTypes();
 		
 		String templateName = "unnamed";
 		if (project.getFile()!=null)
@@ -329,7 +354,11 @@ public class SessionFrame extends JFrame {
 		try {
 			// NB requires Transaction manager - ensure jndi.properties is in class path to 
 			// configure use of Bitronix JNDI implementation
-			droolsSession = DroolsSession.createSession(template, session.getSessionType(), session.isLogged(), session.getLogId());
+			droolsSession = DroolsSession.createSessionNoFacts(template, session.getSessionType(), session.isLogged(), session.getLogId());
+			// listener(s)
+			if(eventsPanel!=null)
+				eventsPanel.setKsession(droolsSession.getKsession());
+			droolsSession.loadFacts();
 //			droolsSession.getKsession().addEventListener(arg0);
 		} catch (Exception e) {
 			// NamingException, RulesetException

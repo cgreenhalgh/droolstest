@@ -114,7 +114,7 @@ public class DroolsSession {
 	}
 	/** read project info 
 	 * @throws URISyntaxException */
-	protected ProjectInfo readProjectInfo(String projectUrl) throws IOException {
+	public static ProjectInfo readProjectInfo(String projectUrl) throws IOException {
 		ProjectInfo projectInfo = null;
 		try {
 			File projectFile = new File(new URI(projectUrl));
@@ -141,7 +141,22 @@ public class DroolsSession {
 	 * @throws SecurityException 
 	 * @throws IllegalStateException */
 	public synchronized static DroolsSession createSession(SessionTemplate template, SessionType sessionType, boolean logged, int logId) throws NamingException, RulesetException, IOException, IllegalStateException, SecurityException, SystemException, NotSupportedException {
-		DroolsSession ds = new DroolsSession(template.getProjectUrl(), true, 0, sessionType, logged);
+		DroolsSession ds = new DroolsSession(template.getProjectUrl(), true, 0, sessionType, logged, true);
+		ds.startLog(logId);
+		sessions.put(ds.ksession.getId(), ds);		
+		return ds;
+	}
+	/** create a new drools session 
+	 * @param logged 
+	 * @throws NamingException 
+	 * @throws RulesetException 
+	 * @throws IOException 
+	 * @throws NotSupportedException 
+	 * @throws SystemException 
+	 * @throws SecurityException 
+	 * @throws IllegalStateException */
+	public synchronized static DroolsSession createSessionNoFacts(SessionTemplate template, SessionType sessionType, boolean logged, int logId) throws NamingException, RulesetException, IOException, IllegalStateException, SecurityException, SystemException, NotSupportedException {
+		DroolsSession ds = new DroolsSession(template.getProjectUrl(), true, 0, sessionType, logged, false);
 		ds.startLog(logId);
 		sessions.put(ds.ksession.getId(), ds);		
 		return ds;
@@ -163,7 +178,7 @@ public class DroolsSession {
 			ds.closeLog();
 			ds.getKsession().dispose();
 		}
-		ds = new DroolsSession(session.getProjectUrl(), false, session.getDroolsId(), session.getSessionType(), session.isLogged());
+		ds = new DroolsSession(session.getProjectUrl(), false, session.getDroolsId(), session.getSessionType(), session.isLogged(), true);
 		try {
 			ds.startLog(nextLogId(em, session.getId()));
 		}
@@ -219,7 +234,7 @@ public class DroolsSession {
 			return ds;
 		if (session.getSessionType()==SessionType.TRANSIENT)
 			throw new RuntimeException("Cannot restore a transient session ("+session.getId()+")");
-		ds = new DroolsSession(session.getProjectUrl(), false, session.getDroolsId(), session.getSessionType(), session.isLogged());
+		ds = new DroolsSession(session.getProjectUrl(), false, session.getDroolsId(), session.getSessionType(), session.isLogged(), true);
 		try {
 			ds.startLog(nextLogId(em, session.getId()));
 		}
@@ -245,6 +260,7 @@ public class DroolsSession {
 	}
 	/** cons 
 	 * @param logged 
+	 * @param addFacts 
 	 * @throws NamingException 
 	 * @throws RulesetException 
 	 * @throws IOException 
@@ -252,7 +268,7 @@ public class DroolsSession {
 	 * @throws SystemException 
 	 * @throws SecurityException 
 	 * @throws IllegalStateException */
-	private DroolsSession(String projectUrl, boolean newFlag, int sessionId, SessionType sessionType, boolean logged) throws NamingException, RulesetException, IOException, IllegalStateException, SecurityException, SystemException, NotSupportedException {	
+	private DroolsSession(String projectUrl, boolean newFlag, int sessionId, SessionType sessionType, boolean logged, boolean addFacts) throws NamingException, RulesetException, IOException, IllegalStateException, SecurityException, SystemException, NotSupportedException {	
 		projectInfo = this.readProjectInfo(projectUrl);
 		String ruleFiles[] = projectInfo.getRuleFiles().toArray(new String[projectInfo.getRuleFiles().size()]);
 		
@@ -291,13 +307,19 @@ public class DroolsSession {
 		}
 
 		this.logged = logged;
-		
+
+		if (addFacts)
+			loadFacts();
+	}
+	public void loadFacts() throws IllegalStateException, SecurityException, SystemException, NotSupportedException, NamingException {
 		// load facts...
 		List<FactStore> factStores = projectInfo.getFactStores();
 		for (FactStore factStore : factStores) {
 			loadFacts(factStore);
 		}
 
+		logger.info("Firing rules after initial facts");
+		ksession.fireAllRules();
 	}
 	/** log file name */
 	protected String logFileName;
