@@ -19,6 +19,7 @@ import org.restlet.Restlet;
 import org.restlet.routing.Router;   
 import org.restlet.resource.Directory;
 import uk.ac.horizon.ug.exserver.TemplatesResource;
+import uk.ac.horizon.ug.exserver.clientapi.ClientAPIApplication;
 
 import javax.servlet.ServletContext;
 
@@ -67,6 +68,9 @@ public class RestletApplication extends Application {
         }
         else
         	logger.info("Could not get ServletContext - "+this.getContext().getAttributes());
+        
+        // also run as lobby, at least for now
+        ClientAPIApplication.init(router);
         
         return router;   
     }   

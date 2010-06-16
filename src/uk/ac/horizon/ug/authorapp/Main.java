@@ -174,7 +174,20 @@ public class Main {
 		sessionMenu.add(new JMenuItem(new AbstractAction("New...") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
+				if (project.getFile()==null) {
+					saveProject();
+					if (project.getFile()==null)
+						return;
+				}
+				if (project.isChanged()) {
+					int res = JOptionPane.showConfirmDialog(mainFrame, "Save changes to project?", "New session", JOptionPane.YES_NO_CANCEL_OPTION);
+					if (res==JOptionPane.CANCEL_OPTION)
+						return;
+					if (res==JOptionPane.YES_OPTION) 
+						saveProject();
+					if (project.isChanged())
+						return;
+				}
 				new SessionFrame(mainFrame, project);
 			}
 		}));
@@ -263,19 +276,13 @@ public class Main {
 		return projectFileChooser;
 	}
 	
-	/** get configured project XStream */
-	XStream getProjectXStream() {
-		XStream xs = new XStream(new DomDriver());
-		xs.alias("project", ProjectInfo.class);
-		return xs;
-	}
 	/** save - swing thread */
 	protected boolean saveProject() {
 		if (project.getFile()==null) {
 			return saveAsProject();
 		}
 		try {
-			XStream xs = getProjectXStream();
+			XStream xs = Project.getProjectXStream();
 			FileOutputStream fos = new FileOutputStream(project.getFile());
 			xs.toXML(project.getProjectInfo(), fos);
 			fos.close();
@@ -352,7 +359,7 @@ public class Main {
 			fileChooser.setSelectedFile(project.getFile());
 		if (fileChooser.showOpenDialog(mainFrame)!=JFileChooser.APPROVE_OPTION)
 			return;
-		XStream xs = getProjectXStream();
+		XStream xs = Project.getProjectXStream();
 		File file = fileChooser.getSelectedFile();
 		// clear
 		closeProjectInternal();

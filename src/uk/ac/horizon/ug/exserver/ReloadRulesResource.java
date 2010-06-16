@@ -3,11 +3,14 @@
  */
 package uk.ac.horizon.ug.exserver;
 
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 
 import org.restlet.data.Status;
 import org.restlet.resource.ResourceException;
@@ -43,10 +46,15 @@ public class ReloadRulesResource extends BaseResource {
 	}
 
 	/** post - force reload 
-	 * @throws NamingException */
+	 * @throws NamingException 
+	 * @throws NotSupportedException 
+	 * @throws SystemException 
+	 * @throws IOException 
+	 * @throws SecurityException 
+	 * @throws IllegalStateException */
 	@Post("xml")
 	@Get("xml")
-	public Representation doReload() throws NamingException {
+	public Representation doReload() throws NamingException, IllegalStateException, SecurityException, IOException, SystemException, NotSupportedException {
 		try {
 			logger.info("Attempting reload on session "+this.sessionId);
 			DroolsSession ds = DroolsSession.reloadSession(this.sessionInfo, getEntityManager());

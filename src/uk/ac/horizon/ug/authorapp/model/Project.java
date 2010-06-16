@@ -11,6 +11,9 @@ import java.util.List;
 import org.drools.KnowledgeBase;
 import org.drools.lang.descr.TypeDeclarationDescr;
 
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.DomDriver;
+
 import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.exserver.DroolsUtils;
 import uk.ac.horizon.ug.exserver.protocol.RulesetErrors;
@@ -36,6 +39,12 @@ public class Project {
 	protected List<TypeDescription> types;
 	/** listener support */
 	protected PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+	/** get configured project XStream */
+	public static XStream getProjectXStream() {
+		XStream xs = new XStream(new DomDriver());
+		xs.alias("project", ProjectInfo.class);
+		return xs;
+	}
 	/**
 	 * @return the projectInfo
 	 */
@@ -126,8 +135,13 @@ public class Project {
 	public boolean reloadRuleFiles() {
 		try {
 			String ruleFileUrls [] = new String[getProjectInfo().getRuleFiles().size()];
-			for (int i=0; i<ruleFileUrls.length; i++) 
-				ruleFileUrls[i] = "file:///"+getProjectInfo().getRuleFiles().get(i);
+			for (int i=0; i<ruleFileUrls.length; i++) {
+				if (getProjectInfo().getRuleFiles().get(i).indexOf(':')<4) {
+					getProjectInfo().getRuleFiles().set(i, "file:///"+getProjectInfo().getRuleFiles().get(i));
+					setChanged(true);
+				}
+				ruleFileUrls[i] = getProjectInfo().getRuleFiles().get(i);
+			}
 			rulesetErrors = null;
 			kbase = null;
 			List<TypeDescription> oldTypes = types;

@@ -19,7 +19,7 @@ public class Session {
 	/** drools id */
 	protected int droolsId;
 	/** rule set(s) */
-	protected String rulesetUrls[];
+	protected String projectUrl;
 	/** template name */
 	protected String templateName;
 	/** created date */
@@ -65,16 +65,16 @@ public class Session {
 		this.droolsId = droolsId;
 	}
 	/**
-	 * @return the rulesetUrls
+	 * @return the projectUrl
 	 */
-	public String[] getRulesetUrls() {
-		return rulesetUrls;
+	public String getProjectUrl() {
+		return projectUrl;
 	}
 	/**
-	 * @param rulesetUrls the rulesetUrls to set
+	 * @param projectUrl the projectUrl to set
 	 */
-	public void setRulesetUrls(String[] rulesetUrls) {
-		this.rulesetUrls = rulesetUrls;
+	public void setProjectUrl(String projectUrl) {
+		this.projectUrl = projectUrl;
 	}
 	/**
 	 * @return the templateName

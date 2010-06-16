@@ -11,6 +11,8 @@ import org.drools.builder.KnowledgeBuilderErrors;
 import org.drools.builder.KnowledgeBuilderFactory;
 import org.drools.builder.ResourceType;
 import org.drools.definition.KnowledgePackage;
+import org.drools.definition.type.FactField;
+import org.drools.definition.type.FactType;
 import org.drools.event.rule.DebugAgendaEventListener;
 import org.drools.io.ResourceFactory;
 import org.drools.logger.KnowledgeRuntimeLogger;
@@ -22,12 +24,20 @@ import org.drools.runtime.StatefulKnowledgeSession;
 import org.drools.runtime.KnowledgeSessionConfiguration;
 import org.drools.KnowledgeBaseConfiguration;
 
+import com.thoughtworks.xstream.XStream;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -36,7 +46,9 @@ import java.util.logging.Logger;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.swing.JOptionPane;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
@@ -45,9 +57,15 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
+import uk.ac.horizon.ug.authorapp.FactStore;
+import uk.ac.horizon.ug.authorapp.model.Project;
+import uk.ac.horizon.ug.authorapp.model.ProjectInfo;
+import uk.ac.horizon.ug.exserver.devclient.Fact;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.Session;
 import uk.ac.horizon.ug.exserver.model.SessionType;
+import uk.ac.horizon.ug.exserver.protocol.Operation;
+import uk.ac.horizon.ug.exserver.protocol.RawFactHolder;
 
 /**
  * @author cmg
@@ -86,22 +104,58 @@ public class DroolsSession {
 	protected boolean logged;
 	/** map of DroolsSessions (weak refs) */
 	protected static Map<Integer,DroolsSession> sessions = new HashMap<Integer,DroolsSession>();
+	/** project info */
+	protected ProjectInfo projectInfo;
+	/**
+	 * @return the projectInfo
+	 */
+	public ProjectInfo getProjectInfo() {
+		return projectInfo;
+	}
+	/** read project info 
+	 * @throws URISyntaxException */
+	protected ProjectInfo readProjectInfo(String projectUrl) throws IOException {
+		ProjectInfo projectInfo = null;
+		try {
+			File projectFile = new File(new URI(projectUrl));
+			XStream xs = Project.getProjectXStream();
+			FileInputStream fis = new FileInputStream(projectFile);
+			// this might fail
+			projectInfo = ((ProjectInfo)xs.fromXML(fis));
+			// if not these will be ok
+			fis.close();
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING,"Error reading project "+projectUrl, e);
+			throw new IOException("Error reading project "+projectUrl, e);
+		}		
+		return projectInfo;
+	}
 	/** create a new drools session 
 	 * @param logged 
 	 * @throws NamingException 
-	 * @throws RulesetException */
-	public synchronized static DroolsSession createSession(SessionTemplate template, SessionType sessionType, boolean logged, int logId) throws NamingException, RulesetException {
-		DroolsSession ds = new DroolsSession(template.getRulesetUrls(), true, 0, sessionType, logged);
+	 * @throws RulesetException 
+	 * @throws IOException 
+	 * @throws NotSupportedException 
+	 * @throws SystemException 
+	 * @throws SecurityException 
+	 * @throws IllegalStateException */
+	public synchronized static DroolsSession createSession(SessionTemplate template, SessionType sessionType, boolean logged, int logId) throws NamingException, RulesetException, IOException, IllegalStateException, SecurityException, SystemException, NotSupportedException {
+		DroolsSession ds = new DroolsSession(template.getProjectUrl(), true, 0, sessionType, logged);
 		ds.startLog(logId);
 		sessions.put(ds.ksession.getId(), ds);		
-		ds.addFacts(template.getFactUrls());
 		return ds;
 	}
 	/** force reloading of an existing session (and start logging if required)
 	 * @return 
 	 * @throws NamingException 
-	 * @throws RulesetException */
-	public synchronized static DroolsSession reloadSession(Session session, EntityManager em) throws NamingException, RulesetException {
+	 * @throws RulesetException 
+	 * @throws IOException 
+	 * @throws NotSupportedException 
+	 * @throws SystemException 
+	 * @throws SecurityException 
+	 * @throws IllegalStateException */
+	public synchronized static DroolsSession reloadSession(Session session, EntityManager em) throws NamingException, RulesetException, IOException, IllegalStateException, SecurityException, SystemException, NotSupportedException {
 		if (session.getSessionType()==SessionType.TRANSIENT)
 			throw new RuntimeException("Cannot restore a transient session ("+session.getId()+")");
 		DroolsSession ds = sessions.get(session.getDroolsId());
@@ -109,7 +163,7 @@ public class DroolsSession {
 			ds.closeLog();
 			ds.getKsession().dispose();
 		}
-		ds = new DroolsSession(session.getRulesetUrls(), false, session.getDroolsId(), session.getSessionType(), session.isLogged());
+		ds = new DroolsSession(session.getProjectUrl(), false, session.getDroolsId(), session.getSessionType(), session.isLogged());
 		try {
 			ds.startLog(nextLogId(em, session.getId()));
 		}
@@ -153,14 +207,19 @@ public class DroolsSession {
 	/** get existing session (and start logging if required)
 	 * @param em 
 	 * @throws NamingException 
-	 * @throws RulesetException */
-	public synchronized static DroolsSession getSession(Session session, EntityManager em) throws NamingException, RulesetException {
+	 * @throws RulesetException 
+	 * @throws IOException 
+	 * @throws NotSupportedException 
+	 * @throws SystemException 
+	 * @throws SecurityException 
+	 * @throws IllegalStateException */
+	public synchronized static DroolsSession getSession(Session session, EntityManager em) throws NamingException, RulesetException, IOException, IllegalStateException, SecurityException, SystemException, NotSupportedException {
 		DroolsSession ds = sessions.get(session.getDroolsId());
 		if (ds!=null)
 			return ds;
 		if (session.getSessionType()==SessionType.TRANSIENT)
 			throw new RuntimeException("Cannot restore a transient session ("+session.getId()+")");
-		ds = new DroolsSession(session.getRulesetUrls(), false, session.getDroolsId(), session.getSessionType(), session.isLogged());
+		ds = new DroolsSession(session.getProjectUrl(), false, session.getDroolsId(), session.getSessionType(), session.isLogged());
 		try {
 			ds.startLog(nextLogId(em, session.getId()));
 		}
@@ -187,10 +246,17 @@ public class DroolsSession {
 	/** cons 
 	 * @param logged 
 	 * @throws NamingException 
-	 * @throws RulesetException */
-	private DroolsSession(String rulesetUrls[], boolean newFlag, int sessionId, SessionType sessionType, boolean logged) throws NamingException, RulesetException {	
-
-		final KnowledgeBase kbase = DroolsUtils.getKnowledgeBase(rulesetUrls);
+	 * @throws RulesetException 
+	 * @throws IOException 
+	 * @throws NotSupportedException 
+	 * @throws SystemException 
+	 * @throws SecurityException 
+	 * @throws IllegalStateException */
+	private DroolsSession(String projectUrl, boolean newFlag, int sessionId, SessionType sessionType, boolean logged) throws NamingException, RulesetException, IOException, IllegalStateException, SecurityException, SystemException, NotSupportedException {	
+		projectInfo = this.readProjectInfo(projectUrl);
+		String ruleFiles[] = projectInfo.getRuleFiles().toArray(new String[projectInfo.getRuleFiles().size()]);
+		
+		final KnowledgeBase kbase = DroolsUtils.getKnowledgeBase(ruleFiles);
 
 		UserTransaction ut =
 			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
@@ -225,6 +291,13 @@ public class DroolsSession {
 		}
 
 		this.logged = logged;
+		
+		// load facts...
+		List<FactStore> factStores = projectInfo.getFactStores();
+		for (FactStore factStore : factStores) {
+			loadFacts(factStore);
+		}
+
 	}
 	/** log file name */
 	protected String logFileName;
@@ -287,8 +360,51 @@ public class DroolsSession {
 	}
 	/** logger */
 	protected KnowledgeRuntimeLogger droolsLogger;
-	/** add facts */
-	private void addFacts(String factUrls[]) {
-		// TODO
+	public synchronized void loadFacts(FactStore factStore) throws IllegalStateException, SecurityException, SystemException, NotSupportedException, NamingException {
+		UserTransaction ut =
+			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
+		boolean localTransaction = false;
+		if (ut.getStatus()!=Status.STATUS_ACTIVE) {
+			localTransaction = true;
+			ut.begin();
+		}
+
+        try {
+
+    		KnowledgeBase kb = getKsession().getKnowledgeBase();
+    		for (Fact fact : factStore.getFacts()) {
+    			FactType factType = kb.getFactType(fact.getNamespace(), fact.getTypeName());
+    			if (factType==null) {
+    				logger.log(Level.WARNING,"Unknonwn fact type "+fact.getNamespace()+"."+fact.getTypeName());
+    				continue;
+    			}    		
+    			Object object = factType.newInstance();
+    			for (Map.Entry<String, Object> fieldEntry : fact.getFieldValues().entrySet()) {
+    				FactField field = factType.getField(fieldEntry.getKey());
+    				if (field==null) {
+        				logger.log(Level.WARNING,"Fact type "+fact.getNamespace()+"."+fact.getTypeName()+" has no field "+fieldEntry.getKey());
+        				continue;
+    				}
+    				Object fieldValue = fieldEntry.getValue();
+    				if (fieldValue instanceof String)
+    					fieldValue = RawSessionResource.coerce((String)fieldValue, field);
+    				// type?
+    				if (fieldValue!=null)
+    					field.set(object, fieldValue);
+    			}
+    			
+        		// add the fact
+    			this.ksession.insert(object);
+    		}
+    		
+    		if (localTransaction)
+    			ut.commit();	
+    		
+		}
+        catch (Exception e) {
+        	logger.log(Level.WARNING,"Problem loading facts", e);
+        	if (localTransaction)
+        		ut.rollback();
+        }
 	}
 }

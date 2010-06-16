@@ -87,7 +87,7 @@ public class ProjectInfoPanel extends JPanel {
 		for (String currentFile : currentFiles)
 			if (currentFile.equals(newFile))
 				return;
-		currentFiles.add(newFile.getPath());
+		currentFiles.add(newFile.toURI().toString());
 		ruleFileTableModel.fireTableRowsInserted(currentFiles.size()-1, currentFiles.size()-1);
 		handleReloadRules();
 	}

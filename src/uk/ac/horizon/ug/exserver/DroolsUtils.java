@@ -157,4 +157,9 @@ public class DroolsUtils {
 		}
 		return tds;
 	}
+	public static List<TypeDescription> getTypeDescriptions(
+			List<String> ruleFiles) {
+		String [] rfs = ruleFiles.toArray(new String[ruleFiles.size()]);
+		return getTypeDescriptions(rfs);
+	}
 }

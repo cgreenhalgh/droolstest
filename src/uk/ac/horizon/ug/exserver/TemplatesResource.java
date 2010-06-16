@@ -65,8 +65,7 @@ public class TemplatesResource extends BaseResource {
         Form form = new Form(entity);   
         SessionTemplate st = new SessionTemplate();
         st.setName(form.getFirstValue("name"));   
-        st.setRulesetUrls(form.getValuesArray("rulesetUrls"));   
-        st.setFactUrls(form.getValuesArray("factUrls"));  
+        st.setProjectUrl(form.getFirstValue("projectUrl"));   
         logger.info("acceptItem: "+form.getValuesMap());
         logger.info("Name = "+st.getName());
         
@@ -74,6 +73,11 @@ public class TemplatesResource extends BaseResource {
     	if (st.getName()==null || st.getName().length()==0)
     	{
     		this.setStatus(Status.CLIENT_ERROR_BAD_REQUEST, "Name not specified");
+    		return null;
+    	}
+    	if (st.getProjectUrl()==null || st.getProjectUrl().length()==0)
+    	{
+    		this.setStatus(Status.CLIENT_ERROR_BAD_REQUEST, "ProjectURL not specified");
     		return null;
     	}
     	

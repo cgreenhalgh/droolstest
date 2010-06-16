@@ -148,7 +148,7 @@ public class SessionsResource extends BaseResource {
 			EntityManager em = getEntityManager();
 
 			s.setTemplateName(templateName);
-			s.setRulesetUrls(st.getRulesetUrls());
+			s.setProjectUrl(st.getProjectUrl());
 
 			// create session
 			s.setDroolsId(ds.getId());

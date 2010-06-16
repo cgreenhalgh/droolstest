@@ -15,10 +15,8 @@ public class SessionTemplate {
 	/** name */
 	@Id
 	protected String name;
-	/** rule set(s) */
-	protected String rulesetUrls[];
-	/** fact files */
-	protected String factUrls[];
+	/** project file URL */
+	protected String projectUrl;
 	/** cons */
 	public SessionTemplate() {	
 	}
@@ -35,28 +33,15 @@ public class SessionTemplate {
 		this.name = name;
 	}
 	/**
-	 * @return the rulesetUrls
+	 * @return the projectUrl
 	 */
-	public String[] getRulesetUrls() {
-		return rulesetUrls;
+	public String getProjectUrl() {
+		return projectUrl;
 	}
 	/**
-	 * @param rulesetUrls the rulesetUrls to set
+	 * @param projectUrl the projectUrl to set
 	 */
-	public void setRulesetUrls(String[] rulesetUrls) {
-		this.rulesetUrls = rulesetUrls;
+	public void setProjectUrl(String projectUrl) {
+		this.projectUrl = projectUrl;
 	}
-	/**
-	 * @return the dataUrls
-	 */
-	public String[] getFactUrls() {
-		return factUrls;
-	}
-	/**
-	 * @param dataUrls the dataUrls to set
-	 */
-	public void setFactUrls(String[] factUrls) {
-		this.factUrls = factUrls;
-	}
-	
 }

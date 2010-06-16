@@ -144,21 +144,13 @@ public class SessionFrame extends JFrame {
 		// create session
 		SessionTemplate template = new SessionTemplate();
 		template.setName(templateName);
-		if (project.getFile()!=null)
-			template.setFactUrls(new String[] { project.getFile().getPath() });
-		else
-			template.setFactUrls(new String[] { "unnamed" });
-		List<String> ruleFiles = project.getProjectInfo().getRuleFiles();
-		String rulesetUrls [] = new String[ruleFiles.size()];
-		for (int i=0; i<ruleFiles.size(); i++) 
-			rulesetUrls[i] = new File(ruleFiles.get(i)).toURI().toString();
-		template.setRulesetUrls(rulesetUrls);
+		template.setProjectUrl(project.getFile().toURI().toString());
 		
 		session = new Session();
 		session.setCreatedDate(new Date());
 		session.setDroolsId(0);
 		session.setId("0");
-		session.setRulesetUrls(template.getRulesetUrls());
+		session.setProjectUrl(template.getProjectUrl());
 		session.setSessionType(SessionType.TRANSIENT);
 		session.setTemplateName(template.getName());
 		session.setUpdateSystemTime(true);
@@ -197,59 +189,9 @@ public class SessionFrame extends JFrame {
 			return false;
 		}
 
-		// load facts...
-		List<FactStore> factStores = project.getProjectInfo().getFactStores();
-		for (FactStore factStore : factStores) {
-			loadFacts(factStore);
-		}
 		return true;
 	}
 
-	private void loadFacts(FactStore factStore) {
-        try {
-    		KnowledgeBase kb = droolsSession.getKsession().getKnowledgeBase();
-            LinkedList<RawFactHolder> facts = new LinkedList<RawFactHolder>();
-    		for (Fact fact : factStore.getFacts()) {
-        		RawFactHolder fh = new RawFactHolder();
-    			FactType factType = kb.getFactType(fact.getNamespace(), fact.getTypeName());
-    			if (factType==null) {
-    				logger.log(Level.WARNING,"Unknonwn fact type "+fact.getNamespace()+"."+fact.getTypeName());
-    				continue;
-    			}    		
-    			Object object = factType.newInstance();
-    			for (Map.Entry<String, Object> fieldEntry : fact.getFieldValues().entrySet()) {
-    				FactField field = factType.getField(fieldEntry.getKey());
-    				if (field==null) {
-        				logger.log(Level.WARNING,"Fact type "+fact.getNamespace()+"."+fact.getTypeName()+" has no field "+fieldEntry.getKey());
-        				continue;
-    				}
-    				Object fieldValue = fieldEntry.getValue();
-    				if (fieldValue instanceof String)
-    					fieldValue = RawSessionResource.coerce((String)fieldValue, field);
-    				// type?
-    				if (fieldValue!=null)
-    					field.set(object, fieldValue);
-    			}
-    			fh.setFact(object);
-    			fh.setOperation(Operation.add);
-    			facts.add(fh);
-    		}			
-
-    		// actually load the facts using the post facts handler in SessionResource
-    		// nasty hack - hope nothing else happens at the same time! (we are starting up, anyway)
-    		SessionResource.setGlobalSession(session, droolsSession);
-    		SessionResource sessionResource = new SessionResource();
-    		sessionResource.doInit();
-    		sessionResource.addFacts(facts);
-    		logger.info("Added "+facts.size()+" facts");
-		}
-        catch (Exception e) {
-        	logger.log(Level.WARNING,"Problem loading facts", e);
-        }
-        finally {
-    		SessionResource.setGlobalSession(null, null);
-        }
-	}
 
 	static boolean oneTimeInitialised = false;
 	private static synchronized boolean oneTimeInitialise(JFrame parent) {

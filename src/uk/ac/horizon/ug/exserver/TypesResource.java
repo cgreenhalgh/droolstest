@@ -37,7 +37,7 @@ public class TypesResource extends SessionResource {
 	@Post("xml")
 	@Get("xml")
 	public Representation getTypes() {
-		List<TypeDescription> tds = DroolsUtils.getTypeDescriptions(this.sessionInfo.getRulesetUrls());
+		List<TypeDescription> tds = DroolsUtils.getTypeDescriptions(this.droolsSession.getProjectInfo().getRuleFiles());
 		if (tds==null) {
 			setStatus(Status.SERVER_ERROR_INTERNAL);
 			return null;
