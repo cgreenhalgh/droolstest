@@ -57,6 +57,14 @@ public class ProjectInfo {
 			clientTypes = new LinkedList<ClientTypeInfo>();
 		return clientTypes;
 	}
+	/** get default fact store */
+	public ClientTypeInfo getClientType(String name) {
+		for (ClientTypeInfo ct : getClientTypes()) {
+			if (ct.getName().equals(name))
+				return ct;
+		}
+		return null;
+	}
 	/**
 	 * @param clientTypes the clientTypes to set
 	 */

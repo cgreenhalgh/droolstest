@@ -24,7 +24,11 @@ import org.restlet.resource.ResourceException;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonConverter;
 import org.restlet.ext.json.JsonRepresentation;
+
+import uk.ac.horizon.ug.authorapp.model.ClientTypeInfo;
+import uk.ac.horizon.ug.authorapp.model.ProjectInfo;
 import uk.ac.horizon.ug.exserver.BaseResource;
+import uk.ac.horizon.ug.exserver.DroolsSession;
 import uk.ac.horizon.ug.exserver.model.ClientConversation;
 import uk.ac.horizon.ug.exserver.model.ConversationStatus;
 import uk.ac.horizon.ug.exserver.model.Session;
@@ -37,11 +41,11 @@ public class RegisterClientHandler extends BaseResource {
 	static Logger logger = Logger.getLogger(RegisterClientHandler.class.getName());
 
 	/** handle POST registration of client conversation.
-	 * e.g. curl -d '{"hello":"chris"}' http://localhost:8182/droolstest/1/registerclient
+	 * e.g. curl -d '...' http://localhost:8182/droolstest/1/registerclient
 	 * 
 	 * See ClientConversation.
 	 * 
-	 * <pre>{"conversationId":"1234","clientId":"imei:1234","sessionId":"0","creationTime":123456789,"lastContactTime":0,"status":"ACTIVE"}
+	 * <pre>{"conversationId":"1234","clientId":"imei:1234","clientType":"Mobile","sessionId":"0","creationTime":123456789,"lastContactTime":0,"status":"ACTIVE"}
 	 * </pre>
 	 * 
 	 * @throws JSONException 
@@ -117,9 +121,20 @@ public class RegisterClientHandler extends BaseResource {
     		else { // not current...
     			// check session status
     			Session session = em.find(Session.class, conversation.getSessionId());
-    			if (session==null) 
+    			if (session==null) {
+    				logger.log(Level.WARNING, "Could not find session "+conversation.getSessionId());
     				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND);    			
+    			}
 
+    			// check client type
+    			DroolsSession droolsSession = DroolsSession.getSession(session, em);
+    			ProjectInfo pi = droolsSession.getProjectInfo();
+    			ClientTypeInfo ct = pi.getClientType(conversation.getClientType());
+    			if (ct==null) {
+    				logger.log(Level.WARNING, "Could not find client tyep "+conversation.getClientType());
+    				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND);    			
+    			}
+    			
     			// Persist the new conversation
     			conversation.setCreationTime(System.currentTimeMillis());
     			conversation.setLastContactTime(0);
