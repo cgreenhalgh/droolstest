@@ -508,6 +508,28 @@ In summary:<br>
   <li>Sign on with lobby, obtain specific game information =&gt;</li>
   <li>Sign on with game instance server &amp; play game</li>
 </ol>
+<h3>Specific Client Interactions</h3>
+<ul>
+  <li>publish facts, esp. sensor readings</li>
+  <li>accept / remove directed messages</li>
+  <li>do momentary queries</li>
+  <li>accept persistent query "initial" (current) results and subsequent updates</li>
+  <li>terminate session / leave</li>
+</ul>
+Current implementation notes:<br>
+<ul>
+  <li>client type in author app is just a list of type name, selected from those tagged with @client.</li>
+  <ul>
+    <li>these are intended to represent (to the user) composable units
+of client functionality (e.g. public bluetooth sightings, display
+content)</li>
+  </ul>
+  <ul>
+    <li>the client tree view gives one sketch of how further
+information might be inferred from other annotations that mention the
+same type(s), @message @to, @sensed @subject </li>
+  </ul>
+</ul>
 
 </body>
 </html>

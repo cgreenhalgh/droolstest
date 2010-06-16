@@ -140,6 +140,8 @@ public class RegisterClientHandler extends BaseResource {
     			conversation.setLastContactTime(0);
     			logger.info("Persisting "+conversation);
     			em.persist(conversation);
+    			
+    			// TODO flush conversation state (e.g. incremental query cache)
     		}
 			// construct response (what?)
 			// TODO
