@@ -62,6 +62,10 @@ public class ClientResource extends BaseResource {
         		throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Could not create internal session state for "+sessionInfo.getDroolsId()+": "+e);
         	}	
     	}
+    	else {
+    		logger.log(Level.WARNING, "Request for inactive conversation "+conversation);
+    		throw new ResourceException(Status.CLIENT_ERROR_GONE);
+    	}
 	}
 	
 	/** test method 
