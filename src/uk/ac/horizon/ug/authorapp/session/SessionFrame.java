@@ -5,15 +5,20 @@ package uk.ac.horizon.ug.authorapp.session;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.net.URL;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,12 +29,18 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.transaction.UserTransaction;
 
 import org.drools.KnowledgeBase;
@@ -42,13 +53,17 @@ import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.authorapp.Main;
+import uk.ac.horizon.ug.authorapp.model.ClientTypeInfo;
 import uk.ac.horizon.ug.authorapp.model.Project;
 import uk.ac.horizon.ug.exserver.DroolsSession;
 import uk.ac.horizon.ug.exserver.RawSessionResource;
 import uk.ac.horizon.ug.exserver.RestletApplication;
 import uk.ac.horizon.ug.exserver.SessionResource;
 import uk.ac.horizon.ug.exserver.DroolsSession.RulesetException;
+import uk.ac.horizon.ug.exserver.clientapi.RegisterClientHandler;
 import uk.ac.horizon.ug.exserver.devclient.Fact;
+import uk.ac.horizon.ug.exserver.model.ClientConversation;
+import uk.ac.horizon.ug.exserver.model.ConversationStatus;
 import uk.ac.horizon.ug.exserver.model.Session;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.SessionType;
@@ -69,6 +84,8 @@ public class SessionFrame extends JFrame {
 	Session session;
 	/** drools session */
 	DroolsSession droolsSession;
+	/** client types */
+	List<ClientTypeInfo> clientTypes;
 	
 	/** cons */
 	public SessionFrame(JFrame parent, Project project) {
@@ -103,18 +120,133 @@ public class SessionFrame extends JFrame {
 			}			
 		}));
 
+		JMenu clientMenu = new JMenu("Client");
+		menuBar.add(clientMenu);
+		clientMenu.add(new JMenuItem(new AbstractAction("Register new...") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				registerNewClient();
+			}
+		}));
+		
 		tabbedPane = new JTabbedPane();
 		getContentPane().add(tabbedPane, BorderLayout.CENTER);
 
 		// initialise
 		if (!init(parent, project))
 			return;
+	
+		// must make properties panel after init!
+		PropertiesPanel pp = new PropertiesPanel(this);
+		tabbedPane.add("Properties", pp);
+		
+		eventsPanel = new EventsPanel(this.droolsSession.getKsession());
+		tabbedPane.add("Events", eventsPanel);
 		
 		pack();
 		setVisible(true);
 		currentFrame = this;
 	}
 
+	protected void registerNewClient() {
+		final JDialog dialog = new JDialog();
+		dialog.setTitle("Register new client");
+		dialog.setLocationRelativeTo(this);
+		dialog.setModal(true);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		JPanel panel = new JPanel(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.weightx = 0;
+		c.weighty = 1;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.gridwidth = 1;
+		c.gridheight = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		panel.add(new JLabel("Client ID"), c);
+		c.gridx = 1;
+		c.weightx = 1;
+		final JTextField clientIdField = new JTextField(30);
+		panel.add(clientIdField, c);
+		c.gridx = 0;
+		c.gridy = 1;
+		c.weightx = 0;
+		panel.add(new JLabel("Client Type"), c);
+		c.gridx = 1;
+		c.weightx = 1;
+		Vector<String> clientTypeNames = new Vector<String>();
+		for (ClientTypeInfo cti : clientTypes) {
+			clientTypeNames.addElement(cti.getName());
+		}
+		if (clientTypeNames.size()==0) {
+			JOptionPane.showMessageDialog(this, "This project does not include any client types", "Register new client", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+		final JComboBox clientTypeCombo = new JComboBox(clientTypeNames);
+		clientTypeCombo.setEditable(false);
+		panel.add(clientTypeCombo, c);
+		
+		dialog.getContentPane().setLayout(new BorderLayout());
+		dialog.getContentPane().add(panel, BorderLayout.CENTER);
+		
+		JPanel buttons = new JPanel(new FlowLayout());
+		buttons.add(new JButton(new AbstractAction("OK") {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				String clientId = clientIdField.getText();
+				String clientType = (String)clientTypeCombo.getSelectedItem();
+				if (clientId==null || clientId.length()==0 || clientType==null) {
+					JOptionPane.showMessageDialog(dialog, "Please enter client ID and type", "Register new client", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				registerNewClient(clientId, clientType);
+				dialog.setVisible(false);
+			}
+		}));
+		dialog.getContentPane().add(buttons, BorderLayout.SOUTH);
+		
+		dialog.pack();
+		dialog.setVisible(true);
+		dialog.dispose();
+	}
+
+	protected void registerNewClient(String clientId, String clientType) {
+		ClientConversation conversation = new ClientConversation();
+		conversation.setClientId(clientId);
+		conversation.setClientType(clientType);
+		conversation.setConversationId(newClientId());
+		conversation.setStatus(ConversationStatus.ACTIVE);
+		conversation.setSessionId(sessionId);
+		//conversation.setSessionId("0");
+		// TODO Auto-generated method stub
+		boolean ok = false;
+		try {
+			ok = RegisterClientHandler.registerInternal(conversation);
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "registering new client", e);
+			ok = false;
+		}
+		if (!ok)
+			JOptionPane.showMessageDialog(this, "Problem registering new client", "Register new client", JOptionPane.ERROR_MESSAGE);
+		else {
+			showClientFrame(conversation);
+		}
+	}
+
+	private void showClientFrame(ClientConversation conversation) {
+		ClientPanel cp  = new ClientPanel(conversation);
+		tabbedPane.add("Client "+conversation.getClientType()+" "+conversation.getClientId(), cp);
+		tabbedPane.setSelectedComponent(cp);
+	}
+
+	private String newClientId() {
+		// TODO proper GUID
+		return ""+System.currentTimeMillis();
+	}
+
+	protected EventsPanel eventsPanel;
+	
 	static SessionFrame currentFrame = null;
 	
 	protected void handleClose() {
@@ -126,17 +258,28 @@ public class SessionFrame extends JFrame {
 		catch (Exception e) {
 			logger.log(Level.WARNING, "Problem stopping application", e);
 		}
+		if (eventsPanel!=null)
+			eventsPanel.dispose();
 		if (droolsSession!=null)
 			droolsSession.getKsession().dispose();
+
 		dispose();		
 	}
 	/** Restlet server */
 	protected static Component restletComponent;
-	
+	protected static String serverUrl;
+	/** get server url */
+	public String getServerUrl() {
+		return serverUrl;
+	}
+	/** session id */
+	protected String sessionId;
 	private boolean init(JFrame parent, Project project) {
 	
 		if (!oneTimeInitialise(parent))
 			return false;
+		
+		clientTypes = project.getProjectInfo().getClientTypes();
 		
 		String templateName = "unnamed";
 		if (project.getFile()!=null)
@@ -149,7 +292,8 @@ public class SessionFrame extends JFrame {
 		session = new Session();
 		session.setCreatedDate(new Date());
 		session.setDroolsId(0);
-		session.setId("0");
+		sessionId = ""+System.currentTimeMillis();
+		session.setId(sessionId);
 		session.setProjectUrl(template.getProjectUrl());
 		session.setSessionType(SessionType.TRANSIENT);
 		session.setTemplateName(template.getName());
@@ -165,7 +309,12 @@ public class SessionFrame extends JFrame {
 
 			ut.begin();
 			em.joinTransaction();
-			em.persist(template);
+			if (em.find(SessionTemplate.class, template.getName())!=null) {
+				logger.info("SessionTemplate already present");
+			}
+			else {
+				em.persist(template);
+			}
 			em.persist(session);
 			ut.commit();
 			em.close();
@@ -207,7 +356,7 @@ public class SessionFrame extends JFrame {
 	  
 	    // Add a new HTTP server listening on port 8182.   
 	    restletComponent.getServers().add(Protocol.HTTP, 8182);   
-	  
+
 	    // Attach the sample application.   
 	    restletComponent.getDefaultHost().attach("/droolstest/1",   
 	            new RestletApplication());   
@@ -217,6 +366,7 @@ public class SessionFrame extends JFrame {
 	    // Start the component.   
 	    try {
 	    	restletComponent.start();
+	    	serverUrl = "http://localhost:8182/droolstest/";
 	    	logger.info("Server started on port 8181, path /droolstest");
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error starting server", e);

@@ -23,13 +23,13 @@ public class BaseResource extends ServerResource {
     }
 	
     /** get persistence entity manager */
-    public EntityManager getEntityManager() {
+    public static EntityManager getEntityManager() {
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory( "droolstest" );
 		EntityManager em = emf.createEntityManager();
 		return em;
     }
     /** get transaction */
-    public UserTransaction getTransaction() throws NamingException {
+    public static UserTransaction getTransaction() throws NamingException {
 		UserTransaction ut =
 			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
 		return ut;

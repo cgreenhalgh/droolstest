@@ -54,6 +54,7 @@ public class ProjectInfoPanel extends JPanel {
 		splitPane.setResizeWeight(0.5);
 		top.add(new JLabel("Rule files"), BorderLayout.NORTH);
 		ruleFileTable = new JTable(ruleFileTableModel);
+		ruleFileTable.setDefaultRenderer(Object.class, new FieldCellRenderer());
 		JScrollPane sp = new JScrollPane(ruleFileTable);
 		sp.setPreferredSize(new Dimension(500,300));
 		top.add(sp, BorderLayout.CENTER);
@@ -61,6 +62,7 @@ public class ProjectInfoPanel extends JPanel {
 		splitPane.setBottomComponent(bottom);
 		bottom.add(new JLabel("Errors"), BorderLayout.NORTH);
 		ruleErrorTable = new JTable(ruleErrorTableModel);
+		ruleErrorTable.setDefaultRenderer(Object.class, new FieldCellRenderer());
 		bottom.add(new JScrollPane(ruleErrorTable), BorderLayout.CENTER);
 
 		//splitPane.setDividerLocation(0.5);
@@ -140,6 +142,17 @@ public class ProjectInfoPanel extends JPanel {
 				return filename;
 			}
 			return null;
+		}
+
+		@Override
+		public boolean isCellEditable(int arg0, int arg1) {
+			return true;
+		}
+
+		@Override
+		public void setValueAt(Object value, int row, int col) {
+			project.getProjectInfo().getRuleFiles().set(row, value.toString());
+			project.setChanged(true);
 		}
 		
 	}

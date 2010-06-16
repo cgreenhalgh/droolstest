@@ -4,7 +4,6 @@
 package uk.ac.horizon.ug.authorapp;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -27,7 +26,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -202,23 +200,5 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 	@Override
 	public void propertyChange(PropertyChangeEvent pce) {
 		refreshTable();
-	}
-	/** custom cell renderer, e.g. show full value as tooltip */
-	static class FieldCellRenderer extends DefaultTableCellRenderer {
-
-		/* (non-Javadoc)
-		 * @see javax.swing.table.DefaultTableCellRenderer#getTableCellRendererComponent(javax.swing.JTable, java.lang.Object, boolean, boolean, int, int)
-		 */
-		@Override
-		public Component getTableCellRendererComponent(JTable arg0,
-				Object value, boolean arg2, boolean arg3, int arg4, int arg5) {
-			if (value!=null)
-				setToolTipText(value.toString());
-			else
-				this.setToolTipText(null);
-			// TODO Auto-generated method stub
-			return super.getTableCellRendererComponent(arg0, value, arg2, arg3, arg4, arg5);
-		}
-		
 	}
 }

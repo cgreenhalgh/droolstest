@@ -70,9 +70,18 @@ public class RegisterClientHandler extends BaseResource {
 			setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
 			return null;
 		}
-		
-		EntityManager em = this.getEntityManager();
-		UserTransaction ut = this.getTransaction();
+		if (!registerInternal(conversation)) {
+  			setStatus(Status.SERVER_ERROR_INTERNAL);
+  			return null;
+		}
+		// construct response (what?)
+		// TODO
+		return null;
+	}
+	
+	public static boolean registerInternal(ClientConversation conversation) throws IllegalStateException, SecurityException, SystemException, NamingException, NotSupportedException {
+		EntityManager em = getEntityManager();
+		UserTransaction ut = getTransaction();
 		ut.begin();
 		try {
 			em.joinTransaction();
@@ -143,17 +152,14 @@ public class RegisterClientHandler extends BaseResource {
     			
     			// TODO flush conversation state (e.g. incremental query cache)
     		}
-			// construct response (what?)
-			// TODO
 			ut.commit();
 			em.close();
 		}
 		catch (Exception e) {
 			ut.rollback();
 			logger.log(Level.WARNING, "Error registering client", e);
-			setStatus(Status.SERVER_ERROR_INTERNAL);
-			return null;
+			return false;
 		}
-		return null;
+		return true;
 	}
 }

@@ -16,6 +16,7 @@ import com.thoughtworks.xstream.io.xml.DomDriver;
 
 import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.exserver.DroolsUtils;
+import uk.ac.horizon.ug.exserver.protocol.RulesetError;
 import uk.ac.horizon.ug.exserver.protocol.RulesetErrors;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 import uk.ac.horizon.ug.exserver.DroolsSession.RulesetException;
@@ -154,6 +155,20 @@ public class Project {
 			return true;
 		} catch (RulesetException re) {
 			rulesetErrors = DroolsUtils.getRulesetErros(re);
+			return false;
+		} catch (Exception e) {
+			rulesetErrors = new RulesetErrors[1];
+			rulesetErrors[0] = new RulesetErrors();
+			RulesetError errors[] = new RulesetError[1];
+			errors[0] = new RulesetError();
+			Throwable t = e;
+			if (e instanceof RuntimeException && e.getCause()!=null)
+				t = e.getCause();
+			errors[0].setErrorType(t.getClass().getName());
+			errors[0].setMessage(t.toString());
+			errors[0].setLongMessage(t.getMessage());
+			rulesetErrors[0].setErrors(errors);//setRulesetUrl();
+
 			return false;
 		}
 	}
