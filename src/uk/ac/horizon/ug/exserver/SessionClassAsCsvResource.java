@@ -69,8 +69,8 @@ public class SessionClassAsCsvResource extends SessionResource {
 	protected String className;
 	protected FactType factType;
 	
-	@Override  
-    protected void doInit() throws ResourceException {   
+	@Override
+	public void doInit() throws ResourceException {   
 		super.doInit();
 		this.className = (String)getRequest().getAttributes().get("className");
 		if (className==null) {

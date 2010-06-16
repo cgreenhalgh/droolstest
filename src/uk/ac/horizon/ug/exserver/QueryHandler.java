@@ -29,8 +29,8 @@ public class QueryHandler extends SessionResource {
 	String queryName;
 	String urlParameters[];
 	
-	@Override  
-    protected void doInit() throws ResourceException {   
+	@Override
+	public void doInit() throws ResourceException {   
 		super.doInit();
         // Get the "itemName" attribute value taken from the URI template   
         // /items/{itemName}.   
