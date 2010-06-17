@@ -16,6 +16,10 @@ public class ClientTypeInfo {
 	protected String name;
 	/** list of individual @client TypeDescription names */
 	protected List<String> clientTypeNames = new LinkedList<String>();
+	/** client publication filters */
+	protected List<ClientPublicationFilterInfo> publicationFilters;
+	/** client subscriptions */
+	protected List<ClientSubscriptionInfo> subscriptions;
 	/** cons */
 	/**
 	 * 
@@ -53,6 +57,35 @@ public class ClientTypeInfo {
 	 */
 	public void setClientTypeNames(List<String> clientTypeNames) {
 		this.clientTypeNames = clientTypeNames;
+	}
+	/**
+	 * @return the publicationFilters
+	 */
+	public List<ClientPublicationFilterInfo> getPublicationFilters() {
+		if (publicationFilters==null)
+			publicationFilters = new LinkedList<ClientPublicationFilterInfo>();
+		return publicationFilters;
+	}
+	/**
+	 * @param publicationFilters the publicationFilters to set
+	 */
+	public void setPublicationFilters(
+			List<ClientPublicationFilterInfo> publicationFilters) {
+		this.publicationFilters = publicationFilters;
+	}
+	/**
+	 * @return the subscriptions
+	 */
+	public List<ClientSubscriptionInfo> getSubscriptions() {
+		if (subscriptions==null)
+			subscriptions = new LinkedList<ClientSubscriptionInfo>();
+		return subscriptions;
+	}
+	/**
+	 * @param subscriptions the subscriptions to set
+	 */
+	public void setSubscriptions(List<ClientSubscriptionInfo> subscriptions) {
+		this.subscriptions = subscriptions;
 	}
 	
 }
