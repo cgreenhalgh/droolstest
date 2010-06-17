@@ -91,7 +91,7 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 		}		
 	}
 	/** get view client action - swing thread*/
-	AbstractAction getViewAction(final Main main) {
+	public AbstractAction getViewAction(final BrowserPanelCallback main, final boolean includeAll) {
 		if (viewAction!=null)
 			return viewAction;
 		viewAction = new AbstractAction("View") {
@@ -105,7 +105,7 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 				if (!(object instanceof TypeDescription))
 					return;
 				TypeDescription type = (TypeDescription)object;
-				if (type.isClient()) {
+				if (type.isClient() && !includeAll) {
 					// no-op?! main.openClientTypePanel(type);
 				}
 				else if (type.isEntity()) {

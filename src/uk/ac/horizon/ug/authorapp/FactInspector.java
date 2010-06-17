@@ -8,7 +8,8 @@ import java.util.Map;
 
 import uk.ac.horizon.ug.exserver.devclient.Fact;
 
-/** Introspect "fact" objects, either Facts or as java beans.
+/** DO NOT USE - NOT IMPLEMENTED.
+ * Introspect "fact" objects, either Facts or as java beans.
  * 
  * @author cmg
  *
@@ -23,13 +24,14 @@ public class FactInspector {
 	
 	/** fact not bean? */
 	protected boolean fact;
-	public FactInspector(Class class1) {
+	public FactInspector(Class class1) throws UnsupportedOperationException {
 		if (class1==Fact.class) {
 			fact = true;
 		}
 		else {
 			// TODO Auto-generated constructor stub
 		}
+		throw new UnsupportedOperationException("Sorry, FactInspector not implemented");
 	}
 	
 	public String getNamespace() {

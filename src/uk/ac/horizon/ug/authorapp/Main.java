@@ -45,7 +45,7 @@ import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
  * @author cmg
  *
  */
-public class Main {
+public class Main implements BrowserPanelCallback {
 	static Logger logger = Logger.getLogger(Main.class.getName());
 	
 	private static final int DEFAULT_WIDTH = 800;
@@ -167,7 +167,7 @@ public class Main {
 		
 		browserPanel = new BrowserPanel(project);
 		tabbedPane.add("Types", browserPanel);
-		viewMenu.add(new JMenuItem(browserPanel.getViewAction(this)));
+		viewMenu.add(new JMenuItem(browserPanel.getViewAction(this, false)));
 
 		JMenu sessionMenu = new JMenu("Session");
 		menuBar.add(sessionMenu);
@@ -439,6 +439,7 @@ public class Main {
 	/** client panels, key by type name */
 	protected Map<String,EntityTablePanel> entityTablePanels = new HashMap<String,EntityTablePanel>();
 	/** open/to front client panel for type - swing thread */
+	@Override
 	public void openEntityTablePanel(TypeDescription type) {
 		String name = type.getTypeName();
 		if (entityTablePanels.containsKey(name)) {

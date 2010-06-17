@@ -53,6 +53,10 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 	protected ListSubsetPanel typesPanel;
 	protected EntityTableModel model;
 	protected JTable table;
+	/** fact store ? */
+	protected FactStore factStore;
+	/** readonly */
+	protected boolean readonly;
 
 	/**
 	 * @param typeName
@@ -62,7 +66,23 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 	public EntityTablePanel(String typeName, Project project,
 			TypeDescription type) {
 		super(new BorderLayout());
+		init(typeName, project, type, project.getProjectInfo().getDefaultFactStore(), false);
+	}
+	/**
+	 * @param typeName
+	 * @param project
+	 * @param type
+	 */
+	public EntityTablePanel(String typeName, Project project,
+			TypeDescription type, FactStore factStore, boolean readonly) {	
+		super(new BorderLayout());
+		init(typeName, project, type, factStore, readonly);
+	}
+	protected void init(String typeName, Project project,
+			TypeDescription type, FactStore factStore, boolean readonly) {
 		this.typeName = typeName;
+		this.factStore = factStore;
+		this.readonly = readonly;
 
 		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		add(splitPane, BorderLayout.CENTER);
@@ -70,9 +90,10 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 		typesPanel = new ListSubsetPanel();
 		splitPane.setTopComponent(typesPanel);
 		typesPanel.addPropertyChangeListener("selectedListModel", this);
-		//splitPane.setResizeWeight(0.25);
+		factStore.addPropertyChangeListener("facts", this);
+		//splitPane.setResizeWeight(0.25); 
 		
-		model = new EntityTableModel(type, new LinkedList<TypeDescription>(), null);
+		model = new EntityTableModel(type, new LinkedList<TypeDescription>(), null, readonly);
 		table = new JTable(model);
 		// Java 1.6
 		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
@@ -190,7 +211,7 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 			else
 				logger.log(Level.WARNING, "Cannot find facet type "+facetName);
 		}
-		model = new EntityTableModel(type, facets, project.getProjectInfo().getDefaultFactStore());
+		model = new EntityTableModel(type, facets, factStore, readonly);
 		table.setModel(model);
 		table.setColumnModel(model.getColumnModel());
 		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);

@@ -14,6 +14,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,6 +53,8 @@ import org.restlet.data.Protocol;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 import uk.ac.horizon.ug.authorapp.BrowserPanel;
+import uk.ac.horizon.ug.authorapp.BrowserPanelCallback;
+import uk.ac.horizon.ug.authorapp.EntityTablePanel;
 import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.authorapp.Main;
 import uk.ac.horizon.ug.authorapp.model.ClientTypeInfo;
@@ -71,12 +74,13 @@ import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.SessionType;
 import uk.ac.horizon.ug.exserver.protocol.Operation;
 import uk.ac.horizon.ug.exserver.protocol.RawFactHolder;
+import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 
 /**
  * @author cmg
  *
  */
-public class SessionFrame extends JFrame {
+public class SessionFrame extends JFrame implements BrowserPanelCallback {
 	static Logger logger = Logger.getLogger(SessionFrame.class.getName());
 	private static final int DEFAULT_WIDTH = 800;
 	private static final int DEFAULT_HEIGHT = 600;
@@ -86,10 +90,15 @@ public class SessionFrame extends JFrame {
 	Session session;
 	/** drools session */
 	DroolsSession droolsSession;
+	/** our fake project
+	 */
+	protected Project fakeProject;
 	/** project info */
 	ProjectInfo projectInfo;
 	/** client types */
 	List<ClientTypeInfo> clientTypes;
+	/** session fact store */
+	protected SessionFactStore sessionFactStore;
 	
 	/** cons */
 	public SessionFrame(JFrame parent, Project project) {
@@ -109,9 +118,9 @@ public class SessionFrame extends JFrame {
 			JOptionPane.showMessageDialog(parent, "Problem re-loading project\n"+e, "New Session", JOptionPane.ERROR_MESSAGE);
 			return;			
 		}
-		Project p = new Project();
-		p.setProjectInfo(projectInfo);
-		if (!p.reloadRuleFiles()) 
+		fakeProject = new Project();
+		fakeProject.setProjectInfo(projectInfo);
+		if (!fakeProject.reloadRuleFiles()) 
 		{
 			JOptionPane.showMessageDialog(parent, "Error parsing rules\n", "New Session", JOptionPane.ERROR_MESSAGE);
 			return;						
@@ -142,6 +151,9 @@ public class SessionFrame extends JFrame {
 			}			
 		}));
 
+		JMenu viewMenu = new JMenu("View");
+		menuBar.add(viewMenu);
+				
 		JMenu clientMenu = new JMenu("Client");
 		menuBar.add(clientMenu);
 		clientMenu.add(new JMenuItem(new AbstractAction("Register new...") {
@@ -160,17 +172,42 @@ public class SessionFrame extends JFrame {
 		// initialise
 		if (!init(parent, project))
 			return;
+		
+		sessionFactStore = new SessionFactStore("session:"+sessionId, droolsSession.getKsession());
 	
 		// must make properties panel after init!
 		PropertiesPanel pp = new PropertiesPanel(this);
 		tabbedPane.add("Properties", pp);
 		
-		BrowserPanel browserPanel = new BrowserPanel(p);
+		BrowserPanel browserPanel = new BrowserPanel(fakeProject);
 		tabbedPane.add("Types", browserPanel);
+		viewMenu.add(new JMenuItem(browserPanel.getViewAction(this, true)));
+		viewMenu.add(new JMenuItem(new AbstractAction("Refresh Session Views") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				logger.info("Reloading session facts");
+				sessionFactStore.refresh();
+			}
+		}));
 		
 		pack();
 		setVisible(true);
 		currentFrame = this;
+	}
+	/** client panels, key by type name */
+	protected Map<String,EntityTablePanel> entityTablePanels = new HashMap<String,EntityTablePanel>();
+	/** open/to front client panel for type - swing thread */
+	@Override
+	public void openEntityTablePanel(TypeDescription type) {
+		String name = type.getTypeName();
+		if (entityTablePanels.containsKey(name)) {
+			tabbedPane.setSelectedComponent(entityTablePanels.get(name));
+			return;
+		}
+		EntityTablePanel entityTablePanel = new EntityTablePanel(name, fakeProject, type, this.sessionFactStore, false);
+		entityTablePanels.put(name, entityTablePanel);
+		tabbedPane.add("Entity: "+name,entityTablePanel);
+		tabbedPane.setSelectedComponent(entityTablePanel);		
 	}
 
 	protected void registerNewClient() {

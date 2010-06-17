@@ -88,12 +88,15 @@ public class EntityTableModel extends AbstractTableModel {
 	/** fact store */
 	protected FactStore factStore;
 	/**
+	 * @param readonly 
 	 * @param type
 	 */
-	public EntityTableModel(TypeDescription mainType, List<TypeDescription> visibleTypes, FactStore factStore) {
+	private boolean readonly;
+	public EntityTableModel(TypeDescription mainType, List<TypeDescription> visibleTypes, FactStore factStore, boolean readonly) {
 		super();
 		this.mainType = mainType;
 		this.factStore = factStore;
+		this.readonly = readonly;
 		// first column
 		columns = new LinkedList<ColumnInfo>();
 		pkFieldName = mainType.getIdFieldName();
@@ -228,6 +231,8 @@ public class EntityTableModel extends AbstractTableModel {
 	 */
 	@Override
 	public boolean isCellEditable(int row, int columnIndex) {
+		if (readonly)
+			return false;
 		ColumnInfo ci = columns.get(columnIndex);
 		if (ci.columnType==ColumnInfo.ColumnType.id)
 			return false; // can't change ID for now

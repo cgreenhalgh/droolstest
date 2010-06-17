@@ -5,7 +5,8 @@ package uk.ac.horizon.ug.authorapp;
 
 import java.util.Map;
 
-/** Factory/cache by name of FactInspectors
+/** DO NOT USE - FactInspector NOT IMPLEMENTED.
+ * Factory/cache by name of FactInspectors
  * 
  * @author cmg
  *
@@ -14,7 +15,7 @@ public class FactInspectorFactory {
 	/** cache by class name */
 	protected Map<String,FactInspector> factInspectors;
 	/** get */
-	public synchronized FactInspector getFactInspector(Object object) {
+	public synchronized FactInspector getFactInspector(Object object) throws UnsupportedOperationException {
 		if (object==null)
 			return null;
 		String className = object.getClass().getName();
