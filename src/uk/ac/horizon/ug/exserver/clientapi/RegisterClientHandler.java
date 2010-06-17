@@ -24,6 +24,7 @@ import org.restlet.resource.ResourceException;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonConverter;
 import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.ext.xstream.XstreamRepresentation;
 
 import uk.ac.horizon.ug.authorapp.model.ClientTypeInfo;
 import uk.ac.horizon.ug.authorapp.model.ProjectInfo;
@@ -40,10 +41,10 @@ import uk.ac.horizon.ug.exserver.model.Session;
 public class RegisterClientHandler extends BaseResource {
 	static Logger logger = Logger.getLogger(RegisterClientHandler.class.getName());
 
-	/** handle POST registration of client conversation.
+	/** handle JSON POST registration of client conversation.
 	 * e.g. curl -d '...' http://localhost:8182/droolstest/1/registerclient
 	 * 
-	 * See ClientConversation.
+	 * See ClientConversation. NB sessionId below will be wrong.
 	 * 
 	 * <pre>{"conversationId":"1234","clientId":"imei:1234","clientType":"Mobile","sessionId":"0","creationTime":123456789,"lastContactTime":0,"status":"ACTIVE"}
 	 * </pre>
@@ -57,13 +58,50 @@ public class RegisterClientHandler extends BaseResource {
 	 * @throws NamingException 
 	 * @throws SystemException 
 	 * @throws NotSupportedException */
-	@Post("json")
+	//@Post("json")
 	public JsonRepresentation register(JsonRepresentation req) throws JSONException, IllegalArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException, IntrospectionException, NamingException, NotSupportedException, SystemException {
 		JSONObject request = req.getJsonObject();
 		logger.info("Got request: "+request);
 
 		ClientConversation conversation = JsonUtils.JsonToObject(request, ClientConversation.class);
 		logger.info(" -> : "+conversation);
+				
+		if (conversation.getClientId()==null || conversation.getConversationId()==null && conversation.getSessionId()==null || conversation.getClientType()==null) {
+			logger.log(Level.WARNING, "incomplete request: "+conversation);
+			setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+			return null;
+		}
+		if (!registerInternal(conversation)) {
+  			setStatus(Status.SERVER_ERROR_INTERNAL);
+  			return null;
+		}
+		// construct response (what?)
+		// TODO
+		return null;
+	}
+	
+	/** handle JSON POST registration of client conversation.
+	 * e.g. curl -H Content-Type:application/xml -d '...' http://localhost:8182/droolstest/1/registerclient
+	 * 
+	 * See ClientConversation. NB sessionId below will be wrong.
+	 * 
+	 * <pre><conversation><conversationId>1234</conversationId><clientId>imei:1234</clientId><clientType>Mobile</clientType><sessionId>0</sessionId><creationTime>123456789</creationTime><lastContactTime>0</lastContactTime><status>ACTIVE</status></conversation>
+	 * </pre>
+	 * 
+	 * @throws JSONException 
+	 * @throws IntrospectionException 
+	 * @throws InstantiationException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws IllegalArgumentException 
+	 * @throws NamingException 
+	 * @throws SystemException 
+	 * @throws NotSupportedException */
+	@Post("xml")
+	public XstreamRepresentation register(XstreamRepresentation req) throws JSONException, IllegalArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException, IntrospectionException, NamingException, NotSupportedException, SystemException {
+		XstreamUtils.addAliases(req);
+		ClientConversation conversation = (ClientConversation)req.getObject();
+		logger.info("Got request: "+conversation);
 				
 		if (conversation.getClientId()==null || conversation.getConversationId()==null && conversation.getSessionId()==null || conversation.getClientType()==null) {
 			logger.log(Level.WARNING, "incomplete request: "+conversation);
