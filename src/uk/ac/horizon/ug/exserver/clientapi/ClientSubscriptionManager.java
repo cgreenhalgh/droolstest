@@ -112,7 +112,7 @@ public class ClientSubscriptionManager {
 					if (subscription.isMatchExisting()) {
 						Collection<Object> objects = ds.getKsession().getObjects();
 						for (Object object : objects) {
-							if (matches(pattern, object, ds.getKsession().getKnowledgeBase())) {
+							if (matches(pattern, object, conversation, ds.getKsession().getKnowledgeBase())) {
 								
 							}
 						}
@@ -123,7 +123,7 @@ public class ClientSubscriptionManager {
 		}
 	}
 
-	private static boolean matches(QueryInfo pattern, Object object, KnowledgeBase knowledgeBase) {
+	private static boolean matches(QueryInfo pattern, Object object, ClientConversation conversation, KnowledgeBase knowledgeBase) {
 		if (object==null)
 			return false;
 		String className = object.getClass().getName();
@@ -151,11 +151,128 @@ public class ClientSubscriptionManager {
 				return false;
 			}
 			Object value = field.get(object);
-			//switch (constraint.getConstraintType()) {
+			String sParameter = constraint.getParameter();
+			Object parameter = sParameter;
+			if (constraint.getConstraintType().requiresValue()) {
+				if (parameter==null) {
+					logger.log(Level.WARNING, "No parameter specified for constraint "+className+" field "+fieldName);
+					return false;
+				}
+				if (value instanceof Number) {
+					if (value instanceof Float || value instanceof Double) {
+						parameter = Double.parseDouble(sParameter);
+						value = ((Number)value).doubleValue();
+					}
+					else {
+						parameter = Long.parseLong(sParameter);
+						value = ((Number)value).longValue();
+					}
+				} else if (value instanceof Boolean) {
+					parameter = (sParameter.startsWith("t") || sParameter.startsWith("T") || sParameter.startsWith("1"));
+				}
+				else if (value!=null) {
+					value = value.toString();
+				}
+			} else if (value!=null)
+				value = value.toString();
+			
+			switch (constraint.getConstraintType()) {
 			// TODO
-			//}
+			case EQUAL_TO: 
+				if (value==null)
+					return false;
+				if (parameter.equals(value))
+					break;
+				return false;
+			case NOT_EQUAL_TO:
+				if (value==null)
+					return false;
+				if (!parameter.equals(value))
+					break;
+				return false;
+			case LESS_THAN:
+				if (value==null)
+					return false;
+				if (value instanceof Long) {
+					if (((Long)value).longValue() < ((Long)parameter).longValue())
+						break;
+				} else if (value instanceof Double) {
+					if (((Double)value).doubleValue() < ((Double)parameter).doubleValue())
+						break;
+				} else if (value instanceof String) {
+					if (((String)value).compareTo((String)parameter)<0)
+						break;
+				}
+				return false;
+			case LESS_THAN_OR_EQUAL_TO:
+				if (value==null)
+					return false;
+				if (value instanceof Long) {
+					if (((Long)value).longValue() <= ((Long)parameter).longValue())
+						break;
+				} else if (value instanceof Double) {
+					if (((Double)value).doubleValue() <= ((Double)parameter).doubleValue())
+						break;
+				} else if (value instanceof String) {
+					if (((String)value).compareTo((String)parameter)<=0)
+						break;
+				}
+				if (value.equals(parameter))
+					break;
+				return false;
+			case GREATER_THAN:
+				if (value==null)
+					return false;
+				if (value instanceof Long) {
+					if (((Long)value).longValue() > ((Long)parameter).longValue())
+						break;					
+				} else if (value instanceof Double) {
+					if (((Double)value).doubleValue() > ((Double)parameter).doubleValue())
+						break;
+				} else if (value instanceof String) {
+					if (((String)value).compareTo((String)parameter)>0)
+						break;
+				}
+				return false;
+			case GREATER_THAN_OR_EQUAL_TO:
+				if (value==null)
+					return false;
+				if (value instanceof Long) {
+					if (((Long)value).longValue() >= ((Long)parameter).longValue())
+						break;
+				} else if (value instanceof Double) {
+					if (((Double)value).doubleValue() >= ((Double)parameter).doubleValue())
+						break;
+				} else if (value instanceof String) {
+					if (((String)value).compareTo((String)parameter)>=0)
+						break;
+				}
+				if (value.equals(parameter))
+					break;
+				return false;
+			case EQUAL_TO_CLIENT_ID: 
+				if (value==null)
+					return false;
+				if (conversation.getClientId().equals(value))
+					break;
+				return false;
+			case EQUAL_TO_CONVERSATION_ID:
+				if (value==null)
+					return false;
+				if (conversation.getConversationId().equals(value))
+					break;
+				return false;
+			case IS_NULL:
+				if (value==null)
+					break;
+				return false;
+			case IS_NOT_NULL:
+				if (value!=null)
+					break;
+				return false;
+			}
 			
 		}
-		return false;
+		return true;
 	}
 }

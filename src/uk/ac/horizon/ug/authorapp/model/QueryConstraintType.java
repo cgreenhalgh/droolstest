@@ -29,6 +29,9 @@ public enum QueryConstraintType {
 	public String text() {
 		return text;
 	}
+	public boolean requiresValue() {
+		return requiresValue;
+	}
 	public static QueryConstraintType valueOfText(String t) {
 		QueryConstraintType qcts[] = QueryConstraintType.values();
 		for (int i=0; i<qcts.length; i++)
