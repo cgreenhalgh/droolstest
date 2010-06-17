@@ -16,6 +16,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -55,8 +56,14 @@ public class ClientTypePanel extends JPanel implements PropertyChangeListener {
 		super(new BorderLayout());
 		this.clientTypeInfo = clientTypeInfo;
 
+		JTabbedPane tabbedPane = new JTabbedPane();
+		add(tabbedPane, BorderLayout.CENTER);
+		
+		JPanel facetsPanel = new JPanel(new BorderLayout());
+		tabbedPane.add("Facets", facetsPanel);
+		
 		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		add(splitPane, BorderLayout.CENTER);
+		facetsPanel.add(splitPane, BorderLayout.CENTER);
 
 		List<String> selectedTypes = new LinkedList<String>();
 		List<String> allTypes = new LinkedList<String>();
@@ -72,6 +79,10 @@ public class ClientTypePanel extends JPanel implements PropertyChangeListener {
 		tree.setCellRenderer(new BrowserPanel.BrowserTreeCellRenderer());
 		splitPane.setBottomComponent(new JScrollPane(tree));
 
+		// TODO subscriptions panel
+		
+		// TODO publication filter panel
+		
 		refresh(project);
 	}
 	/** name */

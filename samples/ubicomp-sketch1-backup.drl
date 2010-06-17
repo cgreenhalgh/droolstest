@@ -105,7 +105,7 @@ declare ScanConfigurationRequest
 	@message // it is a message
 	@stateful // its retraction is also significant (or just don't label it @event?)
 	device_id : String @fk("BluetoothScanningDevice") @required 
-					@to // this is the destination of the the @message
+					@to("BluetoothScanningDevice") // this is the destination of the the @message
 	interval_s : int @type("IntervalSeconds") 
 					@content // this is the content of the @message
 end
@@ -142,7 +142,7 @@ declare ShowContentRequest
 	@digital
 	@message
 	@event
-	device_id : String @fk("ContentDisplayDevice") @required @to
+	device_id : String @fk("ContentDisplayDevice") @required @to("BluetoothScanningDevice")
 	content_url : String @type("URL") @required @content
 	time : long @required @type("SystemTimeMillis")
 end

@@ -111,6 +111,9 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 				else if (type.isEntity()) {
 					main.openEntityTablePanel(type);
 				}
+				else {
+					main.openEntityTablePanel(type);
+				}
 			}
 		};
 		return viewAction;
@@ -245,8 +248,8 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 			for (Map.Entry<String,TypeFieldDescription> field : type.getFields().entrySet()) {
 				if (!field.getValue().getFieldMeta().containsKey(requiredFieldReferenceKey.name()))
 					continue nextfield;
-				// all refs in fk (foreign key)?!
-				String value = field.getValue().getFieldMeta().get(TypeFieldDescription.FieldMetaKeys.fk.name());
+				// all refs in named field (not fk / foreign key)?!
+				String value = field.getValue().getFieldMeta().get(requiredFieldReferenceKey.name());
 				if (value==null) 
 					continue nextfield;
 				//logger.info("Checking field "+field.getKey()+" of type "+type.getTypeName()+" for metadata "+requiredFieldReferenceKey+"="+value+" for type name "+clientType.getTypeName());
@@ -320,6 +323,7 @@ public class BrowserPanel extends JPanel implements PropertyChangeListener {
 			root.add(makeFilteredTypesNode("Authored Entities", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.entity.name()}, types));
 			root.add(makeFilteredTypesNode("Authored Properties", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.property.name()}, types));
 			root.add(makeFilteredTypesNode("Authored Relationships", new String[]{TypeDescription.TypeMetaKeys.describedbyauthor.name(), TypeDescription.TypeMetaKeys.relationship.name()}, types));
+			root.add(makeFilteredTypesNode("Messages", new String[]{TypeDescription.TypeMetaKeys.message.name()}, types));
 			root.add(makeRangeTypesNode("Custom Types", types));
 		}
 		treeModel.reload();

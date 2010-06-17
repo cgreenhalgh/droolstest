@@ -22,7 +22,12 @@ public class FactStore {
 	protected List<Fact> facts = new LinkedList<Fact>();
 	protected transient boolean changed = false;
 	/** listener support */
-	protected PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+	protected transient PropertyChangeSupport propertyChangeSupport;
+	protected  PropertyChangeSupport getPropertyChangeSupport() {
+		if (propertyChangeSupport==null) 
+			propertyChangeSupport = new PropertyChangeSupport(this);
+		return propertyChangeSupport;
+	}
 	/** cons */
 	public FactStore() {	
 	}
@@ -110,14 +115,14 @@ public class FactStore {
 		changed = true;
 	}
 	public void fireFactsChanged() {
-		propertyChangeSupport.firePropertyChange("facts", null, facts);
+		getPropertyChangeSupport().firePropertyChange("facts", null, facts);
 	}
 	/**
 	 * @param listener
 	 * @see java.beans.PropertyChangeSupport#addPropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
 	public void addPropertyChangeListener(PropertyChangeListener listener) {
-		propertyChangeSupport.addPropertyChangeListener(listener);
+		getPropertyChangeSupport().addPropertyChangeListener(listener);
 	}
 	/**
 	 * @param propertyName
@@ -126,14 +131,14 @@ public class FactStore {
 	 */
 	public void addPropertyChangeListener(String propertyName,
 			PropertyChangeListener listener) {
-		propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
+		getPropertyChangeSupport().addPropertyChangeListener(propertyName, listener);
 	}
 	/**
 	 * @param listener
 	 * @see java.beans.PropertyChangeSupport#removePropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
 	public void removePropertyChangeListener(PropertyChangeListener listener) {
-		propertyChangeSupport.removePropertyChangeListener(listener);
+		getPropertyChangeSupport().removePropertyChangeListener(listener);
 	}
 	/**
 	 * @param propertyName
@@ -142,7 +147,7 @@ public class FactStore {
 	 */
 	public void removePropertyChangeListener(String propertyName,
 			PropertyChangeListener listener) {
-		propertyChangeSupport.removePropertyChangeListener(propertyName,
+		getPropertyChangeSupport().removePropertyChangeListener(propertyName,
 				listener);
 	}
 }

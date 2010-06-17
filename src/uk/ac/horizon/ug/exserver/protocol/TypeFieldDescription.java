@@ -84,9 +84,13 @@ public class TypeFieldDescription {
 	public boolean isFrom() {
 		return fieldMeta.containsKey(FieldMetaKeys.from.name());
 	}
-	/** get to metadata */
+	/** is to metadata */
 	public boolean isTo() {
 		return fieldMeta.containsKey(FieldMetaKeys.to.name());
+	}
+	/** get to value metadata */
+	public String getTo() {
+		return fieldMeta.get(FieldMetaKeys.to.name());
 	}
 	/** get key metadata */
 	public boolean isKey() {

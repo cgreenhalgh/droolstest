@@ -214,6 +214,8 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 		model = new EntityTableModel(type, facets, factStore, readonly);
 		table.setModel(model);
 		table.setColumnModel(model.getColumnModel());
+		table.getTableHeader().setColumnModel(model.getColumnModel());
+		table.getTableHeader().setVisible(true);
 		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
 		table.setRowSorter(sorter);
 	}

@@ -1,0 +1,66 @@
+<project>
+  <name></name>
+  <ruleFiles class="linked-list">
+    <string>file:/D:/cmg/Horizon/eclipsews/droolstest/samples/bluetoothex.drl</string>
+  </ruleFiles>
+  <clientTypes class="linked-list">
+    <uk.ac.horizon.ug.authorapp.model.ClientTypeInfo>
+      <name>Mobile</name>
+      <clientTypeNames class="linked-list">
+        <string>BluetoothScanningDevice</string>
+        <string>ContentDisplayDevice</string>
+      </clientTypeNames>
+    </uk.ac.horizon.ug.authorapp.model.ClientTypeInfo>
+  </clientTypes>
+  <factStores class="linked-list">
+    <uk.ac.horizon.ug.authorapp.FactStore>
+      <name>default</name>
+      <facts class="linked-list">
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.ubicomp</namespace>
+          <typeName>Beacon</typeName>
+          <fieldValues>
+            <entry>
+              <string>id</string>
+              <string>B1</string>
+            </entry>
+            <entry>
+              <string>mac</string>
+              <string>1:2:3:4</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.ubicomp</namespace>
+          <typeName>BeaconContent</typeName>
+          <fieldValues>
+            <entry>
+              <string>beacon_id</string>
+              <string>B1</string>
+            </entry>
+            <entry>
+              <string>content_url</string>
+              <string>file:/D:/cmg/Horizon/eclipsews/droolstest/readme.md</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.ubicomp</namespace>
+          <typeName>ShowContentRequest</typeName>
+          <fieldValues>
+            <entry>
+              <string>device_id</string>
+              <string>a</string>
+            </entry>
+            <entry>
+              <string>content_url</string>
+              <string>file:/D:/cmg/Horizon/eclipsews/droolstest/docs/readme.html</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+      </facts>
+    </uk.ac.horizon.ug.authorapp.FactStore>
+  </factStores>
+  <defaultFactStoreName>default</defaultFactStoreName>
+  <customViews class="linked-list"/>
+</project>

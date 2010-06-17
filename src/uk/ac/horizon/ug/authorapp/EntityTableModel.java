@@ -449,7 +449,9 @@ public class EntityTableModel extends AbstractTableModel {
 				}
 			}
 			logger.info("Column "+i+", renderer="+cellRenderer+", editor="+cellEditor);
-			columnModel.addColumn(new TableColumn(i, 75, cellRenderer, cellEditor));
+			TableColumn tableColumn = new TableColumn(i, 75, cellRenderer, cellEditor);
+			tableColumn.setHeaderValue(this.getColumnName(i));
+			columnModel.addColumn(tableColumn);
 		}
 		return columnModel;
 	}
