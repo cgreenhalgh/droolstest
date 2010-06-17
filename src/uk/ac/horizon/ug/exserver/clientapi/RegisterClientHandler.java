@@ -139,6 +139,7 @@ public class RegisterClientHandler extends BaseResource {
     				if (cc.getStatus()==ConversationStatus.ACTIVE) {
     					logger.info("Expire existing conversation: "+cc);
     					cc.setStatus(ConversationStatus.SUPERCEDED);
+    	    			ClientSubscriptionManager.handleConversationChange(cc);
 
     	    			// check session status
     	    			Session session = em.find(Session.class, cc.getSessionId());
@@ -195,6 +196,7 @@ public class RegisterClientHandler extends BaseResource {
         		else if (currentConversation.getStatus()==ConversationStatus.ACTIVE) {
         			logger.info("Changing current conversation status (also Drools): "+conversation);
         			currentConversation.setStatus(conversation.getStatus());
+	    			ClientSubscriptionManager.handleConversationChange(currentConversation);
         			droolsSession.getKsession().retract(droolsConversation);
         			droolsSession.getKsession().insert(currentConversation);
         		}
@@ -226,10 +228,13 @@ public class RegisterClientHandler extends BaseResource {
     			logger.info("Persisting "+conversation);
     			em.persist(conversation);
     			
+    			ClientSubscriptionManager.handleConversationChange(conversation);
+
     			// also in drools
     			droolsSession.getKsession().insert(conversation);
     			
     			// TODO flush conversation state (e.g. incremental query cache)
+    			
     		}
     		ut.commit();
 			em.close();
