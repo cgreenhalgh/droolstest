@@ -5,18 +5,25 @@ package uk.ac.horizon.ug.authorapp;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -24,8 +31,13 @@ import javax.swing.tree.DefaultTreeModel;
 
 import uk.ac.horizon.ug.authorapp.BrowserPanel.BrowserTreeCellRenderer;
 import uk.ac.horizon.ug.authorapp.BrowserPanel.TypeFilter;
+import uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo;
+import uk.ac.horizon.ug.authorapp.model.ClientSubscriptionLifetimeType;
 import uk.ac.horizon.ug.authorapp.model.ClientTypeInfo;
 import uk.ac.horizon.ug.authorapp.model.Project;
+import uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo;
+import uk.ac.horizon.ug.authorapp.model.QueryConstraintType;
+import uk.ac.horizon.ug.authorapp.model.QueryInfo;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 import uk.ac.horizon.ug.exserver.protocol.TypeFieldDescription;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription.TypeMetaKeys;
@@ -80,10 +92,103 @@ public class ClientTypePanel extends JPanel implements PropertyChangeListener {
 		splitPane.setBottomComponent(new JScrollPane(tree));
 
 		// TODO subscriptions panel
+		JPanel subscriptionsPanel = new JPanel(new BorderLayout());
+		tabbedPane.add("Subscriptions", subscriptionsPanel);
+		final ClientSubscriptionTableModel subscriptionModel = new ClientSubscriptionTableModel(clientTypeInfo.getSubscriptions(), project);
+		final JTable subscriptionTable = new JTable(subscriptionModel);
+		ClientSubscriptionTableModel.setDefaultRenderers(subscriptionTable);
+		subscriptionsPanel.add(new JScrollPane(subscriptionTable), BorderLayout.CENTER);
+		
+		JPanel buttons;
+		buttons = new JPanel(new FlowLayout());
+		subscriptionsPanel.add(buttons, BorderLayout.SOUTH);
+		buttons.add(new JButton(new AbstractAction("Create default") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				createDefaultSubscriptions();
+				ClientTypePanel.this.project.setChanged(true);
+				subscriptionModel.fireTableDataChanged();
+			}
+		}));
+		buttons.add(new JButton(new AbstractAction("Delete selected") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				int rows[] = subscriptionTable.getSelectedRows();
+				// Java 1.6! (rowindextomodel)
+				// Pre-1.6 - no TableFiler
+				for (int i=0; i<rows.length; i++) 
+					rows[i] = subscriptionTable.convertRowIndexToModel(rows[i]);
+				
+				// in reverse order so we don't shift positions of ones removed later
+				Arrays.sort(rows);
+				for (int i=rows.length-1; i>=0; i--) {
+					ClientTypePanel.this.clientTypeInfo.getSubscriptions().remove(i);
+					ClientTypePanel.this.project.setChanged(true);
+				}
+				subscriptionModel.fireTableDataChanged();
+			}			
+		}));
 		
 		// TODO publication filter panel
 		
 		refresh(project);
+	}
+	/** create default subscriptions for current client type(s) */
+	protected void createDefaultSubscriptions() {
+		// check @message @to...
+		createSubscriptions(TypeDescription.TypeMetaKeys.message, TypeFieldDescription.FieldMetaKeys.to, clientTypeInfo.getClientTypeNames());
+	}
+	private void createSubscriptions(TypeMetaKeys requiredTypeKey, FieldMetaKeys requiredFieldReferenceKey,
+			List<String> clientTypeNames) {
+		List<TypeDescription> types = project.getTypes();
+		nexttype:
+		for (TypeDescription type : types) {
+			if (!type.getTypeMeta().containsKey(requiredTypeKey.name()))
+				continue nexttype;
+			String fieldName = null;
+			nextfield:
+			for (Map.Entry<String,TypeFieldDescription> field : type.getFields().entrySet()) {
+				if (!field.getValue().getFieldMeta().containsKey(requiredFieldReferenceKey.name()))
+					continue nextfield;
+				// all refs in named field (not fk / foreign key)?!
+				String value = field.getValue().getFieldMeta().get(requiredFieldReferenceKey.name());
+				if (value==null) 
+					continue nextfield;
+				//logger.info("Checking field "+field.getKey()+" of type "+type.getTypeName()+" for metadata "+requiredFieldReferenceKey+"="+value+" for type name "+clientType.getTypeName());
+				String values [] = value.split("[\", |]");
+				for (int i=0; i<values.length; i++) 
+					if (clientTypeNames.contains(values[i]))
+					{
+						//logger.info("Found");
+						fieldName = field.getKey();
+						break nextfield;
+					}
+					//else
+					//	logger.info("Not found ("+clientType.getTypeName()+") in ["+i+"]: "+values[i]);
+			}
+			if (fieldName!=null) {
+				// found!
+				clientTypeInfo.getSubscriptions().add(newSubscription(type, fieldName, QueryConstraintType.EQUAL_TO_CLIENT_ID, null));
+			}
+		}
+	}
+	/** new subscription */
+	protected static ClientSubscriptionInfo newSubscription(TypeDescription type, String fieldName, QueryConstraintType constraintType, String parameter) {
+		ClientSubscriptionInfo subscription = new ClientSubscriptionInfo();
+		subscription.setActive(true);
+		subscription.setLifetime(ClientSubscriptionLifetimeType.CLIENT);
+		subscription.setDeleteAllowed(true);
+		subscription.setUpdateAllowed(true);
+		subscription.setMatchExisting(true);
+		QueryInfo pattern = new QueryInfo();
+		subscription.setPattern(pattern);
+		pattern.setTypeName(type.getTypeName());
+		QueryConstraintInfo constraint = new QueryConstraintInfo();
+		pattern.getConstraints().add(constraint);
+		constraint.setFieldName(fieldName);
+		constraint.setConstraintType(constraintType);
+		constraint.setParameter(parameter);
+		return subscription;
 	}
 	/** name */
 	public String getName() {

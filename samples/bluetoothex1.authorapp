@@ -10,6 +10,25 @@
         <string>BluetoothScanningDevice</string>
         <string>ContentDisplayDevice</string>
       </clientTypeNames>
+      <subscriptions class="linked-list">
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>true</updateAllowed>
+          <deleteAllowed>true</deleteAllowed>
+          <pattern>
+            <typeName>ShowContentRequest</typeName>
+            <constraints class="linked-list">
+              <uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+                <fieldName>device_id</fieldName>
+                <constraintType>EQUAL_TO_CLIENT_ID</constraintType>
+              </uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+            </constraints>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>UNTIL_ACKNOWLEDGED</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+      </subscriptions>
     </uk.ac.horizon.ug.authorapp.model.ClientTypeInfo>
   </clientTypes>
   <factStores class="linked-list">

@@ -128,13 +128,16 @@ public class EntityTablePanel extends JPanel implements PropertyChangeListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int rows[] = table.getSelectedRows();
+				// Java 1.6! (rowindextomodel)
+				// Pre-1.6 - no TableFiler
+				for (int i=0; i<rows.length; i++) 
+					rows[i] = table.convertRowIndexToModel(rows[i]);
+				
+				// in reverse order so we don't shift positions of ones removed later
 				Arrays.sort(rows);
 				for (int i=rows.length-1; i>=0; i--) {
 					// TODO includeSubFacts?
-					// Java 1.6! (rowindextomodel)
-					model.deleteRow(table.convertRowIndexToModel(rows[i]), false);
-					// Pre-1.6 - no TableFiler: 
-					// model.deleteRow(rows[i], false);
+					model.deleteRow(rows[i], false);
 				}
 			}
 		}));
