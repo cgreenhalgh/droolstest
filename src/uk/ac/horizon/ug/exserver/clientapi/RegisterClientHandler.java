@@ -16,6 +16,7 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
+import org.drools.runtime.rule.FactHandle;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.representation.Representation;
@@ -122,6 +123,7 @@ public class RegisterClientHandler extends BaseResource {
 		UserTransaction ut = getTransaction();
 		ut.begin();
 		try {
+			DroolsSession droolsSession = null;
 			em.joinTransaction();
 			// Expire old conversations with the same client
     		Query q = em.createQuery ("SELECT x FROM ClientConversation x WHERE x.clientId = :clientId");
@@ -137,6 +139,24 @@ public class RegisterClientHandler extends BaseResource {
     				if (cc.getStatus()==ConversationStatus.ACTIVE) {
     					logger.info("Expire existing conversation: "+cc);
     					cc.setStatus(ConversationStatus.SUPERCEDED);
+
+    	    			// check session status
+    	    			Session session = em.find(Session.class, cc.getSessionId());
+    	    			if (session==null) {
+    	    				logger.log(Level.WARNING, "Could not find current conv. session "+cc.getSessionId());
+    	    				continue;
+    	    			}
+
+    	    			// check client type
+    	    			DroolsSession ds = DroolsSession.getSession(session, em);
+    	    			FactHandle droolsConversation = ds.getKsession().getFactHandle(cc);    			
+    	    			if (droolsConversation!=null) {
+    	    				logger.info("Expiring in session");
+    	    				// update problem with JPA
+    	    				ds.getKsession().retract(droolsConversation);
+    	    				ds.getKsession().insert(cc);
+    	    				ds.getKsession().fireAllRules();
+    	    			}
     				}
     			}
     		}
@@ -147,6 +167,22 @@ public class RegisterClientHandler extends BaseResource {
     				logger.info("ClientConversation already exists, but does not match: "+conversation+" vs "+currentConversation);
     				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST);
     			}
+
+    			// check session status
+    			Session session = em.find(Session.class, currentConversation.getSessionId());
+    			if (session==null) {
+    				logger.log(Level.WARNING, "Could not find session "+conversation.getSessionId());
+    				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND);    			
+    			}
+
+    			// check client type
+    			droolsSession = DroolsSession.getSession(session, em);
+    			FactHandle droolsConversation = droolsSession.getKsession().getFactHandle(currentConversation);    			
+    			if (droolsConversation==null) {
+    	 			logger.log(Level.WARNING, "Current conversation not found in session: "+currentConversation);
+    	 			droolsConversation = droolsSession.getKsession().insert(currentConversation);
+    			}
+    			
         		if (conversation.getStatus()==ConversationStatus.ACTIVE) {
         			if (currentConversation.getStatus()==ConversationStatus.ACTIVE) {
         				logger.info("ClientConversation already exists, both ACTIVE - ignore: "+currentConversation);
@@ -157,8 +193,10 @@ public class RegisterClientHandler extends BaseResource {
         			}
         		}
         		else if (currentConversation.getStatus()==ConversationStatus.ACTIVE) {
-        			logger.info("Changing current conversation status: "+conversation);
+        			logger.info("Changing current conversation status (also Drools): "+conversation);
         			currentConversation.setStatus(conversation.getStatus());
+        			droolsSession.getKsession().retract(droolsConversation);
+        			droolsSession.getKsession().insert(currentConversation);
         		}
         		else {
         			// already inactive
@@ -174,7 +212,7 @@ public class RegisterClientHandler extends BaseResource {
     			}
 
     			// check client type
-    			DroolsSession droolsSession = DroolsSession.getSession(session, em);
+    			droolsSession = DroolsSession.getSession(session, em);
     			ProjectInfo pi = droolsSession.getProjectInfo();
     			ClientTypeInfo ct = pi.getClientType(conversation.getClientType());
     			if (ct==null) {
@@ -188,10 +226,17 @@ public class RegisterClientHandler extends BaseResource {
     			logger.info("Persisting "+conversation);
     			em.persist(conversation);
     			
+    			// also in drools
+    			droolsSession.getKsession().insert(conversation);
+    			
     			// TODO flush conversation state (e.g. incremental query cache)
     		}
-			ut.commit();
+    		ut.commit();
 			em.close();
+
+    		// drools rules
+			if (droolsSession!=null)
+				droolsSession.getKsession().fireAllRules();
 		}
 		catch (Exception e) {
 			ut.rollback();

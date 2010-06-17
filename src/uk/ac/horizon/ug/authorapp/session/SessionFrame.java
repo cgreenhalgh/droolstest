@@ -296,10 +296,20 @@ public class SessionFrame extends JFrame implements BrowserPanelCallback {
 		}
 	}
 
+	/** client panels by clientId */
+	protected Map<String,ClientPanel> clientPanels = new HashMap<String,ClientPanel>();
 	private void showClientFrame(ClientConversation conversation) {
+		if (clientPanels.containsKey(conversation.getClientId())) {
+			JOptionPane.showMessageDialog(this, "Re-registered existing client "+conversation.getClientId(), "Client", JOptionPane.INFORMATION_MESSAGE);
+			ClientPanel oldcp = clientPanels.remove(conversation.getClientId());
+			oldcp.dispose();
+			tabbedPane.remove(oldcp);
+		}
+		
 		ClientPanel cp  = new ClientPanel(conversation);
 		tabbedPane.add("Client "+conversation.getClientType()+" "+conversation.getClientId(), cp);
 		tabbedPane.setSelectedComponent(cp);
+		clientPanels.put(conversation.getClientId(), cp);
 	}
 
 	private String newClientId() {

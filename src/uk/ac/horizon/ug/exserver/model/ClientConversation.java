@@ -3,6 +3,8 @@
  */
 package uk.ac.horizon.ug.exserver.model;
 
+import java.io.Serializable;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -13,7 +15,7 @@ import javax.persistence.Id;
  *
  */
 @Entity
-public class ClientConversation {
+public class ClientConversation implements Serializable {
 	/** current client ID (specific to this sequence of interactions with this client, e.g. after restart) */
 	@Id
 	protected String conversationId;
@@ -129,6 +131,38 @@ public class ClientConversation {
 				+ ", creationTime=" + creationTime + ", lastContactTime="
 				+ lastContactTime + ", sessionId=" + sessionId + ", status="
 				+ status + "]";
+	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		// just conversationId like Drools @key
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((conversationId == null) ? 0 : conversationId.hashCode());
+		return result;
+	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		// just conversationId like Drools @key
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ClientConversation other = (ClientConversation) obj;
+		if (conversationId == null) {
+			if (other.conversationId != null)
+				return false;
+		} else if (!conversationId.equals(other.conversationId))
+			return false;
+		return true;
 	}
 	
 }
