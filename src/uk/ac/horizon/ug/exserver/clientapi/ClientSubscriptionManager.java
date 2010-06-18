@@ -3,7 +3,9 @@
  */
 package uk.ac.horizon.ug.exserver.clientapi;
 
+import java.beans.IntrospectionException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
@@ -20,6 +22,8 @@ import org.drools.KnowledgeBase;
 import org.drools.definition.type.FactField;
 import org.drools.definition.type.FactType;
 import org.drools.runtime.rule.FactHandle;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo;
 import uk.ac.horizon.ug.authorapp.model.ClientTypeInfo;
@@ -28,8 +32,10 @@ import uk.ac.horizon.ug.authorapp.model.QueryInfo;
 import uk.ac.horizon.ug.exserver.BaseResource;
 import uk.ac.horizon.ug.exserver.DroolsSession;
 import uk.ac.horizon.ug.exserver.DroolsSession.RulesetException;
+import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageType;
 import uk.ac.horizon.ug.exserver.model.ClientConversation;
 import uk.ac.horizon.ug.exserver.model.ConversationStatus;
+import uk.ac.horizon.ug.exserver.model.MessageToClient;
 import uk.ac.horizon.ug.exserver.model.Session;
 
 /**
@@ -56,6 +62,9 @@ public class ClientSubscriptionManager {
 		try {
 			em.joinTransaction();
 
+			if (conversation.getStatus()==ConversationStatus.ACTIVE) {
+				insertMessageToClient(conversation, MessageType.NEW_CONV, null, null, null, em);
+			}
 			handleSubscriptions(conversation, em);
 			
 			if (localTransaction)
@@ -89,7 +98,8 @@ public class ClientSubscriptionManager {
 			}
 
 			List<ClientSubscriptionInfo> subscriptions = clientTypeInfo.getSubscriptions();
-			for (ClientSubscriptionInfo subscription : subscriptions) {
+			for (int si=0; si<subscriptions.size(); si++) {
+				ClientSubscriptionInfo subscription = subscriptions.get(si);
 				if (conversation.getStatus()!=ConversationStatus.ACTIVE) {
 					// tidy up?
 					// TODO
@@ -113,14 +123,52 @@ public class ClientSubscriptionManager {
 						Collection<Object> objects = ds.getKsession().getObjects();
 						for (Object object : objects) {
 							if (matches(pattern, object, conversation, ds.getKsession().getKnowledgeBase())) {
-								
+								insertMessageToClient(conversation, MessageType.FACT_EX, si, null, object, em);
 							}
 						}
 					}
-					// TODO
 				}
 			}
 		}
+	}
+
+	/** insert a new MessageToClient */
+	private static void insertMessageToClient(ClientConversation conversation,
+			MessageType type, Integer si, Object oldVal, Object newVal,
+			EntityManager em) {
+		try {
+			MessageToClient msg = new MessageToClient();
+			int seqNo = conversation.getNextSeqNo();
+			msg.setClientId(conversation.getClientId());
+			msg.setConversationId(conversation.getConversationId());
+			msg.setSessionId(conversation.getSessionId());
+			msg.setSeqNo(seqNo);
+			msg.setTime(System.currentTimeMillis());
+			msg.setType(type);
+			if (si!=null)
+				msg.setSubsIx(si);
+			if (oldVal!=null) 
+				msg.setOldVal(marshallFact(oldVal));
+			if (newVal!=null)
+				msg.setNewVal(marshallFact(newVal));
+			em.persist(msg);
+			conversation.setNextSeqNo(seqNo+1);
+			//em.merge(conversation);
+			logger.info("Added message: "+msg);
+		} catch (Exception e)  {
+			logger.log(Level.WARNING, "Unable to create/insert message to client", e);			
+		}
+	}
+	/** marshall a fact object to a string for use in a message to client 
+	 * @throws JSONException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws IntrospectionException 
+	 * @throws IllegalArgumentException */
+	private static String marshallFact(Object value) throws IllegalArgumentException, IntrospectionException, IllegalAccessException, InvocationTargetException, JSONException {
+		// JSON?!
+		JSONObject json = JsonUtils.objectToJson(value, true);
+		return json.toString();
 	}
 
 	private static boolean matches(QueryInfo pattern, Object object, ClientConversation conversation, KnowledgeBase knowledgeBase) {

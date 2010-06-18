@@ -61,6 +61,7 @@ import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.authorapp.model.Project;
 import uk.ac.horizon.ug.authorapp.model.ProjectInfo;
 import uk.ac.horizon.ug.exserver.devclient.Fact;
+import uk.ac.horizon.ug.exserver.model.DbUtils;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.Session;
 import uk.ac.horizon.ug.exserver.model.SessionType;
@@ -281,7 +282,7 @@ public class DroolsSession {
 		case JPA_SERIALIZED: {
 			Environment env = KnowledgeBaseFactory.newEnvironment();
 			env.set( EnvironmentName.ENTITY_MANAGER_FACTORY,
-			         Persistence.createEntityManagerFactory( "droolstest" ) );
+			         DbUtils.getEntityManagerFactory() );
 			
 			// bitronix specific... !
 			//env.set( EnvironmentName.TRANSACTION_MANAGER,

@@ -69,6 +69,7 @@ import uk.ac.horizon.ug.exserver.clientapi.RegisterClientHandler;
 import uk.ac.horizon.ug.exserver.devclient.Fact;
 import uk.ac.horizon.ug.exserver.model.ClientConversation;
 import uk.ac.horizon.ug.exserver.model.ConversationStatus;
+import uk.ac.horizon.ug.exserver.model.DbUtils;
 import uk.ac.horizon.ug.exserver.model.Session;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.SessionType;
@@ -373,11 +374,9 @@ public class SessionFrame extends JFrame implements BrowserPanelCallback {
 		
 		try {
 			// this seems to be needed first to set things up
-			UserTransaction ut =
-				  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
+			UserTransaction ut = DbUtils.getUserTransaction();
 			// then this - configured by authorapp/META-INF/persistence.xml
-			EntityManagerFactory emf = Persistence.createEntityManagerFactory( "droolstest" );
-			EntityManager em = emf.createEntityManager();
+			EntityManager em = DbUtils.getEntityManager();
 
 			ut.begin();
 			em.joinTransaction();

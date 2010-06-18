@@ -31,6 +31,8 @@ public class ClientConversation implements Serializable {
 	protected long lastContactTime;
 	/** conversation status */
 	protected ConversationStatus status;
+	/** sequence number */
+	protected int nextSeqNo;
 	/**
 	 * 
 	 */
@@ -163,6 +165,18 @@ public class ClientConversation implements Serializable {
 		} else if (!conversationId.equals(other.conversationId))
 			return false;
 		return true;
+	}
+	/**
+	 * @return the nextSeqNo
+	 */
+	public int getNextSeqNo() {
+		return nextSeqNo;
+	}
+	/**
+	 * @param nextSeqNo the nextSeqNo to set
+	 */
+	public void setNextSeqNo(int nextSeqNo) {
+		this.nextSeqNo = nextSeqNo;
 	}
 	
 }

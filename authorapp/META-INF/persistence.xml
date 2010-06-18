@@ -19,6 +19,7 @@
 	<class>uk.ac.horizon.ug.exserver.model.Session</class>
     <!-- client API -->
 	<class>uk.ac.horizon.ug.exserver.model.ClientConversation</class>
+	<class>uk.ac.horizon.ug.exserver.model.MessageToClient</class>
 
       <!-- Hibernate over H2 with BTM for Drools -->
       <properties>

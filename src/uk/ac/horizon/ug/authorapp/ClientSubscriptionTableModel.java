@@ -124,7 +124,7 @@ public class ClientSubscriptionTableModel extends AbstractTableModel {
 			return getFieldValue(subscription, col.fieldName());
 		}
 	}
-	private Object getFieldValue(Object object, String fieldName) {
+	public static Object getFieldValue(Object object, String fieldName) {
 		if (object==null)
 			return null;
 		try {

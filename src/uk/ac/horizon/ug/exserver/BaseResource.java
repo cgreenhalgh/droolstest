@@ -12,6 +12,8 @@ import javax.transaction.UserTransaction;
 
 import org.restlet.resource.ServerResource;
 
+import uk.ac.horizon.ug.exserver.model.DbUtils;
+
 /**
  * @author cmg
  *
@@ -24,15 +26,12 @@ public class BaseResource extends ServerResource {
 	
     /** get persistence entity manager */
     public static EntityManager getEntityManager() {
-		EntityManagerFactory emf = Persistence.createEntityManagerFactory( "droolstest" );
-		EntityManager em = emf.createEntityManager();
+    	EntityManager em = DbUtils.getEntityManager();
 		return em;
     }
     /** get transaction */
     public static UserTransaction getTransaction() throws NamingException {
-		UserTransaction ut =
-			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
-		return ut;
+    	return DbUtils.getUserTransaction();
     }
 
 }

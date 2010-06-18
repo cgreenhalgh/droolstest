@@ -126,12 +126,16 @@ public class RegisterClientHandler extends BaseResource {
 			DroolsSession droolsSession = null;
 			em.joinTransaction();
 			// Expire old conversations with the same client
-    		Query q = em.createQuery ("SELECT x FROM ClientConversation x WHERE x.clientId = :clientId");
+    		Query q = em.createQuery ("SELECT x FROM ClientConversation x WHERE x.clientId = :clientId AND x.sessionId = :sessionId");
     		q.setParameter("clientId", conversation.getClientId());
+    		q.setParameter("sessionId", conversation.getSessionId());
     		List<ClientConversation> conversations = (List<ClientConversation>) q.getResultList ();
 
     		ClientConversation currentConversation = null;
+    		int nextSeqNo = 0;
     		for (ClientConversation cc : conversations) {
+    			if (cc.getNextSeqNo()>nextSeqNo)
+    				nextSeqNo = cc.getNextSeqNo();
     			if (cc.getConversationId().equals(conversation.getConversationId())) {
     				currentConversation = cc;
     			}
@@ -225,6 +229,7 @@ public class RegisterClientHandler extends BaseResource {
     			// Persist the new conversation
     			conversation.setCreationTime(System.currentTimeMillis());
     			conversation.setLastContactTime(0);
+    			conversation.setNextSeqNo(nextSeqNo);
     			logger.info("Persisting "+conversation);
     			em.persist(conversation);
     			
