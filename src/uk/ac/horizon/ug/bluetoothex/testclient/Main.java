@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -27,7 +28,10 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+
+import org.json.JSONObject;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
@@ -35,6 +39,7 @@ import com.thoughtworks.xstream.io.xml.DomDriver;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.Message;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageStatusType;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageType;
+import uk.ac.horizon.ug.exserver.clientapi.JsonUtils;
 
 /**
  * @author cmg
@@ -117,8 +122,10 @@ public class Main {
 				errorMessage = response.getErrorMsg();
 			}
 		}
-		if (ok) 
-			JOptionPane.showMessageDialog(frame, "OK", "Sighting", JOptionPane.INFORMATION_MESSAGE);
+		if (ok) {
+			doPoll();
+//			JOptionPane.showMessageDialog(frame, "OK", "Sighting", JOptionPane.INFORMATION_MESSAGE);
+		}
 		else
 			JOptionPane.showMessageDialog(frame, "Error: "+status+" ("+errorMessage+")", "Sighting", JOptionPane.ERROR_MESSAGE);
 			
@@ -139,7 +146,26 @@ public class Main {
 			if (message.getSeqNo()>0 && message.getSeqNo()>ackSeq)
 				ackSeq = message.getSeqNo();
 			if (message.getType()==MessageType.FACT_EX || message.getType()==MessageType.FACT_ADD) {
-				JOptionPane.showMessageDialog(frame, "New fact: "+message.getNewVal(), "Poll", JOptionPane.INFORMATION_MESSAGE);
+				try {
+					JSONObject json = new JSONObject(message.getNewVal());
+					String typeName = JsonUtils.getTypeName(json);
+					if (typeName.equals("ShowContentRequest")) {
+						String url = json.getString("content_url");
+						logger.info("Show: "+url);
+						JEditorPane viewer = new JEditorPane(new URL(url));
+						JDialog dialog = new JDialog(frame, "Content");
+						dialog.setContentPane(new JScrollPane(viewer));
+						dialog.pack();
+						dialog.setLocationRelativeTo(frame);
+						dialog.getContentPane().setPreferredSize(new Dimension(600, 400));
+						dialog.setVisible(true);
+					}
+					else 
+						JOptionPane.showMessageDialog(frame, "New fact: "+json, "Poll", JOptionPane.INFORMATION_MESSAGE);
+				}
+				catch (Exception e) {
+					JOptionPane.showMessageDialog(frame, "Error parsing response: "+message.getNewVal()+"\n"+e, "Poll", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 		}
 	}
@@ -180,6 +206,7 @@ public class Main {
 			
 		}), c);
 		dialog.pack();
+		dialog.setLocationRelativeTo(frame);
 		dialog.setVisible(true);
 	}
 

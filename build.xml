@@ -78,7 +78,7 @@
 	
 	<target name="bluetoothex">
 		<mkdir dir="build/bluetoothex"/>
-		<javac destdir="build/bluetoothex" debug="true" target="1.5" source="1.5" includes="uk/ac/horizon/ug/bluetoothex/testclient/*,uk/ac/horizon/ug/exserver/clientapi/protocol/*">
+		<javac destdir="build/bluetoothex" debug="true" target="1.5" source="1.5" includes="uk/ac/horizon/ug/bluetoothex/testclient/*,uk/ac/horizon/ug/exserver/clientapi/protocol/*,uk/ac/horizon/ug/exserver/clientapi/JsonUtils.java">
     		<classpath refid="cp"/>
 			<src path="src"/>
     	</javac>
