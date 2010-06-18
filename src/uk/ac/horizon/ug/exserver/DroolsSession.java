@@ -14,6 +14,10 @@ import org.drools.definition.KnowledgePackage;
 import org.drools.definition.type.FactField;
 import org.drools.definition.type.FactType;
 import org.drools.event.rule.DebugAgendaEventListener;
+import org.drools.event.rule.ObjectInsertedEvent;
+import org.drools.event.rule.ObjectRetractedEvent;
+import org.drools.event.rule.ObjectUpdatedEvent;
+import org.drools.event.rule.WorkingMemoryEventListener;
 import org.drools.io.ResourceFactory;
 import org.drools.logger.KnowledgeRuntimeLogger;
 import org.drools.logger.KnowledgeRuntimeLoggerFactory;
@@ -72,7 +76,7 @@ import uk.ac.horizon.ug.exserver.protocol.RawFactHolder;
  * @author cmg
  *
  */
-public class DroolsSession {
+public class DroolsSession implements WorkingMemoryEventListener {
 	static Logger logger = Logger.getLogger(DroolsSession.class.getName());
 	/** default log file directory */
 	protected static String logFileDir;
@@ -235,7 +239,7 @@ public class DroolsSession {
 			return ds;
 		if (session.getSessionType()==SessionType.TRANSIENT)
 			throw new RuntimeException("Cannot restore a transient session ("+session.getId()+")");
-		ds = new DroolsSession(session.getProjectUrl(), false, session.getDroolsId(), session.getSessionType(), session.isLogged(), true);
+		ds = new DroolsSession(session.getProjectUrl(), false, session.getDroolsId(), session.getSessionType(), session.isLogged(), false);
 		try {
 			ds.startLog(nextLogId(em, session.getId()));
 		}
@@ -429,5 +433,20 @@ public class DroolsSession {
         	if (localTransaction)
         		ut.rollback();
         }
+	}
+	@Override
+	public void objectInserted(ObjectInsertedEvent ev) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void objectRetracted(ObjectRetractedEvent ev) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void objectUpdated(ObjectUpdatedEvent ev) {
+		// TODO Auto-generated method stub
+		
 	}
 }
