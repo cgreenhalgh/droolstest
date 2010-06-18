@@ -59,7 +59,7 @@
     	<!-- final war -->
     	<jar basedir="build" destfile="droolstest.war" includes="**" excludes="authorapp/**"/>
     </target>
-	
+
 	<target name="authorapp">
 		<mkdir dir="build/authorapp"/>
 		<javac destdir="build/authorapp" debug="true" target="1.5" source="1.5">
@@ -73,6 +73,20 @@
 				<pathelement location="authorapp"/>
 			</classpath>
 			<jvmarg value="-Dbitronix.tm.configuration=authorapp/btm-config.properties"/>
+		</java>
+	</target>	
+	
+	<target name="bluetoothex">
+		<mkdir dir="build/bluetoothex"/>
+		<javac destdir="build/bluetoothex" debug="true" target="1.5" source="1.5" includes="uk/ac/horizon/ug/bluetoothex/testclient/*,uk/ac/horizon/ug/exserver/clientapi/protocol/*">
+    		<classpath refid="cp"/>
+			<src path="src"/>
+    	</javac>
+		<java classname="uk.ac.horizon.ug.bluetoothex.testclient.Main" fork="true">
+			<classpath>
+				<path refid="cp"/>
+				<pathelement location="build/bluetoothex"/>
+			</classpath>
 		</java>
 	</target>
 	

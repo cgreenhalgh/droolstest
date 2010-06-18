@@ -76,6 +76,7 @@ public class ClientPanel extends JPanel {
 		propertyTableModel.addRow(new Object[] { "Conversation ID", conversation.getConversationId() });
 		propertyTableModel.addRow(new Object[] { "Session ID", conversation.getSessionId() });
 		propertyTableModel.addRow(new Object[] { "Status", conversation.getStatus() });
+		propertyTableModel.addRow(new Object[] { "Default URL", "http://localhost:8182/droolstest/1/client/"+conversation.getConversationId()+"/messages" });
 		JTable table = new JTable(propertyTableModel);
 		table.setDefaultRenderer(Object.class, new FieldCellRenderer());
 		propertyPanel.add(new JScrollPane(table), BorderLayout.CENTER);
