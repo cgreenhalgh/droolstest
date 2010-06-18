@@ -64,6 +64,7 @@ import javax.transaction.UserTransaction;
 import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.authorapp.model.Project;
 import uk.ac.horizon.ug.authorapp.model.ProjectInfo;
+import uk.ac.horizon.ug.exserver.clientapi.ClientSubscriptionManager;
 import uk.ac.horizon.ug.exserver.devclient.Fact;
 import uk.ac.horizon.ug.exserver.model.DbUtils;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
@@ -181,6 +182,7 @@ public class DroolsSession implements WorkingMemoryEventListener {
 		DroolsSession ds = sessions.get(session.getDroolsId());
 		if (ds!=null) {
 			ds.closeLog();
+			ds.getKsession().removeEventListener(ds);
 			ds.getKsession().dispose();
 		}
 		ds = new DroolsSession(session.getProjectUrl(), false, session.getDroolsId(), session.getSessionType(), session.isLogged(), true);
@@ -195,15 +197,8 @@ public class DroolsSession implements WorkingMemoryEventListener {
 	}
 	/** rotate log id 
 	 * @param sessionId 
-	 * @throws NamingException 
-	 * @throws SystemException 
-	 * @throws RollbackException 
-	 * @throws HeuristicRollbackException 
-	 * @throws HeuristicMixedException 
-	 * @throws SecurityException 
-	 * @throws IllegalStateException 
-	 * @throws NotSupportedException */
-	private static int nextLogId(EntityManager em, String sessionId) throws NamingException, IllegalStateException, SecurityException, HeuristicMixedException, HeuristicRollbackException, RollbackException, SystemException, NotSupportedException {
+	 * @throws Exception */
+	private static int nextLogId(EntityManager em, String sessionId) throws Exception {
 		UserTransaction ut =
 			  (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
 		boolean localTransaction = false;
@@ -212,16 +207,21 @@ public class DroolsSession implements WorkingMemoryEventListener {
 			ut.begin();
 		}
 		em.joinTransaction();
-
 		int logId = 0;
-		Session session = em.find(Session.class, sessionId);
-		logId = session.getLogId()+1;
-		session.setLogId(logId);
-		//em.persist(session);
-		
-		if (localTransaction)
-			ut.commit();
+		try {
+			Session session = em.find(Session.class, sessionId);
+			logId = session.getLogId()+1;
+			session.setLogId(logId);
+			//em.persist(session);
 
+			if (localTransaction)
+				ut.commit();
+		}
+		catch (Exception e) {
+			if (localTransaction)
+				ut.rollback();
+			throw e;
+		}
 		return logId;
 	}
 	/** get existing session (and start logging if required)
@@ -311,6 +311,8 @@ public class DroolsSession implements WorkingMemoryEventListener {
 			break;
 		}
 
+		ksession.addEventListener(this);
+		
 		this.logged = logged;
 
 		if (addFacts)
@@ -436,17 +438,14 @@ public class DroolsSession implements WorkingMemoryEventListener {
 	}
 	@Override
 	public void objectInserted(ObjectInsertedEvent ev) {
-		// TODO Auto-generated method stub
-		
+		ClientSubscriptionManager.handleObjectInserted(this, ev);
 	}
 	@Override
 	public void objectRetracted(ObjectRetractedEvent ev) {
-		// TODO Auto-generated method stub
-		
+		ClientSubscriptionManager.handleObjectRetracted(this, ev);
 	}
 	@Override
 	public void objectUpdated(ObjectUpdatedEvent ev) {
-		// TODO Auto-generated method stub
-		
+		ClientSubscriptionManager.handleObjectUpdated(this, ev);
 	}
 }

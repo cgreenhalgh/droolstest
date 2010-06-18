@@ -23,6 +23,9 @@ import java.util.logging.Logger;
  */
 public class JsonUtils {
 	static Logger logger = Logger.getLogger(JsonUtils.class.getName());
+	/** namespace propoerty name */
+	public static final String NAMESPACE = "namespace";
+	public static final String TYPE_NAME = "typeName";
 	/** use java bean introspection to convert object to JSONObject. (no class info) 
 	 * @throws IntrospectionException 
 	 * @throws InvocationTargetException 
@@ -37,6 +40,8 @@ public class JsonUtils {
 		JSONObject json = new JSONObject();
 		for (int i=0; i<properties.length; i++) {
 			String name = properties[i].getName();
+			if (name.equals("class"))
+				continue;
 			Method readMethod = properties[i].getReadMethod();
 			if (readMethod==null) {
 				logger.log(Level.WARNING, "Cannot read property "+name+" in "+object.getClass().getName()+" "+object);
@@ -52,8 +57,8 @@ public class JsonUtils {
 			String typeName = (ix>=0) ? className.substring(ix+1) : className;
 			String namespace = (ix>=0) ? className.substring(0, ix) : null;
 			if (namespace!=null)
-				json.put("namespace", namespace);
-			json.put("typeName", typeName);
+				json.put(NAMESPACE, namespace);
+			json.put(TYPE_NAME, typeName);
 		}
 		return json;
 	}
@@ -78,7 +83,19 @@ public class JsonUtils {
 		if (json==null)
 			return null;
 		T object = clazz.newInstance();	
-		BeanInfo beanInfo = Introspector.getBeanInfo(clazz);
+		return JsonToObject(json, object);
+	}
+	/** use java bean introspection to fill fields of a JSONObject into a java object.
+	 * You need to provide the Class in this case (no class metainfo). 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws IllegalArgumentException 
+	 * @throws InstantiationException 
+	 * @throws IntrospectionException 
+	 * @throws JSONException */
+	public static <T> T JsonToObject(JSONObject json, T object) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException, IntrospectionException, JSONException {
+	
+		BeanInfo beanInfo = Introspector.getBeanInfo(object.getClass());
 		PropertyDescriptor properties[] = beanInfo.getPropertyDescriptors();
 		for (int i=0; i<properties.length; i++) {
 			String name = properties[i].getName();
@@ -102,5 +119,11 @@ public class JsonUtils {
 			}
 		}
 		return object;
+	}
+	public static String getNamespace(JSONObject json) throws JSONException {
+		return json.getString(NAMESPACE);
+	}
+	public static String getTypeName(JSONObject json) throws JSONException {
+		return json.getString(TYPE_NAME);
 	}
 }

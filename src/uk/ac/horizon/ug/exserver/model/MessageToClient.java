@@ -62,7 +62,9 @@ public class MessageToClient {
 	protected String oldVal;
 	/** new value - for FACT_ADD/UPD & ADD/UPD_FACT */
 	protected String newVal;
-	
+	/** handle - FACT_UPD/DEL, UPD/DEL_FACT (option vs oldVal), ADD/UPD_FACT ACK */
+	protected String handle;
+
 	/** lifetime */
 	protected ClientSubscriptionLifetimeType lifetime;
 	/** sent to client? (time, 0=no) */
@@ -176,6 +178,18 @@ public class MessageToClient {
 	 */
 	public void setNewVal(String newVal) {
 		this.newVal = newVal;
+	}
+	/**
+	 * @return the handle
+	 */
+	public String getHandle() {
+		return handle;
+	}
+	/**
+	 * @param handle the handle to set
+	 */
+	public void setHandle(String handle) {
+		this.handle = handle;
 	}
 	/**
 	 * @return the lifetime

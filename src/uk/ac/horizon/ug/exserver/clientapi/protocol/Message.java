@@ -20,6 +20,8 @@ public class Message {
 	protected String oldVal;
 	/** new value - for FACT_ADD/UPD & ADD/UPD_FACT */
 	protected String newVal;
+	/** handle - FACT_UPD/DEL, UPD/DEL_FACT (option vs oldVal), ADD/UPD_FACT ACK */
+	protected String handle;
 	/** ack seq - for ACK, ERROR, POLL and POLL_RESP */
 	protected Integer ackSeq;
 	/** messages to follow - for POLL/POLL_RESP */
@@ -102,6 +104,18 @@ public class Message {
 	 */
 	public void setNewVal(String newVal) {
 		this.newVal = newVal;
+	}
+	/**
+	 * @return the handle
+	 */
+	public String getHandle() {
+		return handle;
+	}
+	/**
+	 * @param handle the handle to set
+	 */
+	public void setHandle(String handle) {
+		this.handle = handle;
 	}
 	/**
 	 * @return the ackSeq

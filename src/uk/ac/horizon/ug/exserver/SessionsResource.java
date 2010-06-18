@@ -71,6 +71,7 @@ public class SessionsResource extends BaseResource {
     		return xml;
     	} catch (Exception e) {
     		logger.log(Level.WARNING, "error getting/marshalling sessions", e);
+    		ut.rollback();
     		setStatus(Status.SERVER_ERROR_INTERNAL, e);
     		return null;
     	}

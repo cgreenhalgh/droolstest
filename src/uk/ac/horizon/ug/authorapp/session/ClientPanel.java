@@ -158,6 +158,7 @@ public class ClientPanel extends JPanel {
 		SubsIx(Integer.class, "subsIx"),
 		OldValue(String.class, "oldVal"),
 		NewValue(String.class, "newVal"),
+		Handle(String.class, "handle"),
 		Lifetime(ClientSubscriptionLifetimeType.class, "lifetime"),
 		Sent(Long.class, "sentToClient"),
 		Acked(Long.class, "ackedByClient");

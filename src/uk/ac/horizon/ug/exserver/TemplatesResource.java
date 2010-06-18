@@ -36,17 +36,24 @@ public class TemplatesResource extends BaseResource {
 //    @Get  
  //   public String toString() {   
   //  }   
-	/** XML list of all rep */
+	/** XML list of all rep 
+	 * @throws Exception */
     @Get("xml")   
-    public Representation toXml() throws java.io.IOException, javax.naming.NamingException, javax.transaction.SystemException, javax.transaction.NotSupportedException, javax.transaction.RollbackException, javax.transaction.HeuristicRollbackException, javax.transaction.HeuristicMixedException {   
+    public Representation toXml() throws Exception {   
     	EntityManager em = getEntityManager();
     	UserTransaction ut = getTransaction();
     	
+		List<SessionTemplate> results = null;
 		ut.begin();
-		Query q = em.createQuery ("SELECT x FROM SessionTemplate x");
-		List<SessionTemplate> results = (List<SessionTemplate>) q.getResultList ();
-		ut.commit();
-		
+		try {
+			Query q = em.createQuery ("SELECT x FROM SessionTemplate x");
+			results = (List<SessionTemplate>) q.getResultList ();
+			ut.commit();
+		}
+		catch (Exception e) {
+			ut.rollback();
+			throw e;
+		}
     	XstreamRepresentation<List<SessionTemplate>> xml = new XstreamRepresentation<List<SessionTemplate>>(MediaType.APPLICATION_XML, results);
     	xml.getXstream().alias("template", SessionTemplate.class);
 		// immediate expire?

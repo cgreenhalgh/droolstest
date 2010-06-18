@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.transaction.NotSupportedException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -21,6 +22,9 @@ import javax.transaction.UserTransaction;
 import org.drools.KnowledgeBase;
 import org.drools.definition.type.FactField;
 import org.drools.definition.type.FactType;
+import org.drools.event.rule.ObjectInsertedEvent;
+import org.drools.event.rule.ObjectRetractedEvent;
+import org.drools.event.rule.ObjectUpdatedEvent;
 import org.drools.runtime.rule.FactHandle;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,13 +33,16 @@ import uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo;
 import uk.ac.horizon.ug.authorapp.model.ClientSubscriptionLifetimeType;
 import uk.ac.horizon.ug.authorapp.model.ClientTypeInfo;
 import uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo;
+import uk.ac.horizon.ug.authorapp.model.QueryConstraintType;
 import uk.ac.horizon.ug.authorapp.model.QueryInfo;
 import uk.ac.horizon.ug.exserver.BaseResource;
 import uk.ac.horizon.ug.exserver.DroolsSession;
 import uk.ac.horizon.ug.exserver.DroolsSession.RulesetException;
+import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageStatusType;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageType;
 import uk.ac.horizon.ug.exserver.model.ClientConversation;
 import uk.ac.horizon.ug.exserver.model.ConversationStatus;
+import uk.ac.horizon.ug.exserver.model.DbUtils;
 import uk.ac.horizon.ug.exserver.model.MessageToClient;
 import uk.ac.horizon.ug.exserver.model.Session;
 
@@ -64,7 +71,7 @@ public class ClientSubscriptionManager {
 			em.joinTransaction();
 
 			if (conversation.getStatus()==ConversationStatus.ACTIVE) {
-				insertMessageToClient(conversation, MessageType.NEW_CONV, null, null, null, null, em);
+				insertMessageToClient(conversation, MessageType.NEW_CONV, null, null, null, null, null, em);
 			}
 			handleSubscriptions(conversation, em);
 			
@@ -73,7 +80,9 @@ public class ClientSubscriptionManager {
 			em.close();
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "handling conversation change: "+conversation, e);
-			ut.rollback();
+			// rollback anyway?!
+			if (localTransaction)
+				ut.rollback();
 			// silent fail?!
 		}
 	}
@@ -123,10 +132,12 @@ public class ClientSubscriptionManager {
 
 					// initial values?
 					if (subscription.isMatchExisting()) {
+						//Collection<FactHandle> handles = ds.getKsession().getFactHandles();
 						Collection<Object> objects = ds.getKsession().getObjects();
 						for (Object object : objects) {
 							if (matches(pattern, object, conversation, ds.getKsession().getKnowledgeBase())) {
-								insertMessageToClient(conversation, MessageType.FACT_EX, si, null, object, subscription.getLifetime(), em);
+								FactHandle handle = ds.getKsession().getFactHandle(object);
+								insertMessageToClient(conversation, MessageType.FACT_EX, si, null, object, handle, subscription.getLifetime(), em);
 							}
 						}
 					}
@@ -137,7 +148,7 @@ public class ClientSubscriptionManager {
 
 	/** insert a new MessageToClient */
 	private static void insertMessageToClient(ClientConversation conversation,
-			MessageType type, Integer si, Object oldVal, Object newVal, ClientSubscriptionLifetimeType lifetime,
+			MessageType type, Integer si, Object oldVal, Object newVal, FactHandle factHandle, ClientSubscriptionLifetimeType lifetime,
 			EntityManager em) {
 		try {
 			MessageToClient msg = new MessageToClient();
@@ -150,12 +161,24 @@ public class ClientSubscriptionManager {
 			msg.setType(type);
 			if (si!=null)
 				msg.setSubsIx(si);
-			if (oldVal!=null) 
-				msg.setOldVal(marshallFact(oldVal));
-			if (newVal!=null)
-				msg.setNewVal(marshallFact(newVal));
+			if (oldVal!=null) {
+				if (oldVal instanceof String)
+					// alredy marshalled
+					msg.setOldVal((String)oldVal);
+				else
+					msg.setOldVal(marshallFact(oldVal));
+			}
+			if (newVal!=null) {
+				if (newVal instanceof String)
+					// alredy marshalled
+					msg.setNewVal((String)newVal);
+				else
+					msg.setNewVal(marshallFact(newVal));
+			}
 			if (lifetime!=null)
 				msg.setLifetime(lifetime);
+			if (factHandle!=null)
+				msg.setHandle(factHandle.toExternalForm());
 			em.persist(msg);
 			conversation.setNextSeqNo(seqNo+1);
 			//em.merge(conversation);
@@ -170,12 +193,40 @@ public class ClientSubscriptionManager {
 	 * @throws IllegalAccessException 
 	 * @throws IntrospectionException 
 	 * @throws IllegalArgumentException */
-	private static String marshallFact(Object value) throws IllegalArgumentException, IntrospectionException, IllegalAccessException, InvocationTargetException, JSONException {
+	public static String marshallFact(Object value) throws IllegalArgumentException, IntrospectionException, IllegalAccessException, InvocationTargetException, JSONException {
 		// JSON?!
 		JSONObject json = JsonUtils.objectToJson(value, true);
 		return json.toString();
 	}
+	/** unmarshall 
+	 * @throws JSONException 
+	 * @throws ClientAPIException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * @throws IntrospectionException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalArgumentException */
+	public static Object unmarshallFact(String string, KnowledgeBase kb) throws JSONException, ClientAPIException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+		// JSON ?!
+		JSONObject json = new JSONObject(string);
+		String namespace = JsonUtils.getNamespace(json);
+		String typeName = JsonUtils.getTypeName(json);
+		FactType factType = kb.getFactType(namespace, typeName);
+		if (factType==null)
+			throw new ClientAPIException(MessageStatusType.INVALID_REQUEST, "Could not find fact class "+namespace+"."+typeName);
+		Object object = factType.newInstance();
+		JsonUtils.JsonToObject(json, object);
+		return object;
+	}
 
+	/** does object match pattern?
+	 * 
+	 * @param pattern
+	 * @param object
+	 * @param conversation if null then check if would possibly match 
+	 * @param knowledgeBase
+	 * @return
+	 */
 	private static boolean matches(QueryInfo pattern, Object object, ClientConversation conversation, KnowledgeBase knowledgeBase) {
 		if (object==null)
 			return false;
@@ -306,13 +357,14 @@ public class ClientSubscriptionManager {
 			case EQUAL_TO_CLIENT_ID: 
 				if (value==null)
 					return false;
-				if (conversation.getClientId().equals(value))
+				// null conversation = wildcard
+				if (conversation==null || conversation.getClientId().equals(value))
 					break;
 				return false;
 			case EQUAL_TO_CONVERSATION_ID:
 				if (value==null)
 					return false;
-				if (conversation.getConversationId().equals(value))
+				if (conversation==null || conversation.getConversationId().equals(value))
 					break;
 				return false;
 			case IS_NULL:
@@ -328,4 +380,92 @@ public class ClientSubscriptionManager {
 		}
 		return true;
 	}
+
+	public static void handleObjectInserted(DroolsSession droolsSession,
+			ObjectInsertedEvent ev) {
+		handleSessionEvent(droolsSession, MessageType.ADD_FACT, null, ev.getObject(), ev.getFactHandle());
+		
+	}
+
+	public static void handleObjectRetracted(DroolsSession droolsSession,
+			ObjectRetractedEvent ev) {
+		handleSessionEvent(droolsSession, MessageType.DEL_FACT, ev.getOldObject(), null, ev.getFactHandle());
+	}
+
+	public static void handleObjectUpdated(DroolsSession droolsSession,
+			ObjectUpdatedEvent ev) {
+		handleSessionEvent(droolsSession, MessageType.UPD_FACT, ev.getOldObject(), ev.getObject(), ev.getFactHandle());
+	}
+
+	private static void handleSessionEvent(DroolsSession droolsSession,
+			MessageType type, Object oldObject, Object newObject, FactHandle factHandle) {
+		// TODO Auto-generated method stub
+		try {
+			UserTransaction ut = DbUtils.getUserTransaction();
+			boolean localTransaction = false;
+			if (ut.getStatus()!=Status.STATUS_ACTIVE) {
+				localTransaction = true;
+				ut.begin();
+				// hoping this won't be
+				logger.log(Level.WARNING, "Had to create local transaction to handle session event!");
+			}
+			try {
+				EntityManager em = DbUtils.getEntityManager();
+				em.joinTransaction();
+
+				// not sure how enums are mapped...
+	    		Query q = em.createQuery ("SELECT x FROM ClientConversation x WHERE x.status = :status");
+	    		q.setParameter("status", ConversationStatus.ACTIVE);
+	    		List<ClientConversation> conversations = (List<ClientConversation>) q.getResultList ();
+				
+				// each client type...
+	    		String oldValue = null, newValue = null;
+				List<ClientTypeInfo> clientTypes = droolsSession.getProjectInfo().getClientTypes();
+				for (ClientTypeInfo clientType : clientTypes) {
+					List<ClientSubscriptionInfo> subscriptions = clientType.getSubscriptions();
+					for (int si=0; si<subscriptions.size(); si++) {
+						ClientSubscriptionInfo subscription = subscriptions.get(si);
+						QueryInfo pattern = subscription.getPattern();
+						if (pattern==null)
+							continue;
+						// client independent match first
+						if (!matches(pattern, newObject, null, droolsSession.getKsession().getKnowledgeBase()))
+							continue;
+						
+						boolean needsClientMatch = false;
+						for (QueryConstraintInfo constraint : pattern.getConstraints())
+							if (constraint.getConstraintType()!=null && (constraint.getConstraintType()==QueryConstraintType.EQUAL_TO_CLIENT_ID || constraint.getConstraintType()==QueryConstraintType.EQUAL_TO_CONVERSATION_ID))
+								needsClientMatch = true;
+						// each client...
+						for (ClientConversation conversation : conversations) {
+							if (needsClientMatch)
+								// client-dependent match
+								if (!matches(pattern, newObject, conversation, droolsSession.getKsession().getKnowledgeBase()))
+									continue;
+							// marshall on demand
+							if (oldObject!=null && oldValue==null) 
+								oldValue = marshallFact(oldObject);
+							if (newObject!=null && newValue==null)
+								newValue = marshallFact(newObject);
+							// add message
+							insertMessageToClient(conversation, type, si, oldValue, newValue, factHandle, subscription.getLifetime(), em);
+						}
+					}
+				}
+
+				if (localTransaction)
+					ut.commit();
+				em.close();
+			}
+			catch (Exception e) {
+				if (localTransaction)
+					ut.rollback();
+				logger.log(Level.WARNING, "Problem handling session event", e);
+			}
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "Problem setting up to handle session event", e);
+		}
+	}
+
 }

@@ -379,16 +379,21 @@ public class SessionFrame extends JFrame implements BrowserPanelCallback {
 			EntityManager em = DbUtils.getEntityManager();
 
 			ut.begin();
-			em.joinTransaction();
-			if (em.find(SessionTemplate.class, template.getName())!=null) {
-				logger.info("SessionTemplate already present");
+			try {
+				em.joinTransaction();
+				if (em.find(SessionTemplate.class, template.getName())!=null) {
+					logger.info("SessionTemplate already present");
+				}
+				else {
+					em.persist(template);
+				}
+				em.persist(session);
+				ut.commit();
+				em.close();
 			}
-			else {
-				em.persist(template);
+			catch (Exception e) {
+				ut.rollback();
 			}
-			em.persist(session);
-			ut.commit();
-			em.close();
 		}
 		catch (Exception e) {
 			// NamingException, RulesetException
