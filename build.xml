@@ -82,11 +82,12 @@
     		<classpath refid="cp"/>
 			<src path="src"/>
     	</javac>
-		<java classname="uk.ac.horizon.ug.bluetoothex.testclient.Main" fork="true">
+		<java classname="uk.ac.horizon.ug.bluetoothex.testclient.Main" fork="true" >
 			<classpath>
 				<path refid="cp"/>
 				<pathelement location="build/bluetoothex"/>
 			</classpath>
+			<jvmarg value="-Djava.library.path=native/win32"/>
 		</java>
 	</target>
 	

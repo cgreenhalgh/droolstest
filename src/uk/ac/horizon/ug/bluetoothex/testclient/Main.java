@@ -30,11 +30,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import org.json.JSONObject;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
+
+import equip.ect.components.bluetoothdiscover.BluetoothDiscover;
 
 import uk.ac.horizon.ug.exserver.clientapi.protocol.Message;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageStatusType;
@@ -72,7 +75,6 @@ public class Main {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO Auto-generated method stub
 				doConnect();
 			}
 			
@@ -81,8 +83,15 @@ public class Main {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO Auto-generated method stub
 				doPoll();
+			}
+			
+		}));
+		clientMenu.add(new JMenuItem(new AbstractAction("Start scanning") {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				startScanning();
 			}
 			
 		}));
@@ -90,7 +99,6 @@ public class Main {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO Auto-generated method stub
 				addSighting();
 			}
 			
@@ -100,10 +108,50 @@ public class Main {
 		frame.setVisible(true);	
 	}
 
+	protected boolean bluetoothStarted = false;
+	protected BluetoothDiscover bluetooth = null;
+
+	protected void startScanning() {
+		if (bluetoothStarted)
+			return;
+
+		try {
+			BluetoothDiscover bt = new BluetoothDiscover()
+			{
+				synchronized public void updateDevices(final String newDevices)
+				{
+					logger.info("Scan: "+newDevices);
+					super.updateDevices(newDevices);
+					if (serverUrl!=null)
+						SwingUtilities.invokeLater(new Runnable() {
+							public void run() {
+								String macs [] = newDevices.trim().split("[,]");
+								for (int i=0; i<macs.length; i++) 
+									addSighting(macs[i]);								
+							}
+						});
+				}
+			};
+			bt.setConfigPollinterval(15);
+			bt.setConfigured(true);
+
+			bluetoothStarted = true;
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "Problem starting bluetooth scanning", e);
+			JOptionPane.showMessageDialog(frame, "Problem starting scanning: "+e, "Start Scanning", JOptionPane.ERROR_MESSAGE);
+		}
+		
+	}
+
 	protected void addSighting() {
 		String mac = JOptionPane.showInputDialog(frame, "MAC address?", "Sighting", JOptionPane.QUESTION_MESSAGE);
 		if (mac==null || mac.length()==0)
 			return;
+		addSighting(mac);
+	}
+	protected void addSighting(String mac) {
+		logger.info("Add sighting of "+mac+"...");
 		Message msg = new Message();
 		msg.setSeqNo(seqNo++);
 		msg.setType(MessageType.ADD_FACT);
