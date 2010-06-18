@@ -157,7 +157,10 @@ public class ClientPanel extends JPanel {
 		Time(Long.class, "time"),
 		SubsIx(Integer.class, "subsIx"),
 		OldValue(String.class, "oldVal"),
-		NewValue(String.class, "newVal");
+		NewValue(String.class, "newVal"),
+		Lifetime(ClientSubscriptionLifetimeType.class, "lifetime"),
+		Sent(Long.class, "sentToClient"),
+		Acked(Long.class, "ackedByClient");
 		MessageColumn(Class clazz, String fieldName) {
 			this.clazz = clazz;
 			this.fieldName = fieldName;
