@@ -383,18 +383,18 @@ public class ClientSubscriptionManager {
 
 	public static void handleObjectInserted(DroolsSession droolsSession,
 			ObjectInsertedEvent ev) {
-		handleSessionEvent(droolsSession, MessageType.ADD_FACT, null, ev.getObject(), ev.getFactHandle());
+		handleSessionEvent(droolsSession, MessageType.FACT_ADD, null, ev.getObject(), ev.getFactHandle());
 		
 	}
 
 	public static void handleObjectRetracted(DroolsSession droolsSession,
 			ObjectRetractedEvent ev) {
-		handleSessionEvent(droolsSession, MessageType.DEL_FACT, ev.getOldObject(), null, ev.getFactHandle());
+		handleSessionEvent(droolsSession, MessageType.FACT_DEL, ev.getOldObject(), null, ev.getFactHandle());
 	}
 
 	public static void handleObjectUpdated(DroolsSession droolsSession,
 			ObjectUpdatedEvent ev) {
-		handleSessionEvent(droolsSession, MessageType.UPD_FACT, ev.getOldObject(), ev.getObject(), ev.getFactHandle());
+		handleSessionEvent(droolsSession, MessageType.FACT_UPD, ev.getOldObject(), ev.getObject(), ev.getFactHandle());
 	}
 
 	private static void handleSessionEvent(DroolsSession droolsSession,

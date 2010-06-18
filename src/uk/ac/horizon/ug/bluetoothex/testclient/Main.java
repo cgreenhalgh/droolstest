@@ -33,6 +33,7 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
 import uk.ac.horizon.ug.exserver.clientapi.protocol.Message;
+import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageStatusType;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageType;
 
 /**
@@ -50,10 +51,13 @@ public class Main {
 		new Main();
 		
 	}
+	
+	protected JFrame frame;
 
 	/** cons */
 	public Main() {
 		final JFrame frame = new JFrame("Bluetoothex testclient");
+		this.frame = frame;
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		JMenuBar menuBar = new JMenuBar();
 		frame.setJMenuBar(menuBar);
@@ -64,16 +68,83 @@ public class Main {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO Auto-generated method stub
-				doConnect(frame);
+				doConnect();
+			}
+			
+		}));
+		clientMenu.add(new JMenuItem(new AbstractAction("Poll") {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				// TODO Auto-generated method stub
+				doPoll();
+			}
+			
+		}));
+		clientMenu.add(new JMenuItem(new AbstractAction("Add Sighting") {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				// TODO Auto-generated method stub
+				addSighting();
 			}
 			
 		}));
 		frame.setPreferredSize(new Dimension(400,300));
 		frame.pack();
-		frame.setVisible(true);
+		frame.setVisible(true);	
 	}
 
-	protected void doConnect(JFrame frame) {
+	protected void addSighting() {
+		String mac = JOptionPane.showInputDialog(frame, "MAC address?", "Sighting", JOptionPane.QUESTION_MESSAGE);
+		if (mac==null || mac.length()==0)
+			return;
+		Message msg = new Message();
+		msg.setSeqNo(seqNo++);
+		msg.setType(MessageType.ADD_FACT);
+		msg.setNewVal("{\"typeName\":\"BluetoothSighting\",\"namespace\":\"uk.ac.horizon.ug.ubicomp\",\"device_id\":\""+clientId+"\",\"beacon_mac\":\""+mac+"\",\"time\":"+System.currentTimeMillis()+"}");
+		List<Message> responses = sendMessage(msg);
+		boolean ok = false;
+		MessageStatusType status = MessageStatusType.OK;
+		String errorMessage = null;
+		for (Message response : responses) {
+			if (response.getType()==MessageType.ACK && response.getAckSeq()!=null && response.getAckSeq()==msg.getSeqNo())  {
+				ok = true;
+				break;
+			}
+			else if (response.getType()==MessageType.ERROR && response.getAckSeq()!=null && response.getAckSeq()==msg.getSeqNo())  {
+				status = response.getStatus();
+				errorMessage = response.getErrorMsg();
+			}
+		}
+		if (ok) 
+			JOptionPane.showMessageDialog(frame, "OK", "Sighting", JOptionPane.INFORMATION_MESSAGE);
+		else
+			JOptionPane.showMessageDialog(frame, "Error: "+status+" ("+errorMessage+")", "Sighting", JOptionPane.ERROR_MESSAGE);
+			
+	}
+
+	protected void doPoll() {
+		Message msg = new Message();
+		msg.setSeqNo(seqNo++);
+		msg.setType(MessageType.POLL);
+		//msg.setToFollow(0);
+		msg.setAckSeq(ackSeq);
+		
+		List<Message> messages = sendMessage(msg);
+		if (messages==null)
+			return;
+		
+		for (Message message : messages) {
+			if (message.getSeqNo()>0 && message.getSeqNo()>ackSeq)
+				ackSeq = message.getSeqNo();
+			if (message.getType()==MessageType.FACT_EX || message.getType()==MessageType.FACT_ADD) {
+				JOptionPane.showMessageDialog(frame, "New fact: "+message.getNewVal(), "Poll", JOptionPane.INFORMATION_MESSAGE);
+			}
+		}
+	}
+
+	protected void doConnect() {
 		// TODO Auto-generated method stub
 		final JDialog dialog = new JDialog(frame, "Connect", true);
 		JPanel panel = new JPanel(new GridBagLayout());
@@ -103,7 +174,7 @@ public class Main {
 				// TODO Auto-generated method stub
 				String url = urlField.getText();
 				String clientId = clientIdField.getText();
-				if (connect(url, clientId, dialog))
+				if (connect(url, clientId))
 					dialog.setVisible(false);
 			}
 			
@@ -114,21 +185,43 @@ public class Main {
 
 	protected URL serverUrl;
 	protected String clientId;
-	protected boolean connect(String url, String clientId, JDialog dialog) {
+	protected int ackSeq = 0;
+	protected int seqNo = 1;
+	
+	protected boolean connect(String url, String clientId) {
+		
 		try {
 			serverUrl = new URL(url);
+			this.clientId = clientId;	
+
+			// we are a content display device!
+			Message msg = new Message();
+			msg.setSeqNo(seqNo++);
+			msg.setType(MessageType.ADD_FACT);
+			msg.setNewVal("{\"typeName\":\"ContentDisplayDevice\",\"namespace\":\"uk.ac.horizon.ug.ubicomp\",\"id\":\""+clientId+"\"}");
+
+			sendMessage(msg);
+			return true;
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "Error connecting to server", e);
+			JOptionPane.showMessageDialog(frame, "Error connecting to server: "+e, "Connect", JOptionPane.ERROR_MESSAGE);
+		}
+		return false;
+	}	
+	protected List<Message> sendMessage(Message msg) {
+		List<Message> messages = new LinkedList<Message>();
+		messages.add(msg);
+		return sendMessages(messages);
+	}
+	protected List<Message> sendMessages(List<Message> messages) {
+		try {
 			HttpURLConnection conn = (HttpURLConnection) serverUrl.openConnection();
 			conn.setRequestMethod("POST");
 			conn.setDoInput(true);
 			conn.setDoOutput(true);
 			conn.addRequestProperty("Content-Type", "application/xml");
 			OutputStream os = conn.getOutputStream();
-			
-			Message msg = new Message();
-			msg.setSeqNo(1);
-			msg.setType(MessageType.POLL);
-			List<Message> messages = new LinkedList<Message>();
-			messages.add(msg);
 			
 			XStream xs = new XStream(new DomDriver());
 			xs.alias("list", LinkedList.class);    	
@@ -140,20 +233,20 @@ public class Main {
 			int status = conn.getResponseCode();
 			if (status!=200) {
 				logger.log(Level.WARNING, "Error response ("+status+") from server: "+conn.getResponseMessage());
-				JOptionPane.showMessageDialog(dialog, "Error response ("+status+") from server: "+conn.getResponseMessage(), "Connect", JOptionPane.ERROR_MESSAGE);
-				return false;
+				JOptionPane.showMessageDialog(frame, "Error response ("+status+") from server: "+conn.getResponseMessage(), "Connect", JOptionPane.ERROR_MESSAGE);
+				return null;
 			}
 			InputStream is = conn.getInputStream();
 			messages = (List<Message>)xs.fromXML(is);
 			logger.info("Response: "+messages);
 			
-			return true;
+			return messages;
 		}
 		catch (Exception e) {
 			logger.log(Level.WARNING, "Error connecting to server", e);
-			JOptionPane.showMessageDialog(dialog, "Error connecting to server: "+e, "Connect", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(frame, "Error connecting to server: "+e, "Connect", JOptionPane.ERROR_MESSAGE);
 		}
-		return false;
+		return null;
 	}
 	
 	

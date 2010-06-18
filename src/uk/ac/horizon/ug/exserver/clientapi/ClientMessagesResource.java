@@ -69,54 +69,57 @@ public class ClientMessagesResource extends ClientResource {
 			return;
 		}
 		try {
-			// general transaction stuff
-			UserTransaction ut = DbUtils.getUserTransaction();
-			EntityManager em = DbUtils.getEntityManager();
-			ut.begin();
-			try {
-				em.joinTransaction();
-				LinkedList<Message> newResponses = new LinkedList<Message>();
-				
-				switch(message.getType()) {
+			synchronized(droolsSession) {
+				// general transaction stuff
+				UserTransaction ut = DbUtils.getUserTransaction();
+				EntityManager em = DbUtils.getEntityManager();
+				ut.begin();
+				try {
+					em.joinTransaction();
+					LinkedList<Message> newResponses = new LinkedList<Message>();
 
-				//case NEW_CONV:// new conversation 
-				//case FACT_EX: // fact already exists (matching a subscription)
-				//case FACT_ADD: // fact added (matching a subscription)
-				//case FACT_UPD: // fact updated (matching a subscription)
-				//case FACT_DEL: // fact deleted (matching a subscription)
-				//case POLL_RESP: // response to poll (e.g. no. messages still unsent)
-				case POLL: // poll request 
-					handlePoll(message, newResponses, em);
-					break;
-				case ACK: // acknowledge message
+					switch(message.getType()) {
 
-				case ADD_FACT:// request to add fact
-				case UPD_FACT:// request to update fact
-				case DEL_FACT:// request to delete fact
-					handleFactOperation(message, newResponses, em);
-					break;
-					//ERROR(false, true), // error response, e.g. to add/update/delete request
-				case SUBS_EN:// enable a subscription
-				case SUBS_DIS:// disable a subscription
-					// TODO implement
-				default:
-					newResponses.add(createErrorMessage(message, MessageStatusType.INTERNAL_ERROR, "Message type "+message.getType()+" not supported"));
-					break;
+					//case NEW_CONV:// new conversation 
+					//case FACT_EX: // fact already exists (matching a subscription)
+					//case FACT_ADD: // fact added (matching a subscription)
+					//case FACT_UPD: // fact updated (matching a subscription)
+					//case FACT_DEL: // fact deleted (matching a subscription)
+					//case POLL_RESP: // response to poll (e.g. no. messages still unsent)
+					case POLL: // poll request 
+						handlePoll(message, newResponses, em);
+						break;
+					case ACK: // acknowledge message
+
+					case ADD_FACT:// request to add fact
+					case UPD_FACT:// request to update fact
+					case DEL_FACT:// request to delete fact
+						handleFactOperation(message, newResponses, em);
+						break;
+						//ERROR(false, true), // error response, e.g. to add/update/delete request
+					case SUBS_EN:// enable a subscription
+					case SUBS_DIS:// disable a subscription
+						// TODO implement
+					default:
+						newResponses.add(createErrorMessage(message, MessageStatusType.INTERNAL_ERROR, "Message type "+message.getType()+" not supported"));
+						break;
+					}
+
+					ut.commit();
+					// OK!
+					responses.addAll(newResponses);
+				}
+				catch (ClientAPIException e) {
+					ut.rollback();
+					throw e;				
+				}
+				catch (Exception e) {
+					ut.rollback();
+					throw e;
 				}
 				
-				ut.commit();
-				// OK!
-				responses.addAll(newResponses);
+				droolsSession.getKsession().fireAllRules();
 			}
-			catch (ClientAPIException e) {
-				ut.rollback();
-				throw e;				
-			}
-			catch (Exception e) {
-				ut.rollback();
-				throw e;
-			}
-
 		}
 		catch (Exception e) {
 			logger.log(Level.WARNING, "Handling message "+message, e);
