@@ -132,7 +132,7 @@ public class RegisterClientHandler extends BaseResource {
     		List<ClientConversation> conversations = (List<ClientConversation>) q.getResultList ();
 
     		ClientConversation currentConversation = null;
-    		int nextSeqNo = 0;
+    		int nextSeqNo = 1;
     		for (ClientConversation cc : conversations) {
     			if (cc.getNextSeqNo()>nextSeqNo)
     				nextSeqNo = cc.getNextSeqNo();

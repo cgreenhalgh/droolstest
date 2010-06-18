@@ -26,6 +26,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo;
+import uk.ac.horizon.ug.authorapp.model.ClientSubscriptionLifetimeType;
 import uk.ac.horizon.ug.authorapp.model.ClientTypeInfo;
 import uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo;
 import uk.ac.horizon.ug.authorapp.model.QueryInfo;
@@ -63,7 +64,7 @@ public class ClientSubscriptionManager {
 			em.joinTransaction();
 
 			if (conversation.getStatus()==ConversationStatus.ACTIVE) {
-				insertMessageToClient(conversation, MessageType.NEW_CONV, null, null, null, em);
+				insertMessageToClient(conversation, MessageType.NEW_CONV, null, null, null, null, em);
 			}
 			handleSubscriptions(conversation, em);
 			
@@ -106,6 +107,8 @@ public class ClientSubscriptionManager {
 				}
 				else // active
 				{				
+					// TODO handle different lifetimes if not first conversation with client
+					
 					// initialise subscription
 					QueryInfo pattern = subscription.getPattern();
 					if (pattern==null) {
@@ -123,7 +126,7 @@ public class ClientSubscriptionManager {
 						Collection<Object> objects = ds.getKsession().getObjects();
 						for (Object object : objects) {
 							if (matches(pattern, object, conversation, ds.getKsession().getKnowledgeBase())) {
-								insertMessageToClient(conversation, MessageType.FACT_EX, si, null, object, em);
+								insertMessageToClient(conversation, MessageType.FACT_EX, si, null, object, subscription.getLifetime(), em);
 							}
 						}
 					}
@@ -134,7 +137,7 @@ public class ClientSubscriptionManager {
 
 	/** insert a new MessageToClient */
 	private static void insertMessageToClient(ClientConversation conversation,
-			MessageType type, Integer si, Object oldVal, Object newVal,
+			MessageType type, Integer si, Object oldVal, Object newVal, ClientSubscriptionLifetimeType lifetime,
 			EntityManager em) {
 		try {
 			MessageToClient msg = new MessageToClient();
@@ -151,6 +154,8 @@ public class ClientSubscriptionManager {
 				msg.setOldVal(marshallFact(oldVal));
 			if (newVal!=null)
 				msg.setNewVal(marshallFact(newVal));
+			if (lifetime!=null)
+				msg.setLifetime(lifetime);
 			em.persist(msg);
 			conversation.setNextSeqNo(seqNo+1);
 			//em.merge(conversation);

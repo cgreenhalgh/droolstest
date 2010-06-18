@@ -24,5 +24,6 @@ public class ClientAPIApplication {
 		router.attach("/registerclient", RegisterClientHandler.class);   
 		// test
 		router.attach("/client/{conversationId}/test", ClientResource.class);
+		router.attach("/client/{conversationId}/messages", ClientMessagesResource.class);
 	}
 }

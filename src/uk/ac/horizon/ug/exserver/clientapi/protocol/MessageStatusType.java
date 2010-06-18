@@ -9,6 +9,7 @@ package uk.ac.horizon.ug.exserver.clientapi.protocol;
  */
 public enum MessageStatusType {
 	OK, // not an error
+	INVALID_REQUEST, // request not well-formed
 	NOT_PERMITTED, // no permission, probably not going to change
 	INTERNAL_ERROR, // e.g. exception
 	NOT_FOUND, // probably not going to change

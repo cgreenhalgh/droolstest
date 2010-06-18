@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import uk.ac.horizon.ug.authorapp.model.ClientSubscriptionLifetimeType;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageStatusType;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageType;
 
@@ -61,6 +62,13 @@ public class MessageToClient {
 	protected String oldVal;
 	/** new value - for FACT_ADD/UPD & ADD/UPD_FACT */
 	protected String newVal;
+	
+	/** lifetime */
+	protected ClientSubscriptionLifetimeType lifetime;
+	/** sent to client? (time, 0=no) */
+	protected long sentToClient;
+	/** acked by client? (time, 0=no) */
+	protected long ackedByClient;
 	/**
 	 * @return the clientId
 	 */
@@ -168,5 +176,41 @@ public class MessageToClient {
 	 */
 	public void setNewVal(String newVal) {
 		this.newVal = newVal;
+	}
+	/**
+	 * @return the lifetime
+	 */
+	public ClientSubscriptionLifetimeType getLifetime() {
+		return lifetime;
+	}
+	/**
+	 * @param lifetime the lifetime to set
+	 */
+	public void setLifetime(ClientSubscriptionLifetimeType lifetime) {
+		this.lifetime = lifetime;
+	}
+	/**
+	 * @return the sentToClient
+	 */
+	public long getSentToClient() {
+		return sentToClient;
+	}
+	/**
+	 * @param sentToClient the sentToClient to set
+	 */
+	public void setSentToClient(long sentToClient) {
+		this.sentToClient = sentToClient;
+	}
+	/**
+	 * @return the ackedByClient
+	 */
+	public long getAckedByClient() {
+		return ackedByClient;
+	}
+	/**
+	 * @param ackedByClient the ackedByClient to set
+	 */
+	public void setAckedByClient(long ackedByClient) {
+		this.ackedByClient = ackedByClient;
 	}
 }

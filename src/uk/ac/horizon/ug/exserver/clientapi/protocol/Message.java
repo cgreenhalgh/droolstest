@@ -20,7 +20,7 @@ public class Message {
 	protected String oldVal;
 	/** new value - for FACT_ADD/UPD & ADD/UPD_FACT */
 	protected String newVal;
-	/** ack seq - for ACK, ERROR and POLL_RESP */
+	/** ack seq - for ACK, ERROR, POLL and POLL_RESP */
 	protected Integer ackSeq;
 	/** messages to follow - for POLL/POLL_RESP */
 	protected Integer toFollow;
