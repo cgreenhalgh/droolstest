@@ -1,100 +1,249 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
+
+  
   <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+
+  
   <title>Client Message Protocol</title>
 </head>
+
+
 <body>
+
 <h1>Client Message Protocol</h1>
+
 Chris Greenhalgh, 2010-06-22<br>
+
 <h2>Introduction</h2>
+
 <p>The client's interaction with the game server is (now) via a message-based protocol.</p>
+
 <h2>Client registration</h2>
+
 <p>The lobby server (nominally) registers each client before it can
 communicate with the game server. This is currently via a PUSH to&nbsp;<a style="font-family: monospace;" href="http://localhost:8080/droolstest/1/registerclient">http://localhost:8080/droolstest/1/registerclient</a> (or appropriate hostname/port) of an XML-encoded <span style="font-family: monospace;">uk.ac.horizon.ug.exserver.model.ClientConversation</span>, e.g.:</p>
+
 <pre>&lt;conversation&gt;<br>	&lt;conversationId&gt;1234&lt;/conversationId&gt;<br>	&lt;clientId&gt;imei:1234&lt;/clientId&gt;<br>	&lt;clientType&gt;Mobile&lt;/clientType&gt;<br>	&lt;sessionId&gt;0&lt;/sessionId&gt;<br>	&lt;status&gt;ACTIVE&lt;/status&gt;<br>&lt;/conversation&gt;<br></pre>
+
 <p>Note that:</p>
+
 <ul>
+
   <li><span style="font-family: monospace;">conversationId</span> must
 be unique within the scope of&nbsp;this server for this particular run
 (e.g. restart) of this client against this session (game).</li>
+
   <li><span style="font-family: monospace;">clientId</span> should be a persistent client ID (across client restarts), e.g. IMEI number.</li>
+
   <li><span style="font-family: monospace;">clientType</span> must match a client type configured in the session's project definition file.</li>
+
   <li><span style="font-family: monospace;">sessionId</span> should identify (currently) a current active session (as created by other means).</li>
+
   <li><span style="font-family: monospace;">status</span> should be <span style="font-family: monospace;">ACTIVE</span> normally; may also be <span style="font-family: monospace;">ENDED_BY_LOBBY</span> if the client's access is being removed.</li>
+
 </ul>
+<p>
 Authorapp does this registration internally (i.e. by a direct method
 call rather than over HTTP). The&nbsp;URL should be secured but
 currently is not. At some point JSON-encoding of the request may be
-used instead.
+used instead.</p>
+<p>As noted elsewhere, a single client may have several "conversations"
+with a game server over a period of time. Each conversation is
+essentially self-contained and by default assumes that the client
+retains no knowledge of previous conversation(s). There may not be more
+than one conversation active between a client and a game session at any
+one time. A client starts a new conversation (which requires it to
+interact with the lobby server, nominally) when it joins or rejoins a
+particular game instance (e.g. after a crash or&nbsp;as an explicit
+recovery action).&nbsp;
+ </p>
 <h2>Client interaction</h2>
+
 <p>Once registered a client interacts via HTTP POST to the URL <a href="http://localhost:8080/droolstest/1/client/%7BconversationId%7D/messages">h<span style="font-family: monospace;">ttp://localhost:8080/droolstest/1/client/{conversationId}/messages</span></a> (or appropriate hostname/post) with <span style="font-family: monospace;">{convestationId}</span> an <span style="font-family: monospace;">ACTIVE</span>, previously registered client conversation (see above). Note that the <span style="font-family: monospace;">conversationId</span> is both a client/session identifier and a capability, i.e. implicitly authenticates and admits the client.</p>
+
 <p>The POST body and response are (currently) an XML-encoded list of messages:</p>
+
 <pre>&lt;list&gt;<br>	&lt;message&gt;...&lt;/message&gt;<br>	&lt;message&gt;...&lt;/message&gt;<br>&lt;/list&gt;</pre>
+
 <p>Messages are XML-encodings of class <span style="font-family: monospace;">uk.ac.horizon.ug.exserver.clientapi.protocol.Message</span>, e.g.:</p>
+
 <pre>&lt;list&gt;<br>	&lt;message&gt;&lt;!-- POLL for at most one message --&gt;<br>		&lt;type&gt;POLL&lt;/type&gt;<br>		&lt;seqNo&gt;1&lt;/seqNo&gt;<br>		&lt;ackSeq&gt;0&lt;/ackSeq&gt;<br>		&lt;toFollow&gt;1&lt;/toFollow&gt;<br>	&lt;/message&gt;<br>	&lt;message&gt;&lt;!-- Add a BluetoothSighting --&gt;<br>		&lt;type&gt;ADD_FACT&lt;/type&gt;<br>		&lt;seqNo&gt;2&lt;/seqNo&gt;<br>		&lt;newVal&gt;{"typeName":"BluetoothSighting","namespace":"uk.ac.horizon.ug.ubicomp","device_id":"imei:1234","beacon_mac":"1:2:3:4"}&lt;/newVal&gt;<br>	&lt;/message&gt;<br>&lt;/list&gt;<br></pre>
+
 <p>The Message has fields:</p>
+
 <ul>
+
   <li><span style="font-family: monospace;">seqNo</span>: <span style="font-family: monospace;">int</span> - required, message sequence number.</li>
+
   <li><span style="font-family: monospace;">type</span>: <span style="font-family: monospace;">uk.ac.horizon.ug.exserver.clientapi.protocol.MessageType</span> - required, message type, see below.</li>
+
   <li><span style="font-family: monospace;">time</span>: <span style="font-family: monospace;">Long</span> - optional, time message sent (Java time/UNIX time milliseconds)</li>
+
   <li><span style="font-family: monospace;">subIx</span>: <span style="font-family: monospace;">Integer</span> - for FACT_ADD/UPD/DEL &amp; SUBS_EN/DIS, index of subscription to which message relates (within client type definition)</li>
+
   <li><span style="font-family: monospace;">oldVal</span>: <span style="font-family: monospace;">String</span> - for FACT_UPD/DEL &amp; UPD/DEL_FACT,&nbsp; string marshalled "old" value, e.g. deleted value or before update (see below)</li>
+
   <li><span style="font-family: monospace;">newVal</span>: <span style="font-family: monospace;">String</span> -&nbsp; for FACT_ADD/UPD &amp; ADD/UPD_FACT, string marshalled "new" value, e.g. added value or after update (see below).</li>
+
   <li><span style="font-family: monospace;">handle</span>: <span style="font-family: monospace;">String</span> - FACT_UPD/DEL, UPD/DEL_FACT (option vs oldVal), ADD/UPD_FACT ACK, fact handle if relevant (e.g. of added fact)</li>
+
   <li><span style="font-family: monospace;">ackSeq</span>: <span style="font-family: monospace;">Integer</span> - for ACK, ERROR, POLL and POLL_RESP, highest acknowedged message sequence number.</li>
+
   <li><span style="font-family: monospace;">toFollow</span>: <span style="font-family: monospace;">Integer</span> - for POLL/POLL_RESP (optional), max. number of messages to send (poll) or outstanding (poll_resp).</li>
+
   <li><span style="font-family: monospace;">status</span>: <span style="font-family: monospace;">uk.ac.horizon.ug.exserver.clientapi.protocol.MessageStatusType</span> - for ERROR, status type (see below).</li>
+
   <li><span style="font-family: monospace;">errorMsg</span>: <span style="font-family: monospace;">String</span> - for ERROR</li>
+
 </ul>
+
 Message types from client to server are:<br>
+
 <ul>
+
   <li><span style="font-family: monospace;">POLL</span> - poll for messages to client. Should include <span style="font-family: monospace;">ackSeq</span> for highest acknowedged message sequence number. May include <span style="font-family: monospace;">toFollow</span> to limit number of messages sent back.</li>
+
   <li><span style="font-family: monospace;">ADD_FACT</span> - request to add a fact to the session.&nbsp;</li>
+
   <li><span style="font-family: monospace;">UPD_FACT</span> - request to update a fact in the session. For some types (without primary key) old value <span style="font-family: monospace;">handle</span> is required rather than <span style="font-family: monospace;">oldVal</span>.&nbsp;</li>
+
   <li><span style="font-family: monospace;">DEL_FACT</span> - require to delete a fact from the session.&nbsp;For some types (without primary key) old value <span style="font-family: monospace;">handle</span> is required rather than <span style="font-family: monospace;">oldVal</span>.</li>
+
   <li><span style="font-family: monospace;">SUBS_EN</span>, <span style="font-family: monospace;">SUBS_DIS</span> - not implemented (enable/disable subscriptions).</li>
+
 </ul>
+
 Message types from server to client are:<br>
+
 <ul>
+
   <li><span style="font-family: monospace;">NEW_CONV</span> - marks the start of a new conversation with the client. Generated within the server by client registration.</li>
+
   <li><span style="font-family: monospace;">POLL_RESP</span> - marks end of (FACT_EX/ADD/UPD/DEL) messages sent in response to POLL request. Includes toFollow.</li>
+
   <li><span style="font-family: monospace;">FACT_EX</span> - reports a fact already existed in the session when the client subscription was created.</li>
+
   <li><span style="font-family: monospace;">FACT_ADD</span> - reports a fact added matching a client subscription.&nbsp;</li>
+
   <li><span style="font-family: monospace;">FACT_UPD</span> - reports a
 fact updated matching a client subscription (Note: due to a bug in
 Drools JPA session support for updates these are not currently used).</li>
+
   <li><span style="font-family: monospace;">FACT_DEL</span> - reports a fact deleted matching a client subscription.</li>
+
   <li><span style="font-family: monospace;">ACK</span> - success response to a client request (ADD/UPD/DEL_FACT, SUBS_EN/DIS).</li>
+
   <li><span style="font-family: monospace;">ERROR</span> - error response to a client request. Can include POLL (for which success response is POLL_RESP).</li>
+
 </ul>
+
 Message status types are:<br>
+
 <ul>
+
   <li><span style="font-family: monospace;">OK</span> -&nbsp;not an error</li>
+
   <li><span style="font-family: monospace;">INVALID_REQUEST</span> -&nbsp;request not well-formed</li>
+
   <li><span style="font-family: monospace;">NOT_PERMITTED</span> - no permission, probably not going to change</li>
+
   <li><span style="font-family: monospace;">INTERNAL_ERROR </span>- e.g. exception</li>
+
   <li><span style="font-family: monospace;">NOT_FOUND</span> - probably not going to change</li>
+
   <li><span style="font-family: monospace;">TOO_EARLY</span> - e.g. before start of session</li>
+
   <li><span style="font-family: monospace;">TOO_LATE</span> - e.g. after close of session</li>
+
   <li><span style="font-family: monospace;">SERVER_BUSY</span> - overload - hopefully temporary</li>
+
   <li><span style="font-family: monospace;">REDIRECT_SERVER</span> - to a fail-over server?!</li>
+
   <li><span style="font-family: monospace;">REDIRECT_LOBBY </span>- go back to the lobby and restart...</li>
+
 </ul>
+
 <p>(Many of these status responses are not yet used by the server.)</p>
+
 <p>Facts are currently encoded in JSON as a JSON object, with fields for each property plus special fields:</p>
+
 <ul>
+
   <li><span style="font-family: monospace;">namespace</span> - the package name of the Java class / DRL file</li>
+
   <li><span style="font-family: monospace;">typeName</span> - the class name (without package)</li>
+
 </ul>
+
 <p>Numeric and boolean property types are mapped to the corresponding JSON types (not strings).</p>
+
 <p>Note that currently only DRL-defined types can be transferred. e.g.</p>
+
 <pre>{"typeName":"BluetoothSighting","namespace":"uk.ac.horizon.ug.ubicomp","device_id":"imei:1234","beacon_mac":"1:2:3:4"}<br></pre>
+
 <h3>Testing</h3>
+
 <p>For example, using CURL to test the client API:</p>
+
 <pre>curl -H Content-Type:application/xml -d '&lt;list&gt;&lt;message&gt;&lt;type&gt;POLL&lt;/type&gt;&lt;ackSeq&gt;0&lt;/ackSeq&gt;&lt;toFollow&gt;1&lt;/toFollow&gt;&lt;/message&gt;&lt;/list&gt;' http://localhost:8182/droolstest/1/client/{id}/messages<br></pre>
+
 <h3>Examples</h3>
+
 <p>A couple of example responses from the server:</p>
-<pre>&lt;list&gt;<br>  &lt;message&gt;<br>    &lt;seqNo&gt;6&lt;/seqNo&gt;<br>    &lt;type&gt;NEW_CONV&lt;/type&gt;<br>    &lt;subsIx&gt;0&lt;/subsIx&gt;<br>  &lt;/message&gt;<br>  &lt;message&gt;<br>    &lt;seqNo&gt;0&lt;/seqNo&gt;<br>    &lt;type&gt;POLL_RESP&lt;/type&gt;<br>    &lt;ackSeq&gt;0&lt;/ackSeq&gt;<br>    &lt;toFollow&gt;2&lt;/toFollow&gt;<br>  &lt;/message&gt;<br>&lt;/list&gt;<br><br>&lt;list&gt;<br>  &lt;message&gt;<br>    &lt;seqNo&gt;5&lt;/seqNo&gt;<br>    &lt;type&gt;FACT_EX&lt;/type&gt;<br>    &lt;subsIx&gt;0&lt;/subsIx&gt;<br>    &lt;newVal&gt;{&amp;quot;typeName&amp;quot;:&amp;quot;ShowContentRequest&amp;quot;,&amp;quot;time&amp;quot;:0,&amp;quot;class&amp;quot;:&amp;quot;class uk.ac.horizon.ug.ubicomp.ShowContentRequest&amp;quot;,&amp;quot;device_id&amp;quot;:&amp;quot;a&amp;quot;,&amp;quot;namespace&amp;quot;:&amp;quot;uk.ac.horizon.ug.ubicomp&amp;quot;,&amp;quot;content_url&amp;quot;:&amp;quot;file:/D:/cmg/Horizon/eclipsews/droolstest/docs/readme.html&amp;quot;}&lt;/newVal&gt;<br>  &lt;/message&gt;<br>  &lt;message&gt;<br>    &lt;seqNo&gt;0&lt;/seqNo&gt;<br>    &lt;type&gt;POLL_RESP&lt;/type&gt;<br>    &lt;ackSeq&gt;0&lt;/ackSeq&gt;<br>    &lt;toFollow&gt;0&lt;/toFollow&gt;<br>  &lt;/message&gt;<br>&lt;/list&gt;</pre>
+
+<pre>&lt;list&gt;<br>  &lt;message&gt;<br>    &lt;seqNo&gt;6&lt;/seqNo&gt;<br>    &lt;type&gt;NEW_CONV&lt;/type&gt;<br>    &lt;subsIx&gt;0&lt;/subsIx&gt;<br>  &lt;/message&gt;<br>  &lt;message&gt;<br>    &lt;seqNo&gt;0&lt;/seqNo&gt;<br>    &lt;type&gt;POLL_RESP&lt;/type&gt;<br>    &lt;ackSeq&gt;0&lt;/ackSeq&gt;<br>    &lt;toFollow&gt;2&lt;/toFollow&gt;<br>  &lt;/message&gt;<br>&lt;/list&gt;<br><br>&lt;list&gt;<br>  &lt;message&gt;<br>    &lt;seqNo&gt;5&lt;/seqNo&gt;<br>    &lt;type&gt;FACT_EX&lt;/type&gt;<br>    &lt;subsIx&gt;0&lt;/subsIx&gt;<br>    &lt;newVal&gt;{&amp;quot;typeName&amp;quot;:&amp;quot;ShowContentRequest&amp;quot;,&amp;quot;time&amp;quot;:0,&amp;quot;class&amp;quot;:&amp;quot;class uk.ac.horizon.ug.ubicomp.ShowContentRequest&amp;quot;,&amp;quot;device_id&amp;quot;:&amp;quot;a&amp;quot;,&amp;quot;namespace&amp;quot;:&amp;quot;uk.ac.horizon.ug.ubicomp&amp;quot;,&amp;quot;content_url&amp;quot;:&amp;quot;file:/D:/cmg/Horizon/eclipsews/droolstest/docs/readme.html&amp;quot;}&lt;/newVal&gt;<br>  &lt;/message&gt;<br>  &lt;message&gt;<br>    &lt;seqNo&gt;0&lt;/seqNo&gt;<br>    &lt;type&gt;POLL_RESP&lt;/type&gt;<br>    &lt;ackSeq&gt;0&lt;/ackSeq&gt;<br>    &lt;toFollow&gt;0&lt;/toFollow&gt;<br>  &lt;/message&gt;<br>&lt;/list&gt;<br></pre>
+<h2>Client Type Specification</h2>
+<p>The project file specifies the "type"(s) of client supported by the
+session. Each type is named, and this name is an argument of the client
+(conversation) registration (above).</p>
+<p>The server maintains a queue of messages for each client. These are
+the messages returned by the client POLL request. The messages in the
+queue are generated by the client&nbsp;type's "subscriptions". A
+client&nbsp;type can have several subscriptions, each of which is a
+pattern (query) which will match fact(s) in the game session. For
+example, a client subscription might match all ShowContentRequest
+objects in a session which have a "device_id" field equal to the
+client's clientId.&nbsp;</p>
+<p>The <span style="font-family: monospace;">uk.ac.horizon.ug.exserver.clientapi.ClientSubscriptionManager</span> monitors all changes in each game session and creates client messages as appropriate to match current client subscriptions.</p>
+<p> Note that subscriptions can work be configued to work in different ways:</p>
+<ul>
+  <li>whether or not they generate FACT_EX messages for all (pre-existing) matching facts when the client is first &nbsp;registered.</li>
+  <li>under what circumstances messages are removed from the client message list (lifetime), one of:</li>
+  <ul>
+    <li><span style="font-family: monospace;">UNTIL_SENT</span> -
+removed as soon as they are sent to a client (there is no guarantee
+that the client even receives them if there is a network failure or
+client crash just after the POLL request)</li>
+    <li><span style="font-family: monospace;">UNTIL_ACKNOWLEDGED</span> - removed when explicitly acknowledged by the client (e.g. in a subsequent POLL with <span style="font-family: monospace;">acqSeq</span> field specified).</li>
+    <li><span style="font-family: monospace;">CONVERSATION</span> -
+removed when this particular conversation ends (or more accurately is
+superceded by a new conversation in the same session with the same
+client device) - not yet implemented</li>
+    <li><span style="font-family: monospace;">CLIENT</span> - not
+removed until or unless the client itself is explicit and irrevocable
+removed from the session (currently simply never removed).</li>
+  </ul>
+</ul>
+<p>It is intended that each client conversation will also limit the
+changes that the client can make to the game session state by filtering
+incoming requests - this is not yet implemented.</p>
+<p>It is also intended that client request filters will be able to
+limit the lifetime of objects added by the client, e.g. to delete them
+automatically when the client starts a new conversation or explicitly
+terminates the conversation. This is not yet implemented.</p>
+<p>The client type specification currently also lists @client fact
+types associated with the client type. These are currently only used in
+the authoring tool, and the client is required to add them explicitly
+itself on connection (if appropriate). It may be that these facts
+should be added automatically by the client manager, but this would in
+general also require the client protocol to allow the client to provide
+some initial information to create these facts with (i.e. any
+client-specific&nbsp;field values) which is not yet implemented.
+Alternatively the client might not be permitted to perform any other
+action(s) until it had created the specified fact(s) about itself.</p>
+<p></p>
+
 </body>
 </html>
