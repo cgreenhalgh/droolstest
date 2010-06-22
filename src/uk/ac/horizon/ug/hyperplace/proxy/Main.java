@@ -134,7 +134,7 @@ public class Main implements Runnable {
 			rdata.put("__responseUpdate", response);
 			
 			JSONObject mainState = new JSONObject();
-			mainState.put("__name", "ProxyState");
+			mainState.put("__name", "PyramidMainState");
 			mainState.put("__type", "HPMainState");
 			mainState.put("__completed", true);
 			mainState.put("__errorMessage", (Object)null);
