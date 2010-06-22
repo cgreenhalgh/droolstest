@@ -10,12 +10,18 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.swing.JOptionPane;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import uk.ac.horizon.ug.exserver.clientapi.client.Client;
 /** An exploration of using the Hyperplace Android client (currently the one from HP/Pyramid) 
  * with the drools-based game server.
  * 
@@ -27,9 +33,15 @@ public class Main implements Runnable {
 	static final int DEFAULT_PORT = 7474;
 	/** server socket */
 	protected ServerSocket serverSocket;
+	protected String serverUrl = null;
+	protected String sessionId = null;
 	public Main(int defaultPort) {
 		try {
 		// TODO Auto-generated constructor stub
+			while (serverUrl==null)
+				serverUrl = JOptionPane.showInputDialog("Server URL:");
+			while (sessionId==null)
+				sessionId = JOptionPane.showInputDialog("Session ID:");
 			serverSocket = new ServerSocket(defaultPort);
 		}
 		catch (Exception e) {
@@ -59,13 +71,14 @@ public class Main implements Runnable {
 		new ClientHandler(socket);
 	}
 	/** client handler */
-	static class ClientHandler {
+	class ClientHandler {
 		protected Socket socket;
 		protected boolean dead;
 		protected boolean registered = false;
 		protected String deviceType;
 		protected String deviceId;
 		protected BufferedWriter out;
+		protected Client client;
 		ClientHandler(Socket socket) {
 			this.socket = socket;
 			// read thread
@@ -110,7 +123,6 @@ public class Main implements Runnable {
 			}
 		}
 		private void handleRegister(JSONObject json) throws JSONException, IOException {
-			// TODO Auto-generated method stub
 			JSONObject data = json.getJSONObject("__data");
 			deviceType = data.getString("deviceType");
 			if (data.has("deviceId"))
@@ -121,6 +133,19 @@ public class Main implements Runnable {
 			}
 			registered = true;
 			logger.info("Registered "+deviceType+":"+deviceId+" as "+socket);
+			
+			// register with game server
+			// TODO: support for more than one client at once!
+			client = new Client(serverUrl, deviceId);
+			List<String> clientClassNames =new LinkedList<String>();
+			clientClassNames.add("uk.ac.horizon.ug.hyperplace.facts.HyperplaceClient");
+			client.connect(clientClassNames);
+			logger.info("Registered with server");
+			client.poll();
+			List<JSONObject> tabs = client.getFacts("HyperplaceTab");
+			logger.info("Found "+tabs.size()+" HyperplaceTab s");
+			// TODO...
+			
 			// return success
 			JSONObject resp = new JSONObject();
 			resp.put("__type", "HPUpdate");

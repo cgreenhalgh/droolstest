@@ -1,0 +1,79 @@
+<project>
+  <name></name>
+  <ruleFiles class="linked-list">
+    <string>file:/C:/cmg/Horizon/eclipsews/droolstest/samples/hyperplace.drl</string>
+  </ruleFiles>
+  <clientTypes class="linked-list">
+    <uk.ac.horizon.ug.authorapp.model.ClientTypeInfo>
+      <name>Hyperplace</name>
+      <clientTypeNames class="linked-list">
+        <string>HyperplaceClient</string>
+      </clientTypeNames>
+      <subscriptions class="linked-list">
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>false</updateAllowed>
+          <deleteAllowed>false</deleteAllowed>
+          <pattern>
+            <typeName>HyperplaceTab</typeName>
+            <constraints class="linked-list">
+              <uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+                <fieldName>standard</fieldName>
+                <constraintType>EQUAL_TO</constraintType>
+                <parameter>true</parameter>
+              </uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+            </constraints>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>CLIENT</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>false</updateAllowed>
+          <deleteAllowed>false</deleteAllowed>
+          <pattern>
+            <typeName>HyperplaceAsset</typeName>
+            <constraints class="linked-list">
+              <uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+                <fieldName>standard</fieldName>
+                <constraintType>EQUAL_TO</constraintType>
+                <parameter>true</parameter>
+              </uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+            </constraints>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>CLIENT</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+      </subscriptions>
+    </uk.ac.horizon.ug.authorapp.model.ClientTypeInfo>
+  </clientTypes>
+  <factStores class="linked-list">
+    <uk.ac.horizon.ug.authorapp.FactStore>
+      <name>default</name>
+      <facts class="linked-list">
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.hyperplace.facts</namespace>
+          <typeName>HyperplaceTab</typeName>
+          <fieldValues>
+            <entry>
+              <string>standard</string>
+              <string>true</string>
+            </entry>
+            <entry>
+              <string>name</string>
+              <string>Actions</string>
+            </entry>
+            <entry>
+              <string>type</string>
+              <string>Action</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+      </facts>
+    </uk.ac.horizon.ug.authorapp.FactStore>
+  </factStores>
+  <defaultFactStoreName>default</defaultFactStoreName>
+  <customViews class="linked-list"/>
+</project>

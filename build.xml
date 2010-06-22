@@ -78,7 +78,7 @@
 	
 	<target name="bluetoothex">
 		<mkdir dir="build/bluetoothex"/>
-		<javac destdir="build/bluetoothex" debug="true" target="1.5" source="1.5" includes="uk/ac/horizon/ug/bluetoothex/testclient/*,uk/ac/horizon/ug/exserver/clientapi/protocol/*,uk/ac/horizon/ug/exserver/clientapi/JsonUtils.java">
+		<javac destdir="build/bluetoothex" debug="true" target="1.5" source="1.5" includes="uk/ac/horizon/ug/bluetoothex/testclient/*,uk/ac/horizon/ug/exserver/clientapi/protocol/*,uk/ac/horizon/ug/exserver/clientapi/client/*,uk/ac/horizon/ug/exserver/clientapi/JsonUtils.java,">
     		<classpath refid="cp"/>
 			<src path="src"/>
     	</javac>
@@ -88,6 +88,20 @@
 				<pathelement location="build/bluetoothex"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=native/win32"/>
+		</java>
+	</target>
+	
+	<target name="hyperplaceproxy">
+		<mkdir dir="build/hyperplaceproxy"/>
+		<javac destdir="build/hyperplaceproxy" debug="true" target="1.5" source="1.5" includes="uk/ac/horizon/ug/hyperplace/proxy/*,uk/ac/horizon/ug/exserver/clientapi/protocol/*,uk/ac/horizon/ug/exserver/clientapi/client/*,uk/ac/horizon/ug/exserver/clientapi/JsonUtils.java,">
+    		<classpath refid="cp"/>
+			<src path="src"/>
+    	</javac>
+		<java classname="uk.ac.horizon.ug.hyperplace.proxy.Main" fork="true" >
+			<classpath>
+				<path refid="cp"/>
+				<pathelement location="build/hyperplaceproxy"/>
+			</classpath>
 		</java>
 	</target>
 	

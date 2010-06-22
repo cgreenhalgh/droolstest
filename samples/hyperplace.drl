@@ -1,0 +1,29 @@
+#created on: 22-Jun-2010
+# Hyperplace-proxy facts
+
+package uk.ac.horizon.ug.hyperplace.facts
+
+// hyperplace main client type
+declare HyperplaceClient
+	@client // client type
+	id : String @key 
+end
+
+// tab to show
+declare HyperplaceTab
+	@message // kind of sent to HyperplaceClients
+	standard : boolean // for all clients
+	clientId : String @to("HyperplaceClient") // may be null for standard
+	name : String
+	type : String // probably a fixed set of options?!
+	rank : float // to sort
+end
+
+// asset to cache
+declare HyperplaceAsset 
+	@message // kind of sent to HyperplaceClients
+	standard : boolean // for all clients
+	clientId : String @to("HyperplaceClient") // may be null for standard
+	url : String @type("URL")
+end
+

@@ -43,6 +43,7 @@ import uk.ac.horizon.ug.exserver.clientapi.protocol.Message;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageStatusType;
 import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageType;
 import uk.ac.horizon.ug.exserver.clientapi.JsonUtils;
+import uk.ac.horizon.ug.exserver.clientapi.client.Client;
 
 /**
  * @author cmg
@@ -122,7 +123,7 @@ public class Main {
 				{
 					logger.info("Scan: "+newDevices);
 					super.updateDevices(newDevices);
-					if (serverUrl!=null)
+					if (client!=null)
 						SwingUtilities.invokeLater(new Runnable() {
 							public void run() {
 								String macs [] = newDevices.trim().split("[,]");
@@ -152,69 +153,51 @@ public class Main {
 	}
 	protected void addSighting(String mac) {
 		logger.info("Add sighting of "+mac+"...");
-		Message msg = new Message();
-		msg.setSeqNo(seqNo++);
-		msg.setType(MessageType.ADD_FACT);
-		msg.setNewVal("{\"typeName\":\"BluetoothSighting\",\"namespace\":\"uk.ac.horizon.ug.ubicomp\",\"device_id\":\""+clientId+"\",\"beacon_mac\":\""+mac+"\",\"time\":"+System.currentTimeMillis()+"}");
-		List<Message> responses = sendMessage(msg);
-		boolean ok = false;
-		MessageStatusType status = MessageStatusType.OK;
-		String errorMessage = null;
-		for (Message response : responses) {
-			if (response.getType()==MessageType.ACK && response.getAckSeq()!=null && response.getAckSeq()==msg.getSeqNo())  {
-				ok = true;
-				break;
-			}
-			else if (response.getType()==MessageType.ERROR && response.getAckSeq()!=null && response.getAckSeq()==msg.getSeqNo())  {
-				status = response.getStatus();
-				errorMessage = response.getErrorMsg();
-			}
-		}
-		if (ok) {
+		try {
+			JSONObject json = new JSONObject();
+			json.put("typeName", "BluetoothSighting");
+			json.put("namespace", "uk.ac.horizon.ug.ubicomp");
+			json.put("device_id", client.getClientId());
+			json.put("beacon_mac", mac);
+			client.sendMessage(client.addFactMessage(json.toString()));
 			doPoll();
-//			JOptionPane.showMessageDialog(frame, "OK", "Sighting", JOptionPane.INFORMATION_MESSAGE);
 		}
-		else
-			JOptionPane.showMessageDialog(frame, "Error: "+status+" ("+errorMessage+")", "Sighting", JOptionPane.ERROR_MESSAGE);
-			
+		catch (Exception e) {
+			JOptionPane.showMessageDialog(frame, "Error: "+e, "Sighting", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 	protected void doPoll() {
-		Message msg = new Message();
-		msg.setSeqNo(seqNo++);
-		msg.setType(MessageType.POLL);
-		//msg.setToFollow(0);
-		msg.setAckSeq(ackSeq);
-		
-		List<Message> messages = sendMessage(msg);
-		if (messages==null)
-			return;
-		
-		for (Message message : messages) {
-			if (message.getSeqNo()>0 && message.getSeqNo()>ackSeq)
-				ackSeq = message.getSeqNo();
-			if (message.getType()==MessageType.FACT_EX || message.getType()==MessageType.FACT_ADD) {
-				try {
-					JSONObject json = new JSONObject(message.getNewVal());
-					String typeName = JsonUtils.getTypeName(json);
-					if (typeName.equals("ShowContentRequest")) {
-						String url = json.getString("content_url");
-						logger.info("Show: "+url);
-						JEditorPane viewer = new JEditorPane(new URL(url));
-						JDialog dialog = new JDialog(frame, "Content");
-						dialog.setContentPane(new JScrollPane(viewer));
-						dialog.pack();
-						dialog.setLocationRelativeTo(frame);
-						dialog.getContentPane().setPreferredSize(new Dimension(600, 400));
-						dialog.setVisible(true);
+		try {
+			List<Message> messages = client.poll();
+			
+			for (Message message : messages) {
+				if (message.getType()==MessageType.FACT_EX || message.getType()==MessageType.FACT_ADD) {
+					try {
+						JSONObject json = new JSONObject(message.getNewVal());
+						String typeName = JsonUtils.getTypeName(json);
+						if (typeName.equals("ShowContentRequest")) {
+							String url = json.getString("content_url");
+							logger.info("Show: "+url);
+							JEditorPane viewer = new JEditorPane(new URL(url));
+							JDialog dialog = new JDialog(frame, "Content");
+							dialog.setContentPane(new JScrollPane(viewer));
+							dialog.pack();
+							dialog.setLocationRelativeTo(frame);
+							dialog.getContentPane().setPreferredSize(new Dimension(600, 400));
+							dialog.setVisible(true);
+						}
+						else 
+							JOptionPane.showMessageDialog(frame, "New fact: "+json, "Poll", JOptionPane.INFORMATION_MESSAGE);
 					}
-					else 
-						JOptionPane.showMessageDialog(frame, "New fact: "+json, "Poll", JOptionPane.INFORMATION_MESSAGE);
-				}
-				catch (Exception e) {
-					JOptionPane.showMessageDialog(frame, "Error parsing response: "+message.getNewVal()+"\n"+e, "Poll", JOptionPane.ERROR_MESSAGE);
+					catch (Exception e) {
+						JOptionPane.showMessageDialog(frame, "Error parsing response: "+message.getNewVal()+"\n"+e, "Poll", JOptionPane.ERROR_MESSAGE);
+					}
 				}
 			}
+		}
+		catch (Exception e) {
+			JOptionPane.showMessageDialog(frame, "Error polling: "+e, "Poll", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -258,24 +241,15 @@ public class Main {
 		dialog.setVisible(true);
 	}
 
-	protected URL serverUrl;
-	protected String clientId;
-	protected int ackSeq = 0;
-	protected int seqNo = 1;
+	protected Client client;
 	
 	protected boolean connect(String url, String clientId) {
-		
 		try {
-			serverUrl = new URL(url);
-			this.clientId = clientId;	
-
+			client = new Client(url, clientId);
 			// we are a content display device!
-			Message msg = new Message();
-			msg.setSeqNo(seqNo++);
-			msg.setType(MessageType.ADD_FACT);
-			msg.setNewVal("{\"typeName\":\"ContentDisplayDevice\",\"namespace\":\"uk.ac.horizon.ug.ubicomp\",\"id\":\""+clientId+"\"}");
-
-			sendMessage(msg);
+			List<String> clientClassNames = new LinkedList<String>();
+			clientClassNames.add("uk.ac.horizon.ug.ubicomp.ContentDisplayDevice");
+			client.connect(clientClassNames);
 			return true;
 		}
 		catch (Exception e) {
@@ -283,46 +257,6 @@ public class Main {
 			JOptionPane.showMessageDialog(frame, "Error connecting to server: "+e, "Connect", JOptionPane.ERROR_MESSAGE);
 		}
 		return false;
-	}	
-	protected List<Message> sendMessage(Message msg) {
-		List<Message> messages = new LinkedList<Message>();
-		messages.add(msg);
-		return sendMessages(messages);
-	}
-	protected List<Message> sendMessages(List<Message> messages) {
-		try {
-			HttpURLConnection conn = (HttpURLConnection) serverUrl.openConnection();
-			conn.setRequestMethod("POST");
-			conn.setDoInput(true);
-			conn.setDoOutput(true);
-			conn.addRequestProperty("Content-Type", "application/xml");
-			OutputStream os = conn.getOutputStream();
-			
-			XStream xs = new XStream(new DomDriver());
-			xs.alias("list", LinkedList.class);    	
-			xs.alias("message", Message.class);
-			
-			xs.toXML(messages, os);
-			os.close();
-			
-			int status = conn.getResponseCode();
-			if (status!=200) {
-				logger.log(Level.WARNING, "Error response ("+status+") from server: "+conn.getResponseMessage());
-				JOptionPane.showMessageDialog(frame, "Error response ("+status+") from server: "+conn.getResponseMessage(), "Connect", JOptionPane.ERROR_MESSAGE);
-				return null;
-			}
-			InputStream is = conn.getInputStream();
-			messages = (List<Message>)xs.fromXML(is);
-			logger.info("Response: "+messages);
-			
-			return messages;
-		}
-		catch (Exception e) {
-			logger.log(Level.WARNING, "Error connecting to server", e);
-			JOptionPane.showMessageDialog(frame, "Error connecting to server: "+e, "Connect", JOptionPane.ERROR_MESSAGE);
-		}
-		return null;
-	}
-	
+	}		
 	
 }
