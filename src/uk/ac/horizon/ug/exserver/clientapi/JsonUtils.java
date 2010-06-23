@@ -99,6 +99,8 @@ public class JsonUtils {
 		PropertyDescriptor properties[] = beanInfo.getPropertyDescriptors();
 		for (int i=0; i<properties.length; i++) {
 			String name = properties[i].getName();
+			if (name.equals("class"))
+				continue;
 			Method writeMethod = properties[i].getWriteMethod();
 			if (writeMethod==null) {
 				logger.log(Level.WARNING, "Cannot write property "+name+" in "+object.getClass().getName()+" "+object);

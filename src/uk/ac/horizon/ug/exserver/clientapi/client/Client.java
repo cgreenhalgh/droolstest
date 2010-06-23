@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -20,6 +21,7 @@ import javax.swing.JEditorPane;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -173,11 +175,79 @@ public class Client {
 				JSONObject json = new JSONObject(message.getNewVal());
 				String typeName = JsonUtils.getTypeName(json);
 				facts.add(json);
-				// TODO delete, update, ...
-				// TODO...
+			} else if (message.getType()==MessageType.FACT_UPD || message.getType()==MessageType.FACT_DEL) {
+				JSONObject json = new JSONObject(message.getOldVal());
+				boolean found = false;
+				for (int i=0; i<facts.size(); i++) {
+					if (jsonEqual(json, facts.get(i))) {
+						facts.remove(i);
+						found = true;
+						logger.info("Removing old fact "+json);
+						break;
+					}
+				}
+				if (!found)
+					logger.log(Level.WARNING, "Did not find old fact to remove: "+json);
+				if (message.getType()==MessageType.FACT_UPD) {
+					json = new JSONObject(message.getNewVal());
+					facts.add(json);
+				}
 			}
 		}
 		return messages;
+	}
+	private boolean jsonEqual(JSONObject json, JSONObject json2) throws JSONException {
+		if (json==json2)
+			return true;
+		if (json==null || json2==null)
+			return false;
+		if (json.length()!=json2.length())
+			return false;
+		Iterator<String> keys = json.keys();
+		while(keys.hasNext()) {
+			String key = keys.next();
+			if (!json2.has(key))
+				return false;
+			Object val = json.get(key);
+			Object val2 = json2.get(key);
+			if (!jsonEqual(val, val2))
+				return false;
+		}
+		return true;
+	}
+	private boolean jsonEqual(Object val, Object val2) throws JSONException {
+		if (val==val2)
+			return true;
+		if (val==null || val2==null)
+			return false;
+		if (!val.getClass().getName().equals(val2.getClass().getName()))
+			return false;
+		if (val instanceof JSONObject) {
+			if (!jsonEqual((JSONObject)val, (JSONObject)val2))
+				return false;
+		}
+		else if (val instanceof JSONArray) { 
+			if (!jsonEqual((JSONArray)val, (JSONArray)val2))
+				return false;
+		}
+		else if (!val.equals(val2))
+			return false;
+		return true;
+	}
+	private boolean jsonEqual(JSONArray json, JSONArray json2) throws JSONException {
+		if (json==json2)
+			return true;
+		if (json==null || json2==null)
+			return false;
+		if (json.length()!=json2.length())
+			return false;
+		for (int i =0; i<json.length(); i++) {
+			Object val = json.get(i);
+			Object val2 = json2.get(i);
+			if (!jsonEqual(val, val2))
+				return false;
+		}
+		return true;
 	}
 
 }

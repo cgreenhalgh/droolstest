@@ -440,7 +440,7 @@ public class ClientSubscriptionManager {
 						if (pattern==null)
 							continue;
 						// client independent match first
-						if (!matches(pattern, newObject, null, droolsSession.getKsession().getKnowledgeBase()))
+						if (!matches(pattern, oldObject!=null ? oldObject : newObject, null, droolsSession.getKsession().getKnowledgeBase()))
 							continue;
 						
 						boolean needsClientMatch = false;
@@ -451,7 +451,7 @@ public class ClientSubscriptionManager {
 						for (ClientConversation conversation : conversations) {
 							if (needsClientMatch)
 								// client-dependent match
-								if (!matches(pattern, newObject, conversation, droolsSession.getKsession().getKnowledgeBase()))
+								if (!matches(pattern, oldObject!=null ? oldObject : newObject, conversation, droolsSession.getKsession().getKnowledgeBase()))
 									continue;
 							// marshall on demand
 							if (oldObject!=null && oldValue==null) 

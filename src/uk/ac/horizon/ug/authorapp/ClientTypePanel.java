@@ -102,6 +102,23 @@ public class ClientTypePanel extends JPanel implements PropertyChangeListener {
 		JPanel buttons;
 		buttons = new JPanel(new FlowLayout());
 		subscriptionsPanel.add(buttons, BorderLayout.SOUTH);
+		buttons.add(new JButton(new AbstractAction("Add New subscription") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				ClientSubscriptionInfo subscription = new ClientSubscriptionInfo();
+				subscription.setActive(true);
+				subscription.setLifetime(ClientSubscriptionLifetimeType.CONVERSATION);
+				//subscription.setDeleteAllowed(true);
+				//subscription.setUpdateAllowed(true);
+				subscription.setMatchExisting(true);
+				QueryInfo pattern = new QueryInfo();
+				subscription.setPattern(pattern);
+				//pattern.setTypeName(type.getTypeName());
+				ClientTypePanel.this.clientTypeInfo.getSubscriptions().add(subscription);
+				ClientTypePanel.this.project.setChanged(true);
+				subscriptionModel.fireTableDataChanged();
+			}
+		}));
 		buttons.add(new JButton(new AbstractAction("Create default") {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {

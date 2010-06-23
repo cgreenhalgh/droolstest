@@ -237,7 +237,7 @@ public class Main implements Runnable {
 			clientResponse.put("success", true);
 			clientResponse.put("text", "Registered with hyperplace proxy");
 
-			poll(clientResponse, true, true);
+			poll(clientResponse, true);
 		}
 		/** lobby-type registration 
 		 * @throws IOException */
@@ -271,25 +271,29 @@ public class Main implements Runnable {
 			
 			return serverUrl+"1/client/"+conversationId+"/messages";
 		}
-		private void poll(JSONObject clientResponse, boolean updateMainState, boolean updateActionState) throws IOException, JSONException {
+		private void poll(JSONObject clientResponse, boolean forceUpdate) throws IOException, JSONException {
+			boolean updateMainState = forceUpdate;
+			boolean updateActionState = forceUpdate;
+			boolean updateMapState = forceUpdate;
 			
 			List<Message> pollResponses = client.poll();			
 			
 			JSONObject clientUpdate = getHPUpdate(clientResponse);
+		
+			List<String> changedTypeNames = new LinkedList<String>();
 			
 			// messages (and check other updates)
 			List<JSONObject> serverMessages = new LinkedList<JSONObject>();
 			for (Message pollResponse : pollResponses) {
+				logger.info("Message from server: "+pollResponse.getType()+" "+pollResponse.getOldVal()+" -> "+pollResponse.getNewVal());
 				if (pollResponse.getType()==MessageType.FACT_ADD || pollResponse.getType()==MessageType.FACT_EX) {
 					try {
 						JSONObject val = new JSONObject(pollResponse.getNewVal());
 						String typeName = val.getString("typeName");
 						if (typeName.equals("HyperplaceMessage"))
 							serverMessages.add(val);
-						else if (!updateMainState && (typeName.equals("HyperplaceTab") || typeName.equals("HyperplaceAsset")))
-							updateMainState = true;
-						else if (!updateActionState && (typeName.equals("HyperplaceAction")))
-							updateActionState = true;
+						if (!changedTypeNames.contains(typeName))
+							changedTypeNames.add(typeName);
 					}
 					catch (Exception e) {
 						logger.log(Level.WARNING, "Error checking added fact for message: "+pollResponse.getNewVal());
@@ -298,16 +302,24 @@ public class Main implements Runnable {
 				else if (!updateActionState && (pollResponse.getType()==MessageType.FACT_UPD || pollResponse.getType()==MessageType.FACT_DEL)) {
 					// may need to update actions...
 					try {
-						JSONObject val = new JSONObject(pollResponse.getNewVal());
+						JSONObject val = new JSONObject(pollResponse.getOldVal());
 						String typeName = val.getString("typeName");
-						if (!updateActionState && (typeName.equals("HyperplaceAction")))
-							updateActionState = true;
+						if (!changedTypeNames.contains(typeName))
+							changedTypeNames.add(typeName);
 					}
 					catch (Exception e) {
-						logger.log(Level.WARNING, "Error checking added fact for message: "+pollResponse.getNewVal());
+						logger.log(Level.WARNING, "Error checking updated/removed fact for message: "+pollResponse.getOldVal());
 					}					
 				}
 			}
+			if (changedTypeNames.contains("HyperplaceTab") || changedTypeNames.contains("HyperplaceAsset"))
+				updateMainState = true;
+			if (changedTypeNames.contains("HyperplaceAction"))
+				updateActionState = true;
+			if (changedTypeNames.contains("HyperplaceMapPin") || changedTypeNames.contains("GeoPosition"))
+				updateMapState = true;
+			// TODO: web
+			
 			client.getFacts("HyperplaceMessage");
 			logger.info("Found "+serverMessages.size()+" HyperplaceMessage s");
 			for (JSONObject serverMessage : serverMessages) {
@@ -370,9 +382,86 @@ public class Main implements Runnable {
 					logger.log(Level.WARNING, "Problem building HPActionsState", e);
 				}
 			}
+			// Map
+			if (updateMapState) {
+				addClientStateUpdate(clientUpdate, getHPMapState());
+			}
 			// send update
-			if (clientResponse!=null || updateActionState || updateMainState || serverMessages.size()>0)
+			if (clientResponse!=null || updateActionState || updateMainState || updateMapState || serverMessages.size()>0)
 				send(clientUpdate);
+		}
+		/** HPMapState is a statelet with __type HPMapState, __name classname, __completed, __errorMessage
+		 * optional showMyLocation : boolean, 
+		 * optional viewCentreUpdate: { viewCenterLatitude : double, viewCenterLongitude: double,
+		 * 	                            viewZoom : int, animateToView : boolean, reachedMessage : String }
+		 * plus locations - array of { [id : int - unused], longitude : double , latitude : double , 
+		 * 				               marker : String (image URL) (required), label : String .
+		 *                             optional dialogMessage : String }
+		 * @param rdata
+		 * @throws JSONException 
+		 * @throws IOException
+		 */
+		private JSONObject getHPMapState() throws JSONException {
+			List<JSONObject> serverMapPins = client.getFacts("HyperplaceMapPin");
+			List<JSONObject> serverGeoPoss = client.getFacts("GeoPosition");
+			JSONObject clientMapState = new JSONObject();
+			clientMapState.put("__type", "HPMapState");
+			clientMapState.put("__name", "Map");
+			clientMapState.put("__completed", true);
+			clientMapState.put("__errorMessage", (Object)null);
+			JSONArray clientLocations = new JSONArray();
+			clientMapState.put("locations", clientLocations);
+			for (JSONObject serverMapPin : serverMapPins) {
+				try {
+					/* 	
+					 * id : String @key
+					 * label : String // required
+					 * icon : String @type("URL") // required
+					 * dialogMessage : String // optional
+					 */
+					String id = serverMapPin.getString("id");
+					JSONObject serverGeoPos = null;
+					for (JSONObject sgp : serverGeoPoss) 
+						/*
+						 * 	time : long
+						 * subjectId : String @subject("HyperplaceClient,HyperplaceMapPin,GeoTarget")
+						 * latitude : double
+						 * longitude : double
+						 * provider : String // e.g. "gps" - optional
+						 * accuracy : double // metres
+						 */
+						if (sgp.getString("subjectId").equals(id)) {
+							serverGeoPos = sgp;
+							break;
+						}
+					if (serverGeoPos==null) {
+						logger.log(Level.WARNING, "No GeoPosition for HyperplaceMapPin "+id);
+						continue;
+					}
+					JSONObject clientLocation = new JSONObject();
+					// arbitrary id ?!
+					clientLocation.put("id", clientLocations.length());
+					clientLocations.put(clientLocation);
+					/*
+					 * plus locations - array of { [id : int - unused], longitude : double , latitude : double , 
+					 * 				               marker : String (image URL) (required), label : String .
+					 *                             optional dialogMessage : String }
+					 */
+					clientLocation.put("longitude", serverGeoPos.getDouble("longitude"));
+					clientLocation.put("latitude", serverGeoPos.getDouble("latitude"));
+					if (serverMapPin.has("icon"))
+						clientLocation.put("marker", serverMapPin.get("icon"));
+					else
+						clientLocation.put("marker", DEFAULT_ICON);
+					clientLocation.put("label",	serverMapPin.get("label"));
+					if (serverMapPin.has("dialogMessage"))
+						clientLocation.put("dialogMessage", serverMapPin.get("dialogMessage"));			
+				}
+				catch (Exception e) {
+					logger.log(Level.WARNING, "Error mapping HyperplaceMapPin "+ serverMapPin, e);
+				}
+			}
+			return clientMapState;
 		}
 		public void handleAction(JSONObject json) throws JSONException, IOException {
 			// TODO Auto-generated method stub
@@ -407,7 +496,7 @@ public class Main implements Runnable {
 			logger.info("Sending action to server: "+val);
 			client.sendMessage(client.addFactMessage(val.toString()));
 			
-			poll(null, false, false);
+			poll(null, false);
 		}
 		
 		static final String DEFAULT_ICON = "http://www.mrl.nott.ac.uk/~cmg/unknown-icon.png";
@@ -533,15 +622,9 @@ public class Main implements Runnable {
 				clientMsg.put("messageType", "shortToast");
 			return clientMsg;
 		}
-		/** HPMapState is a statelet with __type HPMapState, __name classname, __completed, __errorMessage
-		 * optional showMyLocation : boolean, 
-		 * optional viewCentreUpdate: { viewCenterLatitude : double, viewCenterLongitude: double,
-		 * 	                            viewZoom : int, animateToView : boolean, reachedMessage : String }
-		 * plus locations - array of { [id : int - unused], longitude : double , latitude : double , 
-		 * 				               marker : String (image URL) (required), label : String .
-		 *                             optional dialogMessage : String }
-		 * @param rdata
-		 * @throws IOException
+		/** HPWebState is a statelet with __type HPWebState
+		 * optional: htmlData : String (HTML UTF-8?)
+		 * else: url : String (URL)
 		 */
 		/*
 		 * @param rdata

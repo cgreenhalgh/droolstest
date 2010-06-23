@@ -4,6 +4,7 @@
 package uk.ac.horizon.ug.hyperplace.facts
 
 import uk.me.jstott.jcoord.LatLng
+import uk.ac.horizon.ug.exserver.model.ClientConversation
 
 // distance function - metres
 function double geoDistance(double lat1, double lng1, double lat2, double lng2) {
@@ -74,8 +75,9 @@ end
 // a position of something (e.g. reported by client, or of a virtual target)
 declare GeoPosition
 	@sensed
+	@message
 	time : long
-	subjectId : String @subject("HyperplaceClient,HyperplaceMapPin,GeoTarget")
+	subjectId : String @subject("HyperplaceClient,HyperplaceMapPin,GeoTarget") 
 	latitude : double
 	longitude : double
 	provider : String // e.g. "gps" - optional
@@ -85,6 +87,7 @@ end
 // a "pin" on the map. Position is provided by GeoPosition
 declare HyperplaceMapPin
 	@entity
+	@describedbyauthor 
 	id : String @key
 	label : String // required
 	icon : String @type("URL") // required
@@ -108,4 +111,28 @@ rule "Say hello to test"
 		a.title = "A dynamic action";
 		a.actionName = "DynamicTestAction";
 		insert( a );
+end
+
+rule "remove old positions"
+	dialect "mvel"
+	when 
+		$gp : GeoPosition( )
+		$ngp : GeoPosition( subjectId==$gp.subjectId, time>$gp.time )
+	then
+		retract ( $gp )
+end
+
+rule "show distance to pins"
+	dialect "mvel"
+	when
+		$cc : ClientConversation( clientType=="Hyperplace" )
+		$gp : GeoPosition( subjectId==$cc.clientId )
+		$mp : HyperplaceMapPin( )
+		$mgp : GeoPosition( subjectId==$mp.id )
+	then
+		HyperplaceAction ac = new HyperplaceAction();
+		ac.clientId = $cc.clientId;
+		ac.title = "To "+$mp.label+": "+geoDistance($gp.latitude, $gp.longitude, $mgp.latitude, $mgp.longitude)+"m";
+		ac.actionName = "Show "+$mp.id;
+		insertLogical( ac );
 end

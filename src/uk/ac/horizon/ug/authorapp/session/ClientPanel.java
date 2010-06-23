@@ -122,7 +122,7 @@ public class ClientPanel extends JPanel {
 	/** swing */
 	private void refresh() {
 		EntityManager em = DbUtils.getEntityManager();
-		Query q = em.createQuery ("SELECT x FROM MessageToClient x WHERE x.clientId = :clientId");
+		Query q = em.createQuery ("SELECT x FROM MessageToClient x WHERE x.clientId = :clientId ORDER BY x.seqNo ASC");
 		q.setParameter("clientId", conversation.getClientId());
 		List<MessageToClient> messages = (List<MessageToClient>) q.getResultList ();
 		messagesTableModel.setMessages(messages);
