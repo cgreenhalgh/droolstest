@@ -72,6 +72,17 @@ public class ClientSubscriptionManager {
 
 			if (conversation.getStatus()==ConversationStatus.ACTIVE) {
 				insertMessageToClient(conversation, MessageType.NEW_CONV, null, null, null, null, null, em);
+			} else {
+				// remove old messages (unless lifetime = client)
+				Query q = em.createQuery ("SELECT x FROM MessageToClient x WHERE x.conversationId = :conversationId AND x.lifetime != :lifetime");
+				q.setParameter("conversationId", conversation.getConversationId());
+				q.setParameter("lifetime", ClientSubscriptionLifetimeType.CLIENT);
+				List<MessageToClient> mtcs = (List<MessageToClient>) q.getResultList ();
+				for (MessageToClient mtc : mtcs) {
+					em.remove(mtc);
+				}
+				if (mtcs.size()>0)
+					logger.info("Removed "+mtcs.size()+" messages from now inactive conversation "+conversation.getConversationId());
 			}
 			handleSubscriptions(conversation, em);
 			
