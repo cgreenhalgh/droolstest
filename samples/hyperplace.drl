@@ -15,8 +15,10 @@ declare HyperplaceTab
 	standard : boolean // for all clients
 	clientId : String @to("HyperplaceClient") // may be null for standard
 	name : String
-	type : String // probably a fixed set of options?!
+	type : String // probably a fixed set of options?! (HPActionTab, HPARTab, HPDebugTab, HPWebTab, HPMapTab)
+	stateGroup : String // defaults Action AR Map
 	rank : float // to sort
+	icon : String @type("URL")
 end
 
 // asset to cache
@@ -25,5 +27,14 @@ declare HyperplaceAsset
 	standard : boolean // for all clients
 	clientId : String @to("HyperplaceClient") // may be null for standard
 	url : String @type("URL")
+end
+
+// action for user
+declare HyperplaceAction
+	@message // kind of sent to HyperplaceClients
+	standard : boolean // for all clients
+	clientId : String @to("HyperplaceClient") // may be null for standard
+	title : String
+	// ...
 end
 

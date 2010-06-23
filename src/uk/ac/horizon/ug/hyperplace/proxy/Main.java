@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import org.json.JSONArray;
@@ -37,6 +38,11 @@ public class Main implements Runnable {
 	protected String sessionId = null;
 	public Main(int defaultPort) {
 		try {
+			JFrame frame = new JFrame("HyperplaceProxy");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.pack();
+			frame.setVisible(true);
+			
 		// TODO Auto-generated constructor stub
 			while (serverUrl==null)
 				serverUrl = JOptionPane.showInputDialog("Server URL:");
@@ -108,6 +114,8 @@ public class Main implements Runnable {
     					throw new IOException("Message when not registered from client "+socket+": "+json);
     				else {
     					// TODO
+    					// ActionForm submission
+    					// E.g. {"__timestamp":1277283960422,"__data":{"Submit":false},"__name":"HPActionForm"}
     				}
     			}
     			logger.info("Client "+socket+" disconnected");
@@ -144,7 +152,8 @@ public class Main implements Runnable {
 			client.poll();
 			List<JSONObject> tabs = client.getFacts("HyperplaceTab");
 			logger.info("Found "+tabs.size()+" HyperplaceTab s");
-			// TODO...
+			List<JSONObject> assets = client.getFacts("HyperplaceAsset");
+			logger.info("Found "+tabs.size()+" HyperplaceTab s");
 			
 			// return success
 			JSONObject resp = new JSONObject();
@@ -158,19 +167,132 @@ public class Main implements Runnable {
 			response.put("text", "Registered with hyperplace proxy");
 			rdata.put("__responseUpdate", response);
 			
+			// Main State
 			JSONObject mainState = new JSONObject();
+			// common to all Statelets: __name, __type, __completed, __errorMessage
 			mainState.put("__name", "PyramidMainState");
 			mainState.put("__type", "HPMainState");
 			mainState.put("__completed", true);
 			mainState.put("__errorMessage", (Object)null);
-			mainState.put("assets", new JSONArray());
-			mainState.put("tabs", new JSONArray());
+			// specific to HPMainState
+			JSONArray mainStateAssets = new JSONArray();
+			mainState.put("assets", mainStateAssets);
+			JSONArray mainStateTabs = new JSONArray();
+			mainState.put("tabs", mainStateTabs);
 			JSONArray stateUpdates = new JSONArray();
 			stateUpdates.put(mainState);
 			rdata.put("__stateUpdates", stateUpdates);
 			
+			for (JSONObject tab : tabs) {
+				try {
+					mainStateTabs.put(getTab(tab));
+				}
+				catch (Exception e) {
+					logger.log(Level.WARNING, "Error converting HyperplaceTab "+tab+" to HPTab: "+e);
+				}
+			}
+			for (JSONObject asset : assets) {
+				try {
+					mainStateAssets.put(asset.get("url"));
+				}
+				catch (Exception e) {
+					logger.log(Level.WARNING, "Error converting HyperplaceAsset "+asset+" to HPMainState: "+e);
+				}
+			}
+			
+			// 
+			List<JSONObject> actions = client.getFacts("HyperplaceAction");
+			logger.info("Found "+actions.size()+" HyperplaceAction s");
+			
+			try {
+				stateUpdates.put(getHPActionsState(actions));
+			}
+			catch (Exception e) {
+				logger.log(Level.WARNING, "Problem building HPActionsState", e);
+			}
 			send(resp);
 		}
+		static final String DEFAULT_ICON = "http://www.mrl.nott.ac.uk/~cmg/unknown-icon.png";
+		/** convert game server HyperplaceTab to HPTab.
+		 * HyperplaceTab has: name, type, rank (int), stateGroup.
+		 * HPTab has: target (HPActionTab, HPARTab, HPDebugTab, HPWebTab, HPMapTab), title, enabled (boolean), visible (boolean), icon, stateUpdates (String[]).
+		 * 
+		 * @param hyperplaceTab
+		 * @return
+		 * @throws JSONException 
+		 */
+		private JSONObject getTab(JSONObject hyperplaceTab) throws JSONException {
+			JSONObject json = new JSONObject();
+			json.put("target", hyperplaceTab.get("type"));
+			if (hyperplaceTab.has("name"))
+				json.put("title", hyperplaceTab.get("name"));
+			else
+				json.put("title", hyperplaceTab.get("type"));
+			json.put("enabled", true);
+			json.put("visible", true);
+			// icon?
+			if (hyperplaceTab.has("icon"))
+				json.put("icon", hyperplaceTab.get("icon"));
+			else
+				// default
+				json.put("icon", DEFAULT_ICON);
+			JSONArray stateUpdates = new JSONArray();
+			json.put("stateUpdates", stateUpdates);
+			if (hyperplaceTab.has("stateGroup"))
+				stateUpdates.put(hyperplaceTab.get("stateGroup"));
+			else {
+				String stateGroup = hyperplaceTab.getString("type");
+				if (stateGroup.startsWith("HP"))
+					stateGroup = stateGroup.substring(2);
+				if (stateGroup.endsWith("Tab"))
+					stateGroup = stateGroup.substring(0, stateGroup.length()-3);
+				stateUpdates.put(stateGroup);			
+			}
+			return json;
+		}
+		/** make HPActionsState.
+		 * Like all statelets it has: __name (to match stateGroup?), __type (HPActionsState), __completed (boolean), __errorMessage (null).
+		 * Also has actions = array of HPActionForm.
+		 * HPActionForm has: __title, __name (name of class! default HPActionForm) and elements (array of ActionFormElement).
+		 * ActionFormElement has: __type (class name), __name, __returnable (boolean)
+		 * Subclasses of ActionFormElement:
+		 * - SubmitButton (returnable = false)
+		 * - HiddenBoolean/Double/Int/String: has value
+		 * - ComboBox: has label, defaultOption (int), options (map String->String)
+		 * - TextArea: has text.
+		 * @throws JSONException 
+		 */
+		private JSONObject getHPActionsState(List<JSONObject> actions ) throws JSONException {
+			JSONObject json = new JSONObject();
+			json.put("__name", "Action");
+			json.put("__type", "HPActionsState");
+			json.put("__completed", true);
+			json.put("__errorMessage", (Object)null);
+			JSONArray actionForms = new JSONArray();
+			json.put("actions", actionForms);
+			for (JSONObject action : actions) {
+				JSONObject actionForm = new JSONObject();
+				actionForms.put(actionForm);
+				actionForm.put("__title", action.get("title"));
+				actionForm.put("__name", "HPActionForm");
+				JSONArray elements = new JSONArray();
+				actionForm.put("elements", elements);
+				
+				// TODO
+				
+				JSONObject submit = new JSONObject();
+				submit.put("__type", "SubmitButton");
+				submit.put("__name", "Submit");
+				submit.put("__returnable", false);
+				elements.put(submit);
+			}
+			
+			return json;
+		}
+		/*
+		 * @param rdata
+		 * @throws IOException
+		 */
 		private void send(JSONObject rdata) throws IOException {
 			// TODO Auto-generated method stub
 			if (out==null)

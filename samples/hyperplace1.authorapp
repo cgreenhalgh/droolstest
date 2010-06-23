@@ -1,7 +1,7 @@
 <project>
   <name></name>
   <ruleFiles class="linked-list">
-    <string>file:/C:/cmg/Horizon/eclipsews/droolstest/samples/hyperplace.drl</string>
+    <string>file:/D:/cmg/Horizon/eclipsews/droolstest/samples/hyperplace.drl</string>
   </ruleFiles>
   <clientTypes class="linked-list">
     <uk.ac.horizon.ug.authorapp.model.ClientTypeInfo>
@@ -26,7 +26,7 @@
           <active>true</active>
           <priority>0.0</priority>
           <matchExisting>true</matchExisting>
-          <lifetime>CLIENT</lifetime>
+          <lifetime>CONVERSATION</lifetime>
         </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
         <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
           <updateAllowed>false</updateAllowed>
@@ -44,7 +44,25 @@
           <active>true</active>
           <priority>0.0</priority>
           <matchExisting>true</matchExisting>
-          <lifetime>CLIENT</lifetime>
+          <lifetime>CONVERSATION</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>false</updateAllowed>
+          <deleteAllowed>false</deleteAllowed>
+          <pattern>
+            <typeName>HyperplaceAction</typeName>
+            <constraints class="linked-list">
+              <uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+                <fieldName>standard</fieldName>
+                <constraintType>EQUAL_TO</constraintType>
+                <parameter>true</parameter>
+              </uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+            </constraints>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>CONVERSATION</lifetime>
         </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
       </subscriptions>
     </uk.ac.horizon.ug.authorapp.model.ClientTypeInfo>
@@ -62,12 +80,84 @@
               <string>true</string>
             </entry>
             <entry>
+              <string>stateGroup</string>
+              <string></string>
+            </entry>
+            <entry>
               <string>name</string>
               <string>Actions</string>
             </entry>
             <entry>
               <string>type</string>
-              <string>Action</string>
+              <string>HPActionTab</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.hyperplace.facts</namespace>
+          <typeName>HyperplaceTab</typeName>
+          <fieldValues>
+            <entry>
+              <string>standard</string>
+              <string>true</string>
+            </entry>
+            <entry>
+              <string>name</string>
+              <string>Map</string>
+            </entry>
+            <entry>
+              <string>type</string>
+              <string>HPMapTab</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.hyperplace.facts</namespace>
+          <typeName>HyperplaceTab</typeName>
+          <fieldValues>
+            <entry>
+              <string>standard</string>
+              <string>true</string>
+            </entry>
+            <entry>
+              <string>name</string>
+              <string>Debug</string>
+            </entry>
+            <entry>
+              <string>type</string>
+              <string>HPDebugTab</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.hyperplace.facts</namespace>
+          <typeName>HyperplaceTab</typeName>
+          <fieldValues>
+            <entry>
+              <string>standard</string>
+              <string>true</string>
+            </entry>
+            <entry>
+              <string>name</string>
+              <string>Web</string>
+            </entry>
+            <entry>
+              <string>type</string>
+              <string>HPWebTab</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.hyperplace.facts</namespace>
+          <typeName>HyperplaceAction</typeName>
+          <fieldValues>
+            <entry>
+              <string>title</string>
+              <string>Test action</string>
+            </entry>
+            <entry>
+              <string>standard</string>
+              <string>true</string>
             </entry>
           </fieldValues>
         </uk.ac.horizon.ug.exserver.devclient.Fact>
