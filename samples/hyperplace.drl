@@ -3,6 +3,14 @@
 
 package uk.ac.horizon.ug.hyperplace.facts
 
+import uk.me.jstott.jcoord.LatLng
+
+// distance function - metres
+function double geoDistance(double lat1, double lng1, double lat2, double lng2) {
+	LatLng c1 = new LatLng(lat1, lng1), c2 = new LatLng(lat2, lng2);
+	return 1000*c1.distance(c2);
+}
+
 // hyperplace main client type
 declare HyperplaceClient
 	@client // client type
@@ -63,15 +71,26 @@ declare HyperplaceActionPerformed
 	// ...	
 end
 
+// a position of something (e.g. reported by client, or of a virtual target)
 declare GeoPosition
 	@sensed
 	time : long
-	subjectId : String @subject("HyperplaceClient,GeoTarget")
+	subjectId : String @subject("HyperplaceClient,HyperplaceMapPin,GeoTarget")
 	latitude : double
 	longitude : double
-	provider : String
-	accuracy : double
+	provider : String // e.g. "gps" - optional
+	accuracy : double // metres
 end
+
+// a "pin" on the map. Position is provided by GeoPosition
+declare HyperplaceMapPin
+	@entity
+	id : String @key
+	label : String // required
+	icon : String @type("URL") // required
+	dialogMessage : String // optional
+end
+
 
 rule "Say hello to test"
 	dialect "mvel"
