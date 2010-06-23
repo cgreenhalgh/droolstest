@@ -6,23 +6,35 @@ package uk.ac.horizon.ug.hyperplace.proxy;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
+import org.codehaus.janino.Java.ThisReference;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.DomDriver;
+
 import uk.ac.horizon.ug.exserver.clientapi.client.Client;
+import uk.ac.horizon.ug.exserver.clientapi.protocol.Message;
+import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageType;
 /** An exploration of using the Hyperplace Android client (currently the one from HP/Pyramid) 
  * with the drools-based game server.
  * 
@@ -36,19 +48,56 @@ public class Main implements Runnable {
 	protected ServerSocket serverSocket;
 	protected String serverUrl = null;
 	protected String sessionId = null;
-	public Main(int defaultPort) {
+	private static Main instance;
+	public static synchronized Main getInstance(String serverUrl, String sessionId) {
+		if (instance!=null) {
+			instance.setServerUrl(serverUrl);
+			instance.setSessionId(sessionId);
+			return instance;
+		}
+		instance = new Main(DEFAULT_PORT, serverUrl, sessionId);
+		return instance;
+	}
+	
+	/**
+	 * @return the serverUrl
+	 */
+	public String getServerUrl() {
+		return serverUrl;
+	}
+
+	/**
+	 * @param serverUrl the serverUrl to set
+	 */
+	public void setServerUrl(String serverUrl) {
+		this.serverUrl = serverUrl;
+	}
+
+	/**
+	 * @return the sessionId
+	 */
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	/**
+	 * @param sessionId the sessionId to set
+	 */
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
+	}
+
+	public Main(int defaultPort, String serverUrl2, String sessionId2) {
 		try {
-			JFrame frame = new JFrame("HyperplaceProxy");
-			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.pack();
-			frame.setVisible(true);
-			
+			this.serverUrl = serverUrl2;
+			this.sessionId = sessionId2;
 		// TODO Auto-generated constructor stub
 			while (serverUrl==null)
 				serverUrl = JOptionPane.showInputDialog("Server URL:");
 			while (sessionId==null)
 				sessionId = JOptionPane.showInputDialog("Session ID:");
 			serverSocket = new ServerSocket(defaultPort);
+			new Thread(this).start();
 		}
 		catch (Exception e) {
 			logger.log(Level.WARNING, "Error starting proxy on port "+defaultPort, e);
@@ -85,6 +134,7 @@ public class Main implements Runnable {
 		protected String deviceId;
 		protected BufferedWriter out;
 		protected Client client;
+		protected String conversationUrl;
 		ClientHandler(Socket socket) {
 			this.socket = socket;
 			// read thread
@@ -112,10 +162,10 @@ public class Main implements Runnable {
     				}
     				else if (!registered) 
     					throw new IOException("Message when not registered from client "+socket+": "+json);
-    				else {
-    					// TODO
-    					// ActionForm submission
+    				else if (json.has("__data")) {
+    					// ActionForm submission?!
     					// E.g. {"__timestamp":1277283960422,"__data":{"Submit":false},"__name":"HPActionForm"}
+    					handleAction(json);
     				}
     			}
     			logger.info("Client "+socket+" disconnected");
@@ -130,6 +180,35 @@ public class Main implements Runnable {
 				catch (Exception e2) {/*ignore*/}
 			}
 		}
+		/** make a client update 
+		 * @throws JSONException */
+		private JSONObject getHPUpdate(JSONObject response) throws JSONException {
+			// return success
+			JSONObject clientUpdate = new JSONObject();
+			clientUpdate.put("__type", "HPUpdate");
+			clientUpdate.put("__timestamp", System.currentTimeMillis());
+			JSONObject clientData = new JSONObject();
+			clientUpdate.put("__data", clientData);
+			if (response!=null)
+				clientData.put("__responseUpdate", response);
+			JSONArray stateUpdates = new JSONArray();
+			clientData.put("__stateUpdates", stateUpdates);
+			JSONArray clientMessages = new JSONArray();
+			clientData.put("__messageUpdates", clientMessages);
+			return clientUpdate;
+		}
+		/** get state Updates from HPUpdate 
+		 * @throws JSONException */
+		private void addClientStateUpdate(JSONObject clientUpdate, JSONObject clientStatelet) throws JSONException {
+			JSONObject clientData = clientUpdate.getJSONObject("__data");
+			clientData.getJSONArray("__stateUpdates").put(clientStatelet);
+		}
+		/** get state Updates from HPUpdate 
+		 * @throws JSONException */
+		private void addClientMessageUpdate(JSONObject clientUpdate, JSONObject clientMsg) throws JSONException {
+			JSONObject clientData = clientUpdate.getJSONObject("data");
+			clientData.getJSONArray("__messageUpdates").put(clientMsg);
+		}
 		private void handleRegister(JSONObject json) throws JSONException, IOException {
 			JSONObject data = json.getJSONObject("__data");
 			deviceType = data.getString("deviceType");
@@ -143,75 +222,178 @@ public class Main implements Runnable {
 			logger.info("Registered "+deviceType+":"+deviceId+" as "+socket);
 			
 			// register with game server
+			conversationUrl = registerClient(deviceId);
+			
 			// TODO: support for more than one client at once!
-			client = new Client(serverUrl, deviceId);
+			client = new Client(conversationUrl, deviceId);
 			List<String> clientClassNames =new LinkedList<String>();
 			clientClassNames.add("uk.ac.horizon.ug.hyperplace.facts.HyperplaceClient");
 			client.connect(clientClassNames);
 			logger.info("Registered with server");
-			client.poll();
-			List<JSONObject> tabs = client.getFacts("HyperplaceTab");
-			logger.info("Found "+tabs.size()+" HyperplaceTab s");
-			List<JSONObject> assets = client.getFacts("HyperplaceAsset");
-			logger.info("Found "+tabs.size()+" HyperplaceTab s");
-			
+
 			// return success
-			JSONObject resp = new JSONObject();
-			resp.put("__type", "HPUpdate");
-			resp.put("__timestamp", System.currentTimeMillis());
-			JSONObject rdata = new JSONObject();
-			resp.put("__data", rdata);
-			JSONObject response = new JSONObject();
-			response.put("action", "REGISTER");
-			response.put("success", true);
-			response.put("text", "Registered with hyperplace proxy");
-			rdata.put("__responseUpdate", response);
-			
-			// Main State
-			JSONObject mainState = new JSONObject();
-			// common to all Statelets: __name, __type, __completed, __errorMessage
-			mainState.put("__name", "PyramidMainState");
-			mainState.put("__type", "HPMainState");
-			mainState.put("__completed", true);
-			mainState.put("__errorMessage", (Object)null);
-			// specific to HPMainState
-			JSONArray mainStateAssets = new JSONArray();
-			mainState.put("assets", mainStateAssets);
-			JSONArray mainStateTabs = new JSONArray();
-			mainState.put("tabs", mainStateTabs);
-			JSONArray stateUpdates = new JSONArray();
-			stateUpdates.put(mainState);
-			rdata.put("__stateUpdates", stateUpdates);
-			
-			for (JSONObject tab : tabs) {
-				try {
-					mainStateTabs.put(getTab(tab));
-				}
-				catch (Exception e) {
-					logger.log(Level.WARNING, "Error converting HyperplaceTab "+tab+" to HPTab: "+e);
-				}
-			}
-			for (JSONObject asset : assets) {
-				try {
-					mainStateAssets.put(asset.get("url"));
-				}
-				catch (Exception e) {
-					logger.log(Level.WARNING, "Error converting HyperplaceAsset "+asset+" to HPMainState: "+e);
-				}
-			}
-			
-			// 
-			List<JSONObject> actions = client.getFacts("HyperplaceAction");
-			logger.info("Found "+actions.size()+" HyperplaceAction s");
-			
-			try {
-				stateUpdates.put(getHPActionsState(actions));
-			}
-			catch (Exception e) {
-				logger.log(Level.WARNING, "Problem building HPActionsState", e);
-			}
-			send(resp);
+			JSONObject clientResponse = new JSONObject();
+			clientResponse.put("action", "REGISTER");
+			clientResponse.put("success", true);
+			clientResponse.put("text", "Registered with hyperplace proxy");
+
+			poll(clientResponse, true, true);
 		}
+		/** lobby-type registration 
+		 * @throws IOException */
+		private String registerClient(String deviceId) throws IOException {
+			URL registerUrl = new URL(serverUrl+"1/registerclient");
+			
+			HttpURLConnection conn = (HttpURLConnection) registerUrl.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setDoInput(true);
+			conn.setDoOutput(true);
+			conn.addRequestProperty("Content-Type", "application/xml");
+			OutputStream os = conn.getOutputStream();
+			PrintWriter pw = new PrintWriter(new OutputStreamWriter(os));
+			// TODO better
+			String conversationId = ""+System.currentTimeMillis();
+			pw.print("<conversation><conversationId>"+conversationId+
+					"</conversationId><clientId>"+deviceId+"</clientId><clientType>Hyperplace</clientType>"+
+					"<sessionId>"+sessionId+"</sessionId><creationTime>"+System.currentTimeMillis()+
+					"</creationTime><lastContactTime>0</lastContactTime>"+
+					"<status>ACTIVE</status></conversation>");
+			pw.flush();
+			pw.close();
+
+			int status = conn.getResponseCode();
+			if (status!=200) {
+				throw new IOException("Error response ("+status+") from server: "+conn.getResponseMessage());
+			}
+			InputStream is = conn.getInputStream();
+			is.close();
+			logger.info("Registered client "+deviceId+" with server as conversation "+conversationId);
+			
+			return serverUrl+"1/client/"+conversationId+"/messages";
+		}
+		private void poll(JSONObject clientResponse, boolean updateMainState, boolean updateActionState) throws IOException, JSONException {
+			
+			List<Message> pollResponses = client.poll();			
+			
+			JSONObject clientUpdate = getHPUpdate(clientResponse);
+			
+			// messages (and check other updates)
+			List<JSONObject> serverMessages = new LinkedList<JSONObject>();
+			for (Message pollResponse : pollResponses) {
+				if (pollResponse.getType()==MessageType.FACT_ADD || pollResponse.getType()==MessageType.FACT_EX) {
+					try {
+						JSONObject val = new JSONObject(pollResponse.getNewVal());
+						String typeName = val.getString("typeName");
+						if (typeName.equals("HyperplaceMessage"))
+							serverMessages.add(val);
+						else if (!updateMainState && (typeName.equals("HyperplaceTab") || typeName.equals("HyperplaceAsset")))
+							updateMainState = true;
+						else if (!updateActionState && (typeName.equals("HyperplaceAction")))
+							updateActionState = true;
+					}
+					catch (Exception e) {
+						logger.log(Level.WARNING, "Error checking added fact for message: "+pollResponse.getNewVal());
+					}
+				}
+				else if (!updateActionState && (pollResponse.getType()==MessageType.FACT_UPD || pollResponse.getType()==MessageType.FACT_DEL)) {
+					// may need to update actions...
+					try {
+						JSONObject val = new JSONObject(pollResponse.getNewVal());
+						String typeName = val.getString("typeName");
+						if (!updateActionState && (typeName.equals("HyperplaceAction")))
+							updateActionState = true;
+					}
+					catch (Exception e) {
+						logger.log(Level.WARNING, "Error checking added fact for message: "+pollResponse.getNewVal());
+					}					
+				}
+			}
+			client.getFacts("HyperplaceMessage");
+			logger.info("Found "+serverMessages.size()+" HyperplaceMessage s");
+			for (JSONObject serverMessage : serverMessages) {
+				try {
+					addClientMessageUpdate(clientUpdate, this.getHPMessage(serverMessage));
+				}
+				catch (Exception e) {
+					logger.log(Level.WARNING, "Problem building HPMessage from "+serverMessage, e);
+				}
+			}
+
+			
+			if (updateMainState) {
+				List<JSONObject> tabs = client.getFacts("HyperplaceTab");
+				logger.info("Found "+tabs.size()+" HyperplaceTab s");
+
+				List<JSONObject> assets = client.getFacts("HyperplaceAsset");
+				logger.info("Found "+tabs.size()+" HyperplaceTab s");
+
+				// Main State
+				JSONObject mainState = new JSONObject();
+				// common to all Statelets: __name, __type, __completed, __errorMessage
+				mainState.put("__name", "PyramidMainState");
+				mainState.put("__type", "HPMainState");
+				mainState.put("__completed", true);
+				mainState.put("__errorMessage", (Object)null);
+				// specific to HPMainState
+				JSONArray mainStateAssets = new JSONArray();
+				mainState.put("assets", mainStateAssets);
+				JSONArray mainStateTabs = new JSONArray();
+				mainState.put("tabs", mainStateTabs);
+
+				for (JSONObject tab : tabs) {
+					try {
+						mainStateTabs.put(getTab(tab));
+					}
+					catch (Exception e) {
+						logger.log(Level.WARNING, "Error converting HyperplaceTab "+tab+" to HPTab: "+e);
+					}
+				}
+				for (JSONObject asset : assets) {
+					try {
+						mainStateAssets.put(asset.get("url"));
+					}
+					catch (Exception e) {
+						logger.log(Level.WARNING, "Error converting HyperplaceAsset "+asset+" to HPMainState: "+e);
+					}
+				}
+				addClientStateUpdate(clientUpdate, mainState);
+			}			
+			// 
+			if (updateActionState) {
+				List<JSONObject> actions = client.getFacts("HyperplaceAction");
+				logger.info("Found "+actions.size()+" HyperplaceAction s");
+
+				try {
+					addClientStateUpdate(clientUpdate, getHPActionsState(actions));
+				}
+				catch (Exception e) {
+					logger.log(Level.WARNING, "Problem building HPActionsState", e);
+				}
+			}
+			// send update
+			if (clientResponse!=null || updateActionState || updateMainState || serverMessages.size()>0)
+				send(clientUpdate);
+		}
+		public void handleAction(JSONObject json) throws JSONException, IOException {
+			// TODO Auto-generated method stub
+			// E.g. {"__timestamp":1277283960422,"__data":{"Submit":false},"__name":"HPActionForm"}
+			JSONObject data = json.getJSONObject("__data");
+			String actionName = json.getString("__name");
+
+			JSONObject val = new JSONObject();
+			// action
+			val.put("namespace", "uk.ac.horizon.ug.hyperplace.facts");
+			val.put("typeName", "HyperplaceActionPerformed");
+			val.put("time", System.currentTimeMillis());
+			val.put("clientId", client.getClientId());
+			val.put("jsonData", data.toString());
+			val.put("actionName", actionName);
+			logger.info("Sending action to server: "+val);
+			client.sendMessage(client.addFactMessage(val.toString()));
+			
+			poll(null, false, false);
+		}
+		
 		static final String DEFAULT_ICON = "http://www.mrl.nott.ac.uk/~cmg/unknown-icon.png";
 		/** convert game server HyperplaceTab to HPTab.
 		 * HyperplaceTab has: name, type, rank (int), stateGroup.
@@ -274,7 +456,15 @@ public class Main implements Runnable {
 				JSONObject actionForm = new JSONObject();
 				actionForms.put(actionForm);
 				actionForm.put("__title", action.get("title"));
-				actionForm.put("__name", "HPActionForm");
+				if (action.has("actionName"))
+					actionForm.put("__name", action.get("actionName"));
+				else if (action.has("title"))
+					actionForm.put("__name", action.get("title"));
+				else
+					actionForm.put("__name", "HPActionForm");
+				if (action.has("jsonData")) {
+					// ...?
+				}
 				JSONArray elements = new JSONArray();
 				actionForm.put("elements", elements);
 				
@@ -288,6 +478,42 @@ public class Main implements Runnable {
 			}
 			
 			return json;
+		}
+		/** convert HyperplaceMessage to HPMessage.
+		 * 	HyperplaceMessage:
+		 * standard : boolean // for all clients
+	clientId : String @to("HyperplaceClient") // may be null for standard
+	message : String
+	vibrate : int // duration
+	dialog : boolean // dialog (rather than toast) message (may not be supported in Hyperplace client)
+	dialogTitle : String // dialog title (may not be supported in Hyperplace client)
+	dialogButtonText : String // (may not be supported in Hyperplace client)
+	dialogIcon : String // (may not be supported in Hyperplace client)
+		 * @throws JSONException 
+
+		 * 
+		 */
+		private JSONObject getHPMessage(JSONObject serverMsg) throws JSONException {
+			JSONObject clientMsg = new JSONObject();
+			if (serverMsg.has("message"))
+				clientMsg.put("message", serverMsg.get("message"));
+			if (serverMsg.has("vibrate")) {
+				int vibrate= serverMsg.getInt("vibrate");
+				clientMsg.put("vibrate", vibrate);
+			}
+			if (serverMsg.has("dialog") && serverMsg.getBoolean("dialog")) {
+				clientMsg.put("messageType", "dialog");
+				JSONObject clientDialog = new JSONObject();
+				clientMsg.put("dialogConfiguration", clientDialog);
+				if (serverMsg.has("dialogTitle"))
+					clientDialog.put("title", serverMsg.get("dialogTitle"));
+				if (serverMsg.has("dialogButtonTest"))
+					clientDialog.put("buttonText", serverMsg.get("dialogButtonText"));
+				if (serverMsg.has("dialogIcon"))
+					clientDialog.put("icon", serverMsg.get("dialogIcon"));
+			} else if (serverMsg.has("messageType"))
+				clientMsg.put("messageType", serverMsg.get("messageType"));
+			return clientMsg;
 		}
 		/*
 		 * @param rdata
@@ -308,7 +534,12 @@ public class Main implements Runnable {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		new Thread(new Main(DEFAULT_PORT)).start();
+		JFrame frame = new JFrame("HyperplaceProxy");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().add(new JLabel("Port: "+DEFAULT_PORT));
+		frame.pack();
+		frame.setVisible(true);
+		
+		new Main(DEFAULT_PORT, null, null);
 	}
-	
 }

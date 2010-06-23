@@ -35,6 +35,30 @@ declare HyperplaceAction
 	standard : boolean // for all clients
 	clientId : String @to("HyperplaceClient") // may be null for standard
 	title : String
+	actionName : String // would be Class name in hyperplace
 	// ...
 end
 
+// message to user
+declare HyperplaceMessage
+	@message // kind of sent to HyperplaceClients
+	standard : boolean // for all clients
+	clientId : String @to("HyperplaceClient") // may be null for standard
+	message : String
+	vibrate : int // duration
+	dialog : boolean // dialog (rather than toast) message (may not be supported in Hyperplace client)
+	dialogTitle : String // dialog title (may not be supported in Hyperplace client)
+	dialogButtonText : String // (may not be supported in Hyperplace client)
+	dialogIcon : String // (may not be supported in Hyperplace client)
+end
+
+
+// action by user
+declare HyperplaceActionPerformed
+	@message
+	time : long
+	clientId : String @msgfrom("HyperplaceClient") // can't use 'from' as it is a DRL keyword
+	actionName : String // would be Class name in hyperplace
+	jsonData : String // should be more structured?!
+	// ...	
+end

@@ -165,7 +165,14 @@ public class SessionFrame extends JFrame implements BrowserPanelCallback {
 				registerNewClient();
 			}
 		}));
-		
+
+		clientMenu.add(new JMenuItem(new AbstractAction("Run Hyperplace Proxy") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				uk.ac.horizon.ug.hyperplace.proxy.Main.getInstance(getServerUrl(), sessionId);
+			}
+		}));
+
 		tabbedPane = new JTabbedPane();
 		getContentPane().add(tabbedPane, BorderLayout.CENTER);
 

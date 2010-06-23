@@ -64,6 +64,92 @@
           <matchExisting>true</matchExisting>
           <lifetime>CONVERSATION</lifetime>
         </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>false</updateAllowed>
+          <deleteAllowed>false</deleteAllowed>
+          <pattern>
+            <typeName>HyperplaceMessage</typeName>
+            <constraints class="linked-list">
+              <uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+                <fieldName>standard</fieldName>
+                <constraintType>EQUAL_TO</constraintType>
+                <parameter>true</parameter>
+              </uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+            </constraints>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>CONVERSATION</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>true</updateAllowed>
+          <deleteAllowed>true</deleteAllowed>
+          <pattern>
+            <typeName>HyperplaceTab</typeName>
+            <constraints class="linked-list">
+              <uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+                <fieldName>clientId</fieldName>
+                <constraintType>EQUAL_TO_CLIENT_ID</constraintType>
+              </uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+            </constraints>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>CONVERSATION</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>true</updateAllowed>
+          <deleteAllowed>true</deleteAllowed>
+          <pattern>
+            <typeName>HyperplaceAsset</typeName>
+            <constraints class="linked-list">
+              <uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+                <fieldName>clientId</fieldName>
+                <constraintType>EQUAL_TO_CLIENT_ID</constraintType>
+              </uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+            </constraints>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>CONVERSATION</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>true</updateAllowed>
+          <deleteAllowed>true</deleteAllowed>
+          <pattern>
+            <typeName>HyperplaceAction</typeName>
+            <constraints class="linked-list">
+              <uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+                <fieldName>clientId</fieldName>
+                <constraintType>EQUAL_TO_CLIENT_ID</constraintType>
+              </uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+            </constraints>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>CONVERSATION</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>true</updateAllowed>
+          <deleteAllowed>true</deleteAllowed>
+          <pattern>
+            <typeName>HyperplaceMessage</typeName>
+            <constraints class="linked-list">
+              <uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+                <fieldName>clientId</fieldName>
+                <constraintType>EQUAL_TO_CLIENT_ID</constraintType>
+              </uk.ac.horizon.ug.authorapp.model.QueryConstraintInfo>
+            </constraints>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>UNTIL_ACKNOWLEDGED</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
       </subscriptions>
     </uk.ac.horizon.ug.authorapp.model.ClientTypeInfo>
   </clientTypes>
