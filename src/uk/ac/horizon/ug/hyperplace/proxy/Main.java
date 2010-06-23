@@ -377,17 +377,33 @@ public class Main implements Runnable {
 		public void handleAction(JSONObject json) throws JSONException, IOException {
 			// TODO Auto-generated method stub
 			// E.g. {"__timestamp":1277283960422,"__data":{"Submit":false},"__name":"HPActionForm"}
-			JSONObject data = json.getJSONObject("__data");
-			String actionName = json.getString("__name");
+			// E.g. MOVE message:
+			// {"__data":{"provider":"gps","longitude":-1.1870920658111572,"latitude":52.9539030790329,"accuracy":48,"speed":0},"__name":"MOVE","__timestamp":1277307218485}
 
+			String actionName = json.getString("__name");
+			JSONObject data = json.getJSONObject("__data");
 			JSONObject val = new JSONObject();
-			// action
 			val.put("namespace", "uk.ac.horizon.ug.hyperplace.facts");
-			val.put("typeName", "HyperplaceActionPerformed");
 			val.put("time", System.currentTimeMillis());
-			val.put("clientId", client.getClientId());
-			val.put("jsonData", data.toString());
-			val.put("actionName", actionName);
+
+			if (actionName.equals("MOVE")) {
+				// position update
+				val.put("typeName", "GeoPosition");
+				val.put("subjectId", client.getClientId());
+				val.put("latitude", data.getDouble("latitude"));
+				val.put("longitude", data.getDouble("longitude"));
+				// cast?!
+				val.put("accuracy", data.getDouble("accuracy"));
+				val.put("provider", data.getString("provider"));
+			}
+			else {
+
+				// action
+				val.put("typeName", "HyperplaceActionPerformed");
+				val.put("clientId", client.getClientId());
+				val.put("jsonData", data.toString());
+				val.put("actionName", actionName);
+			}
 			logger.info("Sending action to server: "+val);
 			client.sendMessage(client.addFactMessage(val.toString()));
 			
@@ -517,6 +533,16 @@ public class Main implements Runnable {
 				clientMsg.put("messageType", "shortToast");
 			return clientMsg;
 		}
+		/** HPMapState is a statelet with __type HPMapState, __name classname, __completed, __errorMessage
+		 * optional showMyLocation : boolean, 
+		 * optional viewCentreUpdate: { viewCenterLatitude : double, viewCenterLongitude: double,
+		 * 	                            viewZoom : int, animateToView : boolean, reachedMessage : String }
+		 * plus locations - array of { [id : int - unused], longitude : double , latitude : double , 
+		 * 				               marker : String (image URL) (required), label : String .
+		 *                             optional dialogMessage : String }
+		 * @param rdata
+		 * @throws IOException
+		 */
 		/*
 		 * @param rdata
 		 * @throws IOException

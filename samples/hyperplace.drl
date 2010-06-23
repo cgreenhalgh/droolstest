@@ -63,6 +63,16 @@ declare HyperplaceActionPerformed
 	// ...	
 end
 
+declare GeoPosition
+	@sensed
+	time : long
+	subjectId : String @subject("HyperplaceClient,GeoTarget")
+	latitude : double
+	longitude : double
+	provider : String
+	accuracy : double
+end
+
 rule "Say hello to test"
 	dialect "mvel"
 	when
