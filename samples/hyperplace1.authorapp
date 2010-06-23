@@ -247,6 +247,24 @@
             </entry>
           </fieldValues>
         </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.hyperplace.facts</namespace>
+          <typeName>HyperplaceMessage</typeName>
+          <fieldValues>
+            <entry>
+              <string>message</string>
+              <string>&quot;Hello new joiner&quot;</string>
+            </entry>
+            <entry>
+              <string>standard</string>
+              <string>true</string>
+            </entry>
+            <entry>
+              <string>dialog</string>
+              <string>false</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
       </facts>
     </uk.ac.horizon.ug.authorapp.FactStore>
   </factStores>

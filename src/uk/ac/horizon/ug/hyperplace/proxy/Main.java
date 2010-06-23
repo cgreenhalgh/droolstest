@@ -206,7 +206,7 @@ public class Main implements Runnable {
 		/** get state Updates from HPUpdate 
 		 * @throws JSONException */
 		private void addClientMessageUpdate(JSONObject clientUpdate, JSONObject clientMsg) throws JSONException {
-			JSONObject clientData = clientUpdate.getJSONObject("data");
+			JSONObject clientData = clientUpdate.getJSONObject("__data");
 			clientData.getJSONArray("__messageUpdates").put(clientMsg);
 		}
 		private void handleRegister(JSONObject json) throws JSONException, IOException {
@@ -513,6 +513,8 @@ public class Main implements Runnable {
 					clientDialog.put("icon", serverMsg.get("dialogIcon"));
 			} else if (serverMsg.has("messageType"))
 				clientMsg.put("messageType", serverMsg.get("messageType"));
+			else
+				clientMsg.put("messageType", "shortToast");
 			return clientMsg;
 		}
 		/*

@@ -1,0 +1,17 @@
+Some Hyperplace position reports (from outside the CS building)
+{"__data":{"provider":"gps","longitude":-1.1870920658111572,"latitude":52.9539030790329,"accuracy":48,"speed":0},"__name":"MOVE","__timestamp":1277307218485}
+{"__data":{"provider":"gps","longitude":-1.1871403455734253,"latitude":52.95387625694275,"accuracy":32,"speed":0},"__name":"MOVE","__timestamp":1277307221457}
+{"__data":{"provider":"gps","longitude":-1.187172532081604,"latitude":52.95384407043457,"accuracy":24,"speed":0},"__name":"MOVE","__timestamp":1277307224423}
+{"__data":{"provider":"gps","longitude":-1.1871939897537231,"latitude":52.95380651950836,"accuracy":24,"speed":0},"__name":"MOVE","__timestamp":1277307230495}
+{"__data":{"provider":"gps","longitude":-1.18727445602417,"latitude":52.953742146492004,"accuracy":16,"speed":0},"__name":"MOVE","__timestamp":1277307245433}
+{"__data":{"provider":"gps","longitude":-1.1872583627700806,"latitude":52.953704595565796,"accuracy":12,"speed":1},"__name":"MOVE","__timestamp":1277307249556}
+{"__data":{"provider":"gps","longitude":-1.1872047185897827,"latitude":52.95367777347565,"accuracy":12,"speed":1},"__name":"MOVE","__timestamp":1277307253422}
+{"__data":{"provider":"gps","longitude":-1.1871296167373657,"latitude":52.95366168022156,"accuracy":12,"speed":1},"__name":"MOVE","__timestamp":1277307258453}
+{"__data":{"provider":"gps","longitude":-1.1870867013931274,"latitude":52.95363485813141,"accuracy":12,"speed":1},"__name":"MOVE","__timestamp":1277307261446}
+{"__data":{"provider":"gps","longitude":-1.1870598793029785,"latitude":52.95360267162323,"accuracy":12,"speed":0.75},"__name":"MOVE","__timestamp":1277307268429}
+{"__data":{"provider":"gps","longitude":-1.1870276927947998,"latitude":52.95355439186096,"accuracy":24,"speed":0.75},"__name":"MOVE","__timestamp":1277307274424}
+
+Equivalent server messages:
+{"typeName":"HyperplaceActionPerformed","time":1277307213451,"actionName":"MOVE","clientId":"354957031758918","jsonData":"{\"speed\":0,\"longitude\":-1.1870920658111572,\"provider\":\"gps\",\"latitude\":52.9539030790329,\"accuracy\":48}","namespace":"uk.ac.horizon.ug.hyperplace.facts"}
+{"typeName":"HyperplaceActionPerformed","time":1277307216419,"actionName":"MOVE","clientId":"354957031758918","jsonData":"{\"speed\":0,\"longitude\":-1.1871403455734253,\"provider\":\"gps\",\"latitude\":52.95387625694275,\"accuracy\":32}","namespace":"uk.ac.horizon.ug.hyperplace.facts"}
+{"typeName":"HyperplaceActionPerformed","time":1277307219373,"actionName":"MOVE","clientId":"354957031758918","jsonData":"{\"speed\":0,\"longitude\":-1.187172532081604,\"provider\":\"gps\",\"latitude\":52.95384407043457,\"accuracy\":24}","namespace":"uk.ac.horizon.ug.hyperplace.facts"}

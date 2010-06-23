@@ -62,3 +62,21 @@ declare HyperplaceActionPerformed
 	jsonData : String // should be more structured?!
 	// ...	
 end
+
+rule "Say hello to test"
+	dialect "mvel"
+	when
+		$ap : HyperplaceActionPerformed( actionName=="Test action" )
+	then
+		HyperplaceMessage m = new HyperplaceMessage();
+		m.clientId = $ap.clientId;
+		m.dialog = false;
+		m.message = "Hello - you did a test action!";
+		m.vibrate = 1;
+		insert( m );
+		HyperplaceAction a = new HyperplaceAction();
+		a.clientId = $ap.clientId;
+		a.title = "A dynamic action";
+		a.actionName = "DynamicTestAction";
+		insert( a );
+end
