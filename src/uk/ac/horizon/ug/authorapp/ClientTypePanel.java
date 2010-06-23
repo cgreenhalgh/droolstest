@@ -116,13 +116,15 @@ public class ClientTypePanel extends JPanel implements PropertyChangeListener {
 				int rows[] = subscriptionTable.getSelectedRows();
 				// Java 1.6! (rowindextomodel)
 				// Pre-1.6 - no TableFiler
-				for (int i=0; i<rows.length; i++) 
+				for (int i=0; i<rows.length; i++) {
+					//logger.info("Delete selected view row "+rows[i]);
 					rows[i] = subscriptionTable.convertRowIndexToModel(rows[i]);
-				
+					//logger.info("=> delete selected model row "+rows[i]);
+				}				
 				// in reverse order so we don't shift positions of ones removed later
 				Arrays.sort(rows);
 				for (int i=rows.length-1; i>=0; i--) {
-					ClientTypePanel.this.clientTypeInfo.getSubscriptions().remove(i);
+					ClientTypePanel.this.clientTypeInfo.getSubscriptions().remove(rows[i]);
 					ClientTypePanel.this.project.setChanged(true);
 				}
 				subscriptionModel.fireTableDataChanged();

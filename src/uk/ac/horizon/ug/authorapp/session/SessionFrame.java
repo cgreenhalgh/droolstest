@@ -29,6 +29,7 @@ import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.Query;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -70,6 +71,7 @@ import uk.ac.horizon.ug.exserver.devclient.Fact;
 import uk.ac.horizon.ug.exserver.model.ClientConversation;
 import uk.ac.horizon.ug.exserver.model.ConversationStatus;
 import uk.ac.horizon.ug.exserver.model.DbUtils;
+import uk.ac.horizon.ug.exserver.model.MessageToClient;
 import uk.ac.horizon.ug.exserver.model.Session;
 import uk.ac.horizon.ug.exserver.model.SessionTemplate;
 import uk.ac.horizon.ug.exserver.model.SessionType;
@@ -388,11 +390,23 @@ public class SessionFrame extends JFrame implements BrowserPanelCallback {
 					em.persist(template);
 				}
 				em.persist(session);
+				// dump ClientConversations & MessageToClients 
+	    		Query q = em.createQuery ("SELECT x FROM ClientConversation x");
+	    		List<ClientConversation> conversations = (List<ClientConversation>) q.getResultList ();
+	    		for (ClientConversation conversation : conversations) {
+	    			em.remove(conversation);
+	    		}
+	    		q = em.createQuery ("SELECT x FROM MessageToClient x");
+	    		List<MessageToClient> mtcs = (List<MessageToClient>) q.getResultList ();
+	    		for (MessageToClient mtc : mtcs) {
+	    			em.remove(mtc);
+	    		}
 				ut.commit();
 				em.close();
 			}
 			catch (Exception e) {
 				ut.rollback();
+				throw e;
 			}
 		}
 		catch (Exception e) {
