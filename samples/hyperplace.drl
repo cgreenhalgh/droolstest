@@ -126,7 +126,7 @@ end
 rule "show distance to pins"
 	dialect "mvel"
 	when
-		$cc : ClientConversation( clientType=="Hyperplace" )
+		$cc : ClientConversation( clientType=="Hyperplace", status==ConversationStatus.ACTIVE )
 		$gp : GeoPosition( subjectId==$cc.clientId )
 		$mp : HyperplaceMapPin( )
 		$mgp : GeoPosition( subjectId==$mp.id )
