@@ -5,6 +5,7 @@ package uk.ac.horizon.ug.hyperplace.facts
 
 import uk.me.jstott.jcoord.LatLng
 import uk.ac.horizon.ug.exserver.model.ClientConversation
+import uk.ac.horizon.ug.exserver.model.ConversationStatus
 
 // distance function - metres
 function double geoDistance(double lat1, double lng1, double lat2, double lng2) {
@@ -135,4 +136,15 @@ rule "show distance to pins"
 		ac.title = "To "+$mp.label+": "+geoDistance($gp.latitude, $gp.longitude, $mgp.latitude, $mgp.longitude)+"m";
 		ac.actionName = "Show "+$mp.id;
 		insertLogical( ac );
+end
+
+rule "show hyperplace clients as pins"
+	dialect "mvel"
+	when
+		$cc : ClientConversation( clientType=="Hyperplace", status==ConversationStatus.ACTIVE )
+	then
+		HyperplaceMapPin mp = new HyperplaceMapPin();
+		mp.id = $cc.clientId;
+		mp.label = "Client "+$cc.clientId;
+		insertLogical ( mp );		
 end

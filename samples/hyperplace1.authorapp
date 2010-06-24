@@ -150,6 +150,30 @@
           <matchExisting>true</matchExisting>
           <lifetime>UNTIL_ACKNOWLEDGED</lifetime>
         </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>false</updateAllowed>
+          <deleteAllowed>false</deleteAllowed>
+          <pattern>
+            <typeName>HyperplaceMapPin</typeName>
+            <constraints class="linked-list"/>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>CONVERSATION</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+        <uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
+          <updateAllowed>false</updateAllowed>
+          <deleteAllowed>false</deleteAllowed>
+          <pattern>
+            <typeName>GeoPosition</typeName>
+            <constraints class="linked-list"/>
+          </pattern>
+          <active>true</active>
+          <priority>0.0</priority>
+          <matchExisting>true</matchExisting>
+          <lifetime>CONVERSATION</lifetime>
+        </uk.ac.horizon.ug.authorapp.model.ClientSubscriptionInfo>
       </subscriptions>
     </uk.ac.horizon.ug.authorapp.model.ClientTypeInfo>
   </clientTypes>
@@ -262,6 +286,46 @@
             <entry>
               <string>dialog</string>
               <string>false</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.hyperplace.facts</namespace>
+          <typeName>HyperplaceMapPin</typeName>
+          <fieldValues>
+            <entry>
+              <string>id</string>
+              <string>At home</string>
+            </entry>
+            <entry>
+              <string>dialogMessage</string>
+              <string>Something about Chris&apos;s home...</string>
+            </entry>
+            <entry>
+              <string>label</string>
+              <string>Chris&apos;s home</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.hyperplace.facts</namespace>
+          <typeName>GeoPosition</typeName>
+          <fieldValues>
+            <entry>
+              <string>subjectId</string>
+              <string>At home</string>
+            </entry>
+            <entry>
+              <string>longitude</string>
+              <string>-1.157297</string>
+            </entry>
+            <entry>
+              <string>latitude</string>
+              <string>52.891937</string>
+            </entry>
+            <entry>
+              <string>accuracy</string>
+              <string>10</string>
             </entry>
           </fieldValues>
         </uk.ac.horizon.ug.exserver.devclient.Fact>
