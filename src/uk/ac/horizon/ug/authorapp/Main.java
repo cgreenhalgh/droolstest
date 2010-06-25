@@ -28,19 +28,37 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
+import org.drools.KnowledgeBase;
+import org.drools.RuleBase;
+import org.drools.RuleBaseConfiguration;
+import org.drools.RuleBaseFactory;
 import org.drools.common.DroolsObjectOutputStream;
+import org.drools.common.InternalRuleBase;
+import org.drools.definition.KnowledgePackage;
+import org.drools.factmodel.ClassBuilder;
+import org.drools.factmodel.ClassDefinition;
+import org.drools.impl.KnowledgeBaseImpl;
+import org.drools.rule.Function;
+import org.drools.rule.ImportDeclaration;
+import org.drools.rule.JavaDialectRuntimeData;
+import org.drools.rule.TypeDeclaration;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import uk.ac.horizon.ug.authorapp.model.*;
 import uk.ac.horizon.ug.authorapp.session.SessionFrame;
+import uk.ac.horizon.ug.exserver.DroolsUtils;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 
 /** Desktop authoring tool (work in progress)
@@ -114,6 +132,12 @@ public class Main implements BrowserPanelCallback {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				saveRuleSet();
+			}
+		}));
+		fileMenu.add(new JMenuItem(new AbstractAction("Save Types...") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				saveTypes();
 			}
 		}));
 		fileMenu.add(new JMenuItem(new AbstractAction("Exit") {
@@ -207,6 +231,62 @@ public class Main implements BrowserPanelCallback {
 		// initial project
 		newProject();
 	}
+	protected void saveTypes() {
+		if (project.getKbase()==null) {
+			JOptionPane.showMessageDialog(mainFrame, "No valid rule set to save", "Save Types", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		JFileChooser fileChooser = new JFileChooser();
+		if (project!=null && project.getFile()!=null) {
+			fileChooser.setSelectedFile(project.getFile());
+			fileChooser.setSelectedFile(new File(""));
+		}
+		if (fileChooser.showSaveDialog(mainFrame)!=JFileChooser.APPROVE_OPTION) 
+			return;
+		
+		File file = fileChooser.getSelectedFile();
+		if (file.exists()) {
+			if (JOptionPane.showConfirmDialog(mainFrame, "File exists; replace?", "Save Types", JOptionPane.YES_NO_CANCEL_OPTION)!=JOptionPane.YES_OPTION)
+				return;
+		}
+		try {
+			KnowledgeBase kb = project.getKbase();
+			if (!(kb instanceof KnowledgeBaseImpl)) {
+				logger.log(Level.WARNING, "KnowledgeBase is not KnowledgeBaseImpl: "+kb);
+				return;
+			}
+			KnowledgeBaseImpl kbi = (KnowledgeBaseImpl)kb;
+			RuleBase rb = kbi.getRuleBase();
+			org.drools.rule.Package[] pkgs = rb.getPackages();
+			ClassBuilder cb = new ClassBuilder();
+			JarOutputStream jout = new JarOutputStream(new FileOutputStream(file));
+
+			for (int i=0; i<pkgs.length; i++) {
+				Map<String,TypeDeclaration> types = pkgs[i].getTypeDeclarations();
+				for (TypeDeclaration type : types.values()) {
+					ClassDefinition classDef = type.getTypeClassDef();
+					byte bytecode[] = cb.buildClass(classDef);
+					logger.info("Type "+type.getTypeClassName()+": "+bytecode.length+" bytes");
+					String path = type.getTypeClassName().replace(".", "/")+".class";
+					JarEntry je = new JarEntry(path);
+					jout.putNextEntry(je);
+					jout.write(bytecode);
+					jout.closeEntry();
+				}
+				Map<String,Function> fns = pkgs[i].getFunctions();
+				for (Function fn : fns.values()) {
+					// TODO
+				}
+			}
+			jout.flush();
+			jout.close();
+			logger.info("Wrote Types to "+file);
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "Error writing KnowledgeBase to "+file, e);
+			JOptionPane.showMessageDialog(mainFrame, "Error writing Rule Set to "+file+"\n"+e, "Save Rule Set", JOptionPane.ERROR_MESSAGE);
+		}
+	}
 	/** serialise... */
 	protected void saveRuleSet() {
 		if (project.getKbase()==null) {
@@ -227,8 +307,43 @@ public class Main implements BrowserPanelCallback {
 				return;
 		}
 		try {
-			DroolsObjectOutputStream out = new DroolsObjectOutputStream(new FileOutputStream(file));
-			out.writeObject(project.getKbase());
+			KnowledgeBase kb = DroolsUtils.getKnowledgeBase(project.getRuleFileUrls());
+/*			ClassLoader cl = kb.getClass().getClassLoader();
+			// remove TypeDeclarations! - export in JAR...
+			if ((kb instanceof KnowledgeBaseImpl)) {
+				KnowledgeBaseImpl kbi = (KnowledgeBaseImpl)kb;
+				RuleBase rb = kbi.getRuleBase();
+				
+				if (rb instanceof InternalRuleBase) {
+					RuleBaseConfiguration config = ((InternalRuleBase)rb).getConfiguration();
+					cl = config.getClassLoader();
+					logger.info("Using custom class loader "+cl);
+				}
+				RuleBaseConfiguration rbc = new RuleBaseConfiguration();
+				rbc.setClassLoader(cl);
+				RuleBase rb2 = RuleBaseFactory.newRuleBase(rbc);
+				org.drools.rule.Package[] pkgs = rb.getPackages();
+				for (int pi=0; pi<pkgs.length; pi++) {
+					// convert declared type to imported type - for android
+					String typeNames[] = pkgs[pi].getTypeDeclarations().keySet().toArray(new String[0]);
+					TypeDeclaration td;
+					for (int ti=0; ti<typeNames.length; ti++) {
+						pkgs[pi].removeTypeDeclaration(typeNames[ti]);
+						logger.info("Removed type definition "+typeNames[ti]);
+						if (pkgs[pi].getDialectRuntimeRegistry().getDialectData("java") instanceof JavaDialectRuntimeData) {
+							JavaDialectRuntimeData jdrd = (JavaDialectRuntimeData)pkgs[pi].getDialectRuntimeRegistry().getDialectData("java");
+							logger.info("Remove from dialect registry: "+pkgs[pi].getName()+"."+typeNames[ti]);
+							jdrd.remove(pkgs[pi].getName()+"."+typeNames[ti]);
+						}
+						pkgs[pi].addImport(new ImportDeclaration(pkgs[pi].getName()+"."+typeNames[ti]));
+					}
+					rb2.addPackage(pkgs[pi]);
+				}
+				kb = new KnowledgeBaseImpl(rb2);
+			}
+*/
+			DroolsObjectOutputStream out = new DroolsObjectOutputStream( new FileOutputStream (file) );
+			out.writeObject(kb);
 			out.close();
 			logger.info("Wrote KnowledgeBase to "+file);
 		}

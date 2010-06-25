@@ -131,18 +131,22 @@ public class Project {
 	public void setTypes(List<TypeDescription> types) {
 		this.types = types;
 	}
+	public String [] getRuleFileUrls() {
+		String ruleFileUrls [] = new String[getProjectInfo().getRuleFiles().size()];
+		for (int i=0; i<ruleFileUrls.length; i++) {
+			if (getProjectInfo().getRuleFiles().get(i).indexOf(':')<4) {
+				getProjectInfo().getRuleFiles().set(i, "file:///"+getProjectInfo().getRuleFiles().get(i));
+				setChanged(true);
+			}
+			ruleFileUrls[i] = getProjectInfo().getRuleFiles().get(i);
+		}
+		return ruleFileUrls;
+	}
 	/** reload rules. Updates RulesetErrors.
 	 * @return ok */
 	public boolean reloadRuleFiles() {
 		try {
-			String ruleFileUrls [] = new String[getProjectInfo().getRuleFiles().size()];
-			for (int i=0; i<ruleFileUrls.length; i++) {
-				if (getProjectInfo().getRuleFiles().get(i).indexOf(':')<4) {
-					getProjectInfo().getRuleFiles().set(i, "file:///"+getProjectInfo().getRuleFiles().get(i));
-					setChanged(true);
-				}
-				ruleFileUrls[i] = getProjectInfo().getRuleFiles().get(i);
-			}
+			String ruleFileUrls [] = getRuleFileUrls();
 			rulesetErrors = null;
 			kbase = null;
 			List<TypeDescription> oldTypes = types;
