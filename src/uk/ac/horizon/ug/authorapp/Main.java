@@ -13,6 +13,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -26,6 +27,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+
+import org.drools.common.DroolsObjectOutputStream;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
@@ -105,6 +108,12 @@ public class Main implements BrowserPanelCallback {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				saveAsProject();
+			}
+		}));
+		fileMenu.add(new JMenuItem(new AbstractAction("Save Rule Set...") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				saveRuleSet();
 			}
 		}));
 		fileMenu.add(new JMenuItem(new AbstractAction("Exit") {
@@ -197,6 +206,36 @@ public class Main implements BrowserPanelCallback {
 		
 		// initial project
 		newProject();
+	}
+	/** serialise... */
+	protected void saveRuleSet() {
+		if (project.getKbase()==null) {
+			JOptionPane.showMessageDialog(mainFrame, "No valid rule set to save", "Save Rule Set", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		JFileChooser fileChooser = new JFileChooser();
+		if (project!=null && project.getFile()!=null) {
+			fileChooser.setSelectedFile(project.getFile());
+			fileChooser.setSelectedFile(new File(""));
+		}
+		if (fileChooser.showSaveDialog(mainFrame)!=JFileChooser.APPROVE_OPTION) 
+			return;
+		
+		File file = fileChooser.getSelectedFile();
+		if (file.exists()) {
+			if (JOptionPane.showConfirmDialog(mainFrame, "File exists; replace?", "Save Rule Set", JOptionPane.YES_NO_CANCEL_OPTION)!=JOptionPane.YES_OPTION)
+				return;
+		}
+		try {
+			DroolsObjectOutputStream out = new DroolsObjectOutputStream(new FileOutputStream(file));
+			out.writeObject(project.getKbase());
+			out.close();
+			logger.info("Wrote KnowledgeBase to "+file);
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "Error writing KnowledgeBase to "+file, e);
+			JOptionPane.showMessageDialog(mainFrame, "Error writing Rule Set to "+file+"\n"+e, "Save Rule Set", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	protected void handleExit() {
 		if (project.isChanged()) {

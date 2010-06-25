@@ -76,6 +76,16 @@
 		</java>
 	</target>	
 	
+	<target name="commonfacts">
+		<mkdir dir="build/commonfacts"/>
+		<javac destdir="build/commonfacts" debug="true" target="1.5" source="1.5" includes="uk/ac/horizon/ug/exserver/model/ClientConversation.java,uk/ac/horizon/ug/exserver/model/ConversationStatus.java,uk/ac/horizon/ug/commonfacts/*.java">
+    		<classpath refid="cp"/>
+			<src path="src"/>		
+    	</javac>
+    	<jar basedir="build/commonfacts" destfile="commonfacts.jar" includes="**"/>
+		
+	</target>	
+	
 	<target name="bluetoothex">
 		<mkdir dir="build/bluetoothex"/>
 		<javac destdir="build/bluetoothex" debug="true" target="1.5" source="1.5" includes="uk/ac/horizon/ug/bluetoothex/testclient/*,uk/ac/horizon/ug/exserver/clientapi/protocol/*,uk/ac/horizon/ug/exserver/clientapi/client/*,uk/ac/horizon/ug/exserver/clientapi/JsonUtils.java,">
@@ -104,5 +114,28 @@
 			</classpath>
 		</java>
 	</target>
+	
+<!--
+	<taskdef name="rulebase" classname="org.drools.contrib.DroolsCompilerAntTask"/>
+
+	<path id="rules.cp">
+		<fileset dir="lib">
+			<include name="jcoord-1.0.jar"/>
+		</fileset>
+		<fileset file="build/authorapp">
+		</fileset> 
+	</path>
+
+	<target name="rulestext">
+		<mkdir dir="gen/uk/ac/horizon/ug/hyperplace/facts"/>
+		<rulebase 
+			srcdir="samples"
+			tofile="gen/uk/ac/horizon/apptest/desktop/rules.ser"
+			classpathref="rules.cp"
+			binformat="package">
+			<include name="hyperplace.drl"/>
+		</rulebase>
+	</target>
+-->
 	
 </project>
