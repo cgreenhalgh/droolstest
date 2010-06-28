@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>Drools on Android</title>
+</head>
+<body>
+<h1>Drools on Android</h1>
+<p>Chris Greenhalgh, 2010-06-28</p>
+<h2>Introduction</h2>
+<p>Some notes of getting Drools working on Android.</p>
+<p>I am working against Drools 5.1.0.M2 pre-release, i.e. from SVN, last updated around 2010-05-18.</p>
+<p>It now seems to be working (has run one small test application in
+the helloandroid project), although I haven't&nbsp;stressed it at all.</p>
+<h2>Issues and resolutions</h2>
+<h3>1</h3>
+<p>Problem: drools-api org.drools.util.CompositeClassLoader passes null
+as argument to superclass (java.lang.ClassLoader) constructor. This is
+not supported by Android (should represent the system class loader).</p>
+<p>Resolution: replace calls to "super(null)" with "super(ClassLoader.getSystemClassLoader())". For example&nbsp;<a href="../externalsrc/drools/local/drools-api/src/main/java/org/drools/util/CompositeClassLoader.java">../externalsrc/drools/local/drools-api/src/main/java/org/drools/util/CompositeClassLoader.java</a></p>
+<h3>2</h3>
+<p>Problem: drools-core org.drools.rule.JavaDialectRuntimeData, inner
+class PackageClassLoader attempts to use
+java.lang.ClassLoader.defineClass to load types and functions defined
+in the knowledge package (e.g. DRL file). This is not supported on
+Android (and even if it was, would probably only support DEX bytecode
+rather than Java bytecode). It throws an UnsupportedOperationException
+on failure which terminates the attempt to load the class.</p>
+<p>Resolution:</p>
+<p>2.1: Extract type and function Java classes defined in the KnowledgePackages and write them to actual .class files
+and add them to the Android project or otherwise ensure that (a) dx is
+used to convert them to dex classfiles and (b) they are included in the
+classpath for the Android application. For example (from <a href="../src/uk/ac/horizon/ug/authorapp/Main.java">../src/uk/ac/horizon/ug/authorapp/Main.java</a> saveTypes():</p>
+<pre>			KnowledgeBase kb = project.getKbase();<br>			if (!(kb instanceof KnowledgeBaseImpl)) {<br>				logger.log(Level.WARNING, "KnowledgeBase is not KnowledgeBaseImpl: "+kb);<br>				return;<br>			}<br>			KnowledgeBaseImpl kbi = (KnowledgeBaseImpl)kb;<br>			RuleBase rb = kbi.getRuleBase();<br>			org.drools.rule.Package[] pkgs = rb.getPackages();<br>			ClassBuilder cb = new ClassBuilder();<br>			JarOutputStream jout = new JarOutputStream(new FileOutputStream(file));<br><br>			for (int i=0; i&lt;pkgs.length; i++) {<br>				JavaDialectRuntimeData jdrd = (JavaDialectRuntimeData)pkgs[i].getDialectRuntimeRegistry().getDialectData("java");<br>				String rds[] = jdrd.list();<br>				logger.info("runtime data list="+Arrays.toString(rds));<br>				for (int j=0; j&lt;rds.length; j++) {<br>					byte bytecode[] = jdrd.read(rds[j]);<br>					JarEntry je = new JarEntry(rds[j]);<br>					jout.putNextEntry(je);<br>					jout.write(bytecode);<br>					jout.closeEntry();<br>					logger.info("Wrote "+rds[j]+" ("+bytecode.length+" bytes)");<br>				}<br><br>			}<br>			jout.flush();<br>			jout.close();</pre>
+<p>Note: this means that "runtime" discovery/loading of such classes
+will depend on the DEX translation happening on a server somewhere and
+appropriate fiddling with class-loaders to make use of a
+dalvik.system.DexClassLoader in the Android applicaiton to load the
+defined classes from a file cache in the android application.</p>
+<p>2.2: Modify
+org.drools.rule.JavaDialectRuntimeData.PackageClassLoader to fail
+silently (return null) on Android if it finds class bytecode rather
+than attempt defineClass and throw an exception. For example&nbsp;<a href="../externalsrc/drools/local/drools-core/src/main/java/org/drools/rule/JavaDialectRuntimeData.java">../externalsrc/drools/local/drools-core/src/main/java/org/drools/rule/JavaDialectRuntimeData.java</a></p>
+<h3>3</h3>
+<p>Problem: org.drools.core.util.asm.ClassFieldInspector.calcFieldName
+uses java.beans.Introspector.decapitalize(String) which appears not to
+exist on Android.</p>
+<p>Resolution: hand-code alternative (from javadoc description), e.g (from <a href="../externalsrc/drools/local/drools-core/src/main/java/org/drools/core/util/asm/ClassFieldInspector.java">../externalsrc/drools/local/drools-core/src/main/java/org/drools/core/util/asm/ClassFieldInspector.java</a>).</p>
+<pre>    static String decapitalize( String name )<br>    {<br>    	if (name==null || name.length()==0)<br>    		return name;<br>    	if (!Character.isUpperCase(name.charAt(0)))<br>    		return name;<br>    	if (name.length()==1 || !Character.isUpperCase(name.charAt(1))) {<br>    		// decap.<br>    		return Character.toLowerCase(name.charAt(0))+name.substring(1);<br>    	}<br>    	return name;<br>    }<br></pre>
+<h3>4</h3>
+<p>Problem: org.drools.base.ClassFieldAccessorFactory uses defineClass
+to create runtime-generated method accessor classes (presumably for
+performance). As with 2 this is not supported on Android.</p>
+<p>Resolution: change this class (methods getClassFieldReader and
+getClassFieldWriter) so that the simple field access logic branch in
+each method creates a simple java reflection-based read/write accessor
+instance. E.g. <a href="../externalsrc/drools/local/drools-core/src/main/java/org/drools/base/ClassFieldAccessorFactory.java">../externalsrc/drools/local/drools-core/src/main/java/org/drools/base/ClassFieldAccessorFactory.java</a></p>
+<h3>5</h3>
+<p>Problem: mvel checks java system property java.version when some of
+its classes are loaded. On Android this may be "0" but mvel expects
+"n.n" and throws an exception trying to check for 1.5+.</p>
+<p>Resolution: ensure that the application sets System property
+"java.version" to "1.5" (say) before the MVEL class(es) will get
+loaded, e.g. before trying to load a knowledge base.</p>
+<pre>	System.setProperty("java.version", "1.5");</pre>
+<h3>6</h3>
+<p>Problem: mvel might try to do bytecode generation/JIT stuff itself, which of course won't work.</p>
+<p>Resolution: make sure it doesn't try by setting system property "mvel2.disable.jit" to "true":</p>
+<pre>	System.setProperty("mvel2.disable.jit", "true"); </pre>
+<p>(I haven't actually checked if this is essential or not - say it somewhere else.)</p>
+<h3>7 </h3>
+<p>(Possible) Problem: if reading a serialised KnowledgeSession from a
+vanila ObjectInputStream (or which has been written using an
+ObjectOutputStream) then the default class loader will be used
+internally when reading (e.g. facts). So if you were trying to
+dynamically add defined fact classes at runtime (see issue 2, above),
+this would probably not work.</p>
+<p>Resolution: write the KnowledgePackage using a
+drools.io.DroolsObjectOutputStream and read it back in using a
+drools.io.DroolsObjectInputStream; this has an optional second argument
+of a class loader to use so you can pass your own in!</p>
+<p> </p>
+</body>
+</html>

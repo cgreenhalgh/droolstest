@@ -46,9 +46,12 @@ import org.drools.rule.TypeDeclaration;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -262,21 +265,42 @@ public class Main implements BrowserPanelCallback {
 			JarOutputStream jout = new JarOutputStream(new FileOutputStream(file));
 
 			for (int i=0; i<pkgs.length; i++) {
-				Map<String,TypeDeclaration> types = pkgs[i].getTypeDeclarations();
-				for (TypeDeclaration type : types.values()) {
-					ClassDefinition classDef = type.getTypeClassDef();
-					byte bytecode[] = cb.buildClass(classDef);
-					logger.info("Type "+type.getTypeClassName()+": "+bytecode.length+" bytes");
-					String path = type.getTypeClassName().replace(".", "/")+".class";
-					JarEntry je = new JarEntry(path);
+				JavaDialectRuntimeData jdrd = (JavaDialectRuntimeData)pkgs[i].getDialectRuntimeRegistry().getDialectData("java");
+				String rds[] = jdrd.list();
+				logger.info("runtime data list="+Arrays.toString(rds));
+				for (int j=0; j<rds.length; j++) {
+					byte bytecode[] = jdrd.read(rds[j]);
+					JarEntry je = new JarEntry(rds[j]);
 					jout.putNextEntry(je);
 					jout.write(bytecode);
 					jout.closeEntry();
+					logger.info("Wrote "+rds[j]+" ("+bytecode.length+" bytes)");
 				}
-				Map<String,Function> fns = pkgs[i].getFunctions();
-				for (Function fn : fns.values()) {
-					// TODO
-				}
+//				Map<String,TypeDeclaration> types = pkgs[i].getTypeDeclarations();
+//				for (TypeDeclaration type : types.values()) {
+//					ClassDefinition classDef = type.getTypeClassDef();
+//					byte bytecode[] = cb.buildClass(classDef);
+//					logger.info("Type "+type.getTypeClassName()+": "+bytecode.length+" bytes");
+//					String path = type.getTypeClassName().replace(".", "/")+".class";
+//					JarEntry je = new JarEntry(path);
+//					jout.putNextEntry(je);
+//					jout.write(bytecode);
+//					jout.closeEntry();
+//				}
+//				Map<String,Function> fns = pkgs[i].getFunctions();
+//				for (Function fn : fns.values()) {
+//					// TODO
+//					logger.info("Function "+fn.getNamespace()+" "+fn.getName()+", dialect "+fn.getDialect()+", resource "+fn.getResource()+", class "+fn.getClass().getName());
+//					if (fn.getDialect().equals("java")) {
+//						JavaDialectRuntimeData jdrd = (JavaDialectRuntimeData)pkgs[i].getDialectRuntimeRegistry().getDialectData("java");
+//						String rds[] = jdrd.list();
+//						logger.info("runtime data list="+Arrays.toString(rds));
+//						logger.info("runtime data, "+fn.getName()+"="+jdrd.read(fn.getName())+", "+fn.getNamespace()+"."+fn.getName()+"="+jdrd.read(fn.getNamespace()+"."+fn.getName()));
+//						//byte[] bytecode = jdrd.
+//					}
+//					else
+//						logger.log(Level.WARNING, "No support for function dialect "+fn.getDialect()+" (function "+fn.getName()+")");
+//				}
 			}
 			jout.flush();
 			jout.close();
