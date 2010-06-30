@@ -348,18 +348,6 @@
       <name>Geoview</name>
       <layers class="linked-list">
         <uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
-          <name>Pins</name>
-          <visible>true</visible>
-          <viewItemSets class="linked-list">
-            <uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
-              <typeNames class="linked-list">
-                <string>HyperplaceMapPin</string>
-              </typeNames>
-              <viewLayoutName>geo</viewLayoutName>
-            </uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
-          </viewItemSets>
-        </uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
-        <uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
           <name>Map</name>
           <visible>true</visible>
           <viewItemSets class="linked-list">
@@ -369,6 +357,18 @@
               </typeNames>
               <viewLayoutName>geo</viewLayoutName>
               <viewItemType>MapTile</viewItemType>
+            </uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
+          </viewItemSets>
+        </uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
+        <uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
+          <name>Pins</name>
+          <visible>true</visible>
+          <viewItemSets class="linked-list">
+            <uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
+              <typeNames class="linked-list">
+                <string>HyperplaceMapPin</string>
+              </typeNames>
+              <viewLayoutName>geo</viewLayoutName>
             </uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
           </viewItemSets>
         </uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>

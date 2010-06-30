@@ -12,6 +12,7 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -76,7 +77,7 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 		splitPane.setBottomComponent(bottomPane);
 		
 		viewCanvas = new ViewCanvas();
-		JScrollPane viewScrollPane = new JScrollPane(viewCanvas);
+		final JScrollPane viewScrollPane = new JScrollPane(viewCanvas);
 		viewScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 		viewScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		bottomPane.add(viewScrollPane, BorderLayout.CENTER);
@@ -86,7 +87,8 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO Auto-generated method stub
+				// TODO Keep centre in the centre!
+				//viewScrollPane.getViewport().scrollRectToVisible(contentRect)
 				viewCanvas.setZoomRatio(viewCanvas.getZoomRatio()*2);
 			}
 			
@@ -95,7 +97,7 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO Auto-generated method stub
+				// TODO Keep centre in the centre!
 				viewCanvas.setZoomRatio(viewCanvas.getZoomRatio()/2);
 				if (viewCanvas.getZoomRatio()>0.55 && viewCanvas.getZoomRatio()<1.9) 
 					viewCanvas.setZoomRatio(1);
@@ -129,10 +131,6 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 	protected PropertiesBean propertiesBean;
 	/** config tabbed pane */
 	protected JTabbedPane configTabbedPane;
-	/** config layer table */
-	protected Component layerPane;
-	/** config layout table */
-	protected Component layoutPane;
 	/** show configuration dialog */
 	public void showConfigDialog() {
 		if (configDialog==null)
@@ -178,16 +176,22 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 			logger.log(Level.WARNING, "Problem adding properties view", e);
 		}
 		this.layerTableModel = new LayerTableModel();
-		JTable layerTable = new JTable(layerTableModel);
-		layerPane = new JScrollPane(layerTable);
+		final JTable layerTable = new JTable(layerTableModel);
+		JPanel layerPane = new JPanel(new BorderLayout());
+		layerPane.add(new JScrollPane(layerTable), BorderLayout.CENTER);
 		configTabbedPane.add("Layers", layerPane);
+		JPanel layerButtons = new JPanel(new FlowLayout());
+		layerPane.add(layerButtons, BorderLayout.SOUTH);
 		
 		layoutTableModel = new LayoutTableModel();
-		JTable layoutTable =new JTable(layoutTableModel);
-		layoutPane = new JScrollPane(layoutTable);
+		final JTable layoutTable =new JTable(layoutTableModel);
+		JPanel layoutPane = new JPanel(new BorderLayout());
+		layoutPane.add(new JScrollPane(layoutTable), BorderLayout.CENTER);
 		configTabbedPane.add("Layouts", layoutPane);
+		JPanel layoutButtons = new JPanel(new FlowLayout());
+		layoutPane.add(layoutButtons, BorderLayout.SOUTH);
 		
-		buttons.add(new JButton(new AbstractAction("Add Layer") {
+		layerButtons.add(new JButton(new AbstractAction("Add Layer") {
 
 			@Override
 			public void actionPerformed(ActionEvent ae) {
@@ -195,7 +199,62 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 			}
 			
 		}));
-		buttons.add(new JButton(new AbstractAction("Add Layout") {
+		layerButtons.add(new JButton(new AbstractAction("Delete selected") {
+
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				int rows[] = layerTable.getSelectedRows();
+				Arrays.sort(rows);
+				for (int i=rows.length-1; i>=0; i--) {
+					customViewInfo.getLayers().remove(rows[i]);
+				}
+				layerTableModel.fireTableDataChanged();
+				project.setChanged(true);
+			}
+			
+		}));
+		layerButtons.add(new JButton(new AbstractAction("Move selected up") {
+
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				int rows[] = layerTable.getSelectedRows();
+				Arrays.sort(rows);
+				boolean ok = false;
+				for (int i=0; i<rows.length; i++) {
+					if ((i==0 && rows[i]>0) || (i>0 && rows[i]>rows[i-1]+1))
+						ok = true;
+					if (!ok)
+						continue;
+					ViewLayerInfo vli = customViewInfo.getLayers().remove(rows[i]);
+					customViewInfo.getLayers().add(rows[i]-1, vli);
+				}
+				layerTableModel.fireTableDataChanged();
+				project.setChanged(true);
+			}
+			
+		}));
+		layerButtons.add(new JButton(new AbstractAction("Move selected down") {
+
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				int rows[] = layerTable.getSelectedRows();
+				Arrays.sort(rows);
+				boolean ok = false;
+				for (int i=rows.length-1; i>=0; i--) {
+					if ((i==rows.length-1 && rows[i]<layerTable.getRowCount()-1) || 
+							(i<rows.length-1 && rows[i]<rows[i+1]-1))
+						ok = true;
+					if (!ok)
+						continue;
+					ViewLayerInfo vli = customViewInfo.getLayers().remove(rows[i]);
+					customViewInfo.getLayers().add(rows[i]+1, vli);
+				}
+				layerTableModel.fireTableDataChanged();
+				project.setChanged(true);
+			}
+			
+		}));
+		layoutButtons.add(new JButton(new AbstractAction("Add Layout") {
 
 			@Override
 			public void actionPerformed(ActionEvent ae) {
@@ -234,6 +293,7 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 		vli.setName(name);
 		vli.setVisible(true);
 		customViewInfo.getLayers().add(vli);
+		project.setChanged(true);
 		if (layerTableModel!=null)
 			layerTableModel.fireTableDataChanged();
 	}
@@ -419,6 +479,7 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 		ViewLayoutInfo vli = new ViewLayoutInfo();
 		vli.setName(name);
 		customViewInfo.getLayouts().add(vli);
+		project.setChanged(true);
 		if (layoutTableModel!=null)
 			layoutTableModel.fireTableDataChanged();
 	}

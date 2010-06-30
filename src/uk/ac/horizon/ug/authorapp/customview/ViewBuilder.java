@@ -36,23 +36,32 @@ public class ViewBuilder {
 	public static ViewBuilder getViewBuilder() {
 		return new ViewBuilder();
 	}
+	class ItemSet {
+		ViewItemSetInfo visi;
+		List<AbstractViewItem> viewItems;
+		FactStore factStore;
+		ViewLayoutInfo viewLayoutInfo;
+	}
 	/** generate view, i.e. ViewItem list */
 	public List<List<AbstractViewItem>> getView(Project project, CustomViewInfo customViewInfo, ViewCanvas referenceComponent) {
 		List<List<AbstractViewItem>> viewItems2 = new LinkedList<List<AbstractViewItem>>();
+		List<ItemSet> itemSets = new LinkedList<ItemSet>();
 		
 		for (ViewLayerInfo vli : customViewInfo.getLayers()) {
 			if (!vli.isVisible())
 				continue;
 			for (ViewItemSetInfo visi : vli.getViewItemSets()) {
 				// item set...
-				List<AbstractViewItem> viewItems = new LinkedList<AbstractViewItem>();
+				ItemSet itemSet = new ItemSet();
+				itemSet.visi = visi;
+				itemSet.viewItems = new LinkedList<AbstractViewItem>();
 				String factStoreName = visi.getFactStoreName();
-				FactStore factStore = null;
+				itemSet.factStore = null;
 				if (factStoreName==null)
-					factStore = project.getProjectInfo().getDefaultFactStore();
+					itemSet.factStore = project.getProjectInfo().getDefaultFactStore();
 				else {
-					factStore = project.getProjectInfo().getFactStore(factStoreName);
-					if (factStore==null) {
+					itemSet.factStore = project.getProjectInfo().getFactStore(factStoreName);
+					if (itemSet.factStore==null) {
 						logger.log(Level.WARNING, "Unknown fact store "+factStoreName+" in custom view "+customViewInfo.getName()+" layer "+vli.getName());
 						continue;
 					}
@@ -60,29 +69,32 @@ public class ViewBuilder {
 				List<String> factTypeNames = visi.getTypeNames();
 				for (String factTypeName : factTypeNames) {
 					// get facts..
-					List<Fact> facts = factStore.getFacts(factTypeName);
+					List<Fact> facts = itemSet.factStore.getFacts(factTypeName);
 					for (Fact fact : facts) {
 						// create views...
 						AbstractViewItem viewItem = getViewItem(project, visi, fact, viewItems2, referenceComponent);
-						viewItems.add(viewItem);
+						itemSet.viewItems.add(viewItem);
 					}
 				}
 				// layout...
 				String layoutName = visi.getViewLayoutName();
 				if (layoutName==null)
 					layoutName = "default";
-				ViewLayoutInfo viewLayoutInfo = customViewInfo.getLayout(layoutName);
-				if (viewLayoutInfo==null) {
+				itemSet.viewLayoutInfo = customViewInfo.getLayout(layoutName);
+				if (itemSet.viewLayoutInfo==null) {
 					logger.log(Level.WARNING, "Unknown layout "+layoutName+" in custom view "+customViewInfo.getName()+" layer "+vli.getName());					
 				} 
-
-				//TODO: should do all layer's pre layout first, then real layout later
-				preLayout(customViewInfo, viewLayoutInfo, viewItems, viewItems2, referenceComponent, factStore);
-				doLayout(customViewInfo, viewLayoutInfo, viewItems, viewItems2, referenceComponent, factStore);
-				viewItems2.add(viewItems);
+				itemSets.add(itemSet);
+				viewItems2.add(itemSet.viewItems);
 			}
 		}
-		
+		// should do all layer's pre layout first, then real layout later
+		for (ItemSet itemSet : itemSets) {
+			preLayout(customViewInfo, itemSet.viewLayoutInfo, itemSet.viewItems, viewItems2, referenceComponent, itemSet.factStore);		
+		}
+		for (ItemSet itemSet : itemSets) {
+			doLayout(customViewInfo, itemSet.viewLayoutInfo, itemSet.viewItems, viewItems2, referenceComponent, itemSet.factStore);
+		}
 		return viewItems2;
 	}
 	/** create ViewItem for fact 

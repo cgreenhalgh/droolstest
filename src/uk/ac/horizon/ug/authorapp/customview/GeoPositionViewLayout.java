@@ -4,6 +4,8 @@
 package uk.ac.horizon.ug.authorapp.customview;
 
 import java.awt.Component;
+import java.awt.geom.Rectangle2D;
+//import java.awt.geom.Rectangle2D.Double;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -21,13 +23,77 @@ import uk.ac.horizon.ug.exserver.protocol.TypeFieldDescription;
  *
  */
 public class GeoPositionViewLayout extends AbstractViewLayout {
+	private static final double MINIMUM_WIDTH = Math.pow(0.5, 30); // zoom 30?!
 	static Logger logger = Logger.getLogger(GeoPositionViewLayout.class.getName());
-
+	/** doing pre-layout? */
+	private boolean isPre = false;
+	/** min/max */
+	private Rectangle2D range;
 	/**
 	 * 
 	 */
 	public GeoPositionViewLayout() {
 		// TODO Auto-generated constructor stub
+	}
+	/** get google x/y range for item */
+	public static Rectangle2D getGoogleRange(AbstractViewItem viewItem, FactStore factStore) {
+		// could be MapTileURL property?
+		Fact baseFact = viewItem.getBaseFact();
+		TypeDescription type = factStore.getType(baseFact.getTypeName());
+		if (type!=null) {
+			for (Map.Entry<String,TypeFieldDescription> field: type.getFields().entrySet()) {
+				if (field.getValue().hasMetaType("MapTileURL")) {
+					return getGoogleRangeForMapTile(baseFact.getString(field.getKey()));
+				}
+			}
+		}
+		String id = viewItem.getBaseFactID();
+		if (id==null) {
+			viewItem.setExcludedByLayout(true);
+			return null;
+		}
+		Fact position = factStore.getFact("GeoPosition", "subjectId", id);
+		if (position==null) {
+			viewItem.setExcludedByLayout(true);
+			return null;
+		}
+		Double latitude = position.getDouble("latitude");
+		Double longitude = position.getDouble("longitude");
+		if (latitude==null || longitude==null) {
+			viewItem.setExcludedByLayout(true);
+			return null;
+		}
+		logger.info("Found GeoPosition for "+id+": latitude="+latitude+", longitude="+longitude);
+		double googleX = longitudeToGoogleX(longitude);
+		double googleY = latitudeToGoogleY(latitude);
+		return new Rectangle2D.Double(googleX, googleY, 0, 0);
+	}
+	@Override
+	public void preLayout(ViewCanvas component, CustomViewInfo customViewInfo,
+			List<AbstractViewItem> viewItems,
+			List<List<AbstractViewItem>> viewItems2, FactStore factStore) {
+		// TODO Auto-generated method stub
+		super.preLayout(component, customViewInfo, viewItems, viewItems2, factStore);
+		if (!isPre) {
+			// is now
+			isPre = true;
+			range = null;
+		}
+		nextitem:
+			for (AbstractViewItem viewItem : viewItems) {
+				if (viewItem.isExcludedByLayout())
+					continue;
+				Rectangle2D itemRange = getGoogleRange(viewItem, factStore);
+				if (itemRange==null) {
+					viewItem.setExcludedByLayout(true);
+					continue;
+				}
+				if (range==null)
+					range = itemRange;
+				else
+					if (!range.contains(itemRange))
+						range = range.createUnion(itemRange);
+			}		
 	}
 
 	/* (non-Javadoc)
@@ -37,64 +103,57 @@ public class GeoPositionViewLayout extends AbstractViewLayout {
 	public void doLayout(ViewCanvas canvas, CustomViewInfo customViewInfo,
 			List<AbstractViewItem> viewItems,
 			List<List<AbstractViewItem>> viewItems2,  FactStore factStore) {
+		if (isPre) {
+			// not now 
+			isPre = false;
+			if (range==null) {
+				logger.log(Level.WARNING, "GeoPositionViewLayout doing layout with no pre-layout range");
+				range = new Rectangle2D.Double(0, 0, 1, 1);
+			} else if (range.getWidth()<MINIMUM_WIDTH || range.getHeight()<MINIMUM_WIDTH) {
+				range.setRect(range.getMinX(), range.getMinY(), MINIMUM_WIDTH, MINIMUM_WIDTH);
+				logger.log(Level.WARNING, "GeoPositionViewLayout doing layout with too-small pre-layout range");
+			}
+			else {
+				logger.info("Range: "+range);
+			}
+		}
 		nextitem:
 		for (AbstractViewItem viewItem : viewItems) {
 			if (viewItem.isExcludedByLayout())
 				continue;
-			// could be MapTileURL property?
-			Fact baseFact = viewItem.getBaseFact();
-			TypeDescription type = factStore.getType(baseFact.getTypeName());
-			if (type!=null) {
-				for (Map.Entry<String,TypeFieldDescription> field: type.getFields().entrySet()) {
-					if (field.getValue().hasMetaType("MapTileURL")) {
-						doLayoutForMapTile(canvas, customViewInfo, viewItem, baseFact.getString(field.getKey()));
-						continue nextitem;
-					}
-				}
-			}
-			String id = viewItem.getBaseFactID();
-			if (id==null) {
+			Rectangle2D itemRange = getGoogleRange(viewItem, factStore);
+			if (itemRange==null) {
 				viewItem.setExcludedByLayout(true);
 				continue;
 			}
-			Fact position = factStore.getFact("GeoPosition", "subjectId", id);
-			if (position==null) {
-				viewItem.setExcludedByLayout(true);
-				continue;
-			}
-			Double latitude = position.getDouble("latitude");
-			Double longitude = position.getDouble("longitude");
-			if (latitude==null || longitude==null) {
-				viewItem.setExcludedByLayout(true);
-				continue;
-			}
-			logger.info("Found GeoPosition for "+id+": latitude="+latitude+", longitude="+longitude);
-			double googleX = longitudeToGoogleX(longitude);
-			double googleY = latitudeToGoogleY(latitude);
 			
-			double x = canvas.getMinx()+googleX*(canvas.getMaxx()-canvas.getMinx());
+			double x = canvas.getMinx()+((itemRange.getMinX()-range.getMinX())/range.getWidth())*(canvas.getMaxx()-canvas.getMinx());
 			// upside down?
-			double y = canvas.getMiny()+googleY*(canvas.getMaxy()-canvas.getMiny());
-			
+			double y = canvas.getMiny()+((itemRange.getMinY()-range.getMinY())/range.getHeight())*(canvas.getMaxy()-canvas.getMiny());
+						
 			viewItem.setX((float)x);
 			viewItem.setY((float)y);
-			logger.info("- placed at "+x+","+y);
+
+			double w = canvas.getMinx()+(itemRange.getWidth()/range.getWidth())*(canvas.getMaxx()-canvas.getMinx());
+			// upside down?
+			double h = canvas.getMiny()+(itemRange.getHeight()/range.getHeight())*(canvas.getMaxy()-canvas.getMiny());
+			
+			viewItem.setWidth((float)w);
+			viewItem.setHeight((float)h);
+
+			logger.info("Item placed at "+x+","+y+" "+w+"x"+h);
 		}
 	}
 	/** do Layout for a Fact with a MapTileURL property */
-	private void doLayoutForMapTile(ViewCanvas canvas,
-			CustomViewInfo customViewInfo, AbstractViewItem viewItem,
-			String mapTileURL) {
+	public static Rectangle2D getGoogleRangeForMapTile(String mapTileURL) {
 		logger.info("Layout MapTile: "+mapTileURL);
 		try {
 			if (mapTileURL==null) {
-				viewItem.setExcludedByLayout(true);
-				return;
+				return null;
 			}
 			int qix = mapTileURL.indexOf('?');
 			if (qix<0) {
-				viewItem.setExcludedByLayout(true);
-				return;			
+				return null;			
 			}
 			String params [] = mapTileURL.substring(qix+1).split("[&]");
 			double latitude = 0, longitude = 0;
@@ -126,8 +185,7 @@ public class GeoPositionViewLayout extends AbstractViewLayout {
 			}
 			if (!foundLatitude || !foundLongitude || !foundZoom || !foundWidth || !foundHeight) {
 				logger.log(Level.WARNING, "Could not find required parameters in URL "+mapTileURL);
-				viewItem.setExcludedByLayout(true);
-				return;
+				return null;
 			}
 
 			double googleX = longitudeToGoogleX(longitude);
@@ -140,24 +198,10 @@ public class GeoPositionViewLayout extends AbstractViewLayout {
 			// height -> top/bottom latitude
 			double deltaY = height/2.0/pixelsAtZoom;
 			
-			double x = canvas.getMinx()+(googleX-deltaX)*(canvas.getMaxx()-canvas.getMinx());
-			// upside down?
-			double y = canvas.getMiny()+(googleY+deltaY)*(canvas.getMaxy()-canvas.getMiny());
-			
-			viewItem.setX((float)x);
-			viewItem.setY((float)y);
-
-			double w = canvas.getMinx()+(2*deltaX)*(canvas.getMaxx()-canvas.getMinx());
-			// upside down?
-			double h = canvas.getMiny()+(2*deltaY)*(canvas.getMaxy()-canvas.getMiny());
-			
-			viewItem.setWidth((float)w);
-			viewItem.setHeight((float)h);
-
-			logger.info("Map placed at "+x+","+y+" "+w+"x"+h);
+			return new Rectangle2D.Double(googleX-deltaX, googleY-deltaY, 2*deltaX, 2*deltaY);
 		} catch(Exception e) {
 			logger.log(Level.WARNING, "Error parsing map URL "+mapTileURL, e);
-			viewItem.setExcludedByLayout(true);
+			return null;
 		}
 	}
 
