@@ -19,6 +19,9 @@ import java.awt.geom.Rectangle2D;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import uk.ac.horizon.ug.exserver.devclient.Fact;
+import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
+
 /**
  * @author cmg
  *
@@ -48,9 +51,8 @@ public class DefaultViewItem extends AbstractViewItem {
 	/**
 	 * @param referenceComponent
 	 */
-	public DefaultViewItem(Component referenceComponent) {
+	public DefaultViewItem() {
 		super();
-		this.referenceComponent = referenceComponent;
 	}
 	/** get font to use */
 	protected Font getFontInternal(Graphics2D graphics) {
@@ -106,7 +108,7 @@ public class DefaultViewItem extends AbstractViewItem {
 					else
 						texty += textLayouts[r].getBounds().getHeight();
 				}
-				textLayouts[r].draw(graphics, borderWidth, texty);
+				textLayouts[r].draw(graphics, x+borderWidth, texty);
 			}
 //			if (font!=null)
 //				graphics.setFont(oldFont);
@@ -287,6 +289,21 @@ public class DefaultViewItem extends AbstractViewItem {
 	 */
 	public void setUserObject(Object userObject) {
 		this.userObject = userObject;
+	}
+	public void initialise(Fact fact, TypeDescription typeDesc, Component referenceComponent) {
+		super.initialise(fact, typeDesc, referenceComponent);
+		this.referenceComponent = referenceComponent;
+
+		setLineWidth(1);
+		setBorderWidth(3);
+		String typeName = fact.getTypeName();
+		setTextRows(new String[] { typeName, getBaseFactID() });
+		Rectangle textBounds = getTextBounds();
+//		logger.info("Text bounds: "+textBounds.x+","+textBounds.y+","+textBounds.width+","+textBounds.height);
+		if (textBounds.getMaxX()+this.getBorderWidth() > this.getWidth())
+			this.setWidth((float)(textBounds.getMaxX()+this.getBorderWidth()));
+		if (textBounds.getMaxY()+this.getBorderWidth() > this.getHeight())
+			this.setHeight((float)(textBounds.getMaxY()+this.getBorderWidth()));
 	}
 
 }

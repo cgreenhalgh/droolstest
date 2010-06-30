@@ -9,8 +9,13 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -43,7 +48,8 @@ import uk.ac.horizon.ug.authorapp.model.ViewLayoutInfo;
  * @author cmg
  *
  */
-public class CustomViewPanel extends JPanel {
+public class CustomViewPanel extends JPanel implements PropertyChangeListener {
+	static Logger logger = Logger.getLogger(CustomViewPanel.class.getName());
 	/** project */
 	protected Project project;
 	/** custom view info */
@@ -107,6 +113,10 @@ public class CustomViewPanel extends JPanel {
 	protected ViewBuilder viewBuilder;
 	/** regenerate view */
 	public void refresh() {
+		if (viewCanvas.getMaxx()!=customViewInfo.getMinimumWidth())
+			viewCanvas.setMaxx(customViewInfo.getMinimumWidth());
+		if (viewCanvas.getMaxy()!=customViewInfo.getMinimumHeight())
+			viewCanvas.setMaxy(customViewInfo.getMinimumHeight());
 		List<List<AbstractViewItem>> items2 = viewBuilder.getView(project, customViewInfo, viewCanvas);
 		viewCanvas.setViewItems(items2);
 		viewCanvas.repaint();
@@ -115,6 +125,8 @@ public class CustomViewPanel extends JPanel {
 	} 
 	/** config dialog */
 	protected JDialog configDialog;
+	/** properties bean */
+	protected PropertiesBean propertiesBean;
 	/** config tabbed pane */
 	protected JTabbedPane configTabbedPane;
 	/** config layer table */
@@ -156,8 +168,15 @@ public class CustomViewPanel extends JPanel {
 		configTabbedPane = new JTabbedPane();
 		p.add(configTabbedPane, BorderLayout.CENTER);
 		
-		
-		
+		try {
+			propertiesBean = new PropertiesBean(this.customViewInfo);
+			propertiesBean.addPropertyChangeListener(this);
+			AbstractTableModel propertiesModel = new BeanPropertiesTableModel<PropertiesBean>(propertiesBean);
+			JTable propertiesTable = new JTable(propertiesModel);
+			configTabbedPane.add("Properties", new JScrollPane(propertiesTable));
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "Problem adding properties view", e);
+		}
 		this.layerTableModel = new LayerTableModel();
 		JTable layerTable = new JTable(layerTableModel);
 		layerPane = new JScrollPane(layerTable);
@@ -196,6 +215,7 @@ public class CustomViewPanel extends JPanel {
 		}));
 		configDialog.setContentPane(p);
 		configDialog.pack();
+		configDialog.setLocationRelativeTo(this);
 		
 		return configDialog;
 	}
@@ -218,7 +238,7 @@ public class CustomViewPanel extends JPanel {
 			layerTableModel.fireTableDataChanged();
 	}
 	
-	static final String LAYER_TABLE_COLUMNS [] = new String[] { "Layer", "Show", "Include", "Layout" };
+	static final String LAYER_TABLE_COLUMNS [] = new String[] { "Layer", "Show", "Include", "View type", "Layout" };
 	
 	/** layer table model */
 	protected LayerTableModel layerTableModel;
@@ -308,6 +328,23 @@ public class CustomViewPanel extends JPanel {
 				}
 				// TODO second& later view item sets
 				if (value==null)
+					vlsi.setViewItemType(null);
+				else
+					vlsi.setViewItemType(value.toString());
+				project.setChanged(true);
+				break;
+			}
+			case 4: {
+				ViewItemSetInfo vlsi = null;
+				if (vli.getViewItemSets().size()>0) {
+					vlsi = vli.getViewItemSets().get(0);					
+				}
+				else {
+					vlsi = new ViewItemSetInfo();
+					vli.getViewItemSets().add(vlsi);					
+				}
+				// TODO second& later view item sets
+				if (value==null)
 					vlsi.setViewLayoutName(null);
 				else
 					vlsi.setViewLayoutName(value.toString());
@@ -350,6 +387,14 @@ public class CustomViewPanel extends JPanel {
 				return sb.toString();
 			}
 			case 3:
+			{
+				List<ViewItemSetInfo> viss = vli.getViewItemSets();
+				if (viss.size()==0)
+					return null;
+				// TODO: second and later ViewItemSet(s)
+				return viss.get(0).getViewItemType();
+			}
+			case 4:
 			{
 				List<ViewItemSetInfo> viss = vli.getViewItemSets();
 				if (viss.size()==0)
@@ -468,5 +513,75 @@ public class CustomViewPanel extends JPanel {
 			return null;
 		}
 		
+	}
+	
+	/** properties bean (delegate/proxy) */
+	class PropertiesBean implements java.io.Serializable {
+		protected transient CustomViewInfo customViewInfo;
+		protected transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+		
+		public PropertiesBean() {			
+		}
+		/**
+		 * @param customViewInfo
+		 */
+		public PropertiesBean(CustomViewInfo customViewInfo) {
+			super();
+			this.customViewInfo = customViewInfo;
+		}
+
+		public String getName() {
+			return customViewInfo.getName();
+		}
+
+		public void setName(String name) {
+			String oldValue = getName();
+			customViewInfo.setName(name);
+			project.setChanged(true);
+			propertyChangeSupport.firePropertyChange("name", oldValue, name);
+		}
+
+		public int getWidth() {
+			return customViewInfo.getMinimumWidth();
+		}
+
+		public void setWidth(int minimumWidth) {
+			int oldValue = getWidth();
+			customViewInfo.setMinimumWidth(minimumWidth);
+			project.setChanged(true);
+			propertyChangeSupport.firePropertyChange("width", oldValue, minimumWidth);
+		}
+
+		public int getHeight() {
+			return customViewInfo.getMinimumHeight();
+		}
+
+		public void setHeight(int minimumHeight) {
+			int oldValue = getHeight();
+			customViewInfo.setMinimumHeight(minimumHeight);
+			project.setChanged(true);
+			propertyChangeSupport.firePropertyChange("height", oldValue, minimumHeight);
+		}
+		public void addPropertyChangeListener(PropertyChangeListener arg0) {
+			propertyChangeSupport.addPropertyChangeListener(arg0);
+		}
+		public void addPropertyChangeListener(String arg0,
+				PropertyChangeListener arg1) {
+			propertyChangeSupport.addPropertyChangeListener(arg0, arg1);
+		}
+		public void removePropertyChangeListener(PropertyChangeListener arg0) {
+			propertyChangeSupport.removePropertyChangeListener(arg0);
+		}
+		public void removePropertyChangeListener(String arg0,
+				PropertyChangeListener arg1) {
+			propertyChangeSupport.removePropertyChangeListener(arg0, arg1);
+		}
+		
+	}
+	@Override
+	public void propertyChange(PropertyChangeEvent evt) {
+		if (evt.getSource()==propertiesBean) {
+			// ?!
+		}
 	}
 }

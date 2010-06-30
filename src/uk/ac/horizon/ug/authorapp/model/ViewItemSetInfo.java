@@ -18,7 +18,9 @@ public class ViewItemSetInfo {
 	protected String factStoreName;
 	/** view layout name */
 	protected String viewLayoutName;
-	/* TODO custom item viewer(s) */
+	/** item type (e.g. Default... Image...) */
+	protected String viewItemType;
+	/* TODO custom item viewer(s) paramters? */
 	
 	/**
 	 * 
@@ -69,5 +71,13 @@ public class ViewItemSetInfo {
 	 */
 	public void setViewLayoutName(String viewLayoutName) {
 		this.viewLayoutName = viewLayoutName;
+	}
+
+	public String getViewItemType() {
+		return viewItemType;
+	}
+
+	public void setViewItemType(String itemType) {
+		this.viewItemType = itemType;
 	}
 }

@@ -153,6 +153,11 @@ public class Project {
 			types = null;
 			kbase = DroolsUtils.getKnowledgeBase(ruleFileUrls);
 			types = DroolsUtils.getTypeDescriptions(ruleFileUrls);
+			projectInfo.getDefaultFactStore();
+			// initialise types cache
+			List<FactStore> factStores = projectInfo.getFactStores();
+			for (FactStore factStore : factStores)
+				factStore.setTypes(types);
 			propertyChangeSupport.firePropertyChange("types", oldTypes, types);
 			if (types==null) 
 				throw new RuntimeException("reloadRuleFiles created KnowledgeBase but not types");

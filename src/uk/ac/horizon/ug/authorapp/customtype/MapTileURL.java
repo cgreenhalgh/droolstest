@@ -5,6 +5,7 @@ package uk.ac.horizon.ug.authorapp.customtype;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -33,16 +34,15 @@ import uk.ac.horizon.ug.authorapp.EntityTableModel;
  * @author cmg
  *
  */
-public class URL implements CustomFieldType {
-	static Logger logger = Logger.getLogger(URL.class.getName());
+public class MapTileURL implements CustomFieldType {
+	static Logger logger = Logger.getLogger(MapTileURL.class.getName());
 
 	/* (non-Javadoc)
 	 * @see uk.ac.horizon.ug.authorapp.customtype.CustomFieldType#getFieldTypeName()
 	 */
 	@Override
 	public String getFieldTypeName() {
-		// TODO Auto-generated method stub
-		return "URL";
+		return "MapTileURL";
 	}
 
 	/* (non-Javadoc)
@@ -69,7 +69,6 @@ public class URL implements CustomFieldType {
 		String currentValue;
 		JDialog dialog;
 		JTextField dialogTextField;
-		JFileChooser fileChooser;
 		protected static final String EDIT = "edit";
 		protected static final String OK = "ok";
 		protected static final String CHOOSE = "choose";
@@ -91,7 +90,7 @@ public class URL implements CustomFieldType {
 	        dialogTextField.addActionListener(this);
 	        p.add(dialogTextField, BorderLayout.CENTER);
 	        JPanel buttons = new JPanel(new FlowLayout());
-	        JButton chooseButton = new JButton("Choose file...");
+	        JButton chooseButton = new JButton("Open Street Map...");
 	        chooseButton.setActionCommand(CHOOSE);
 	        chooseButton.addActionListener(this);
 	        buttons.add(chooseButton);
@@ -103,10 +102,6 @@ public class URL implements CustomFieldType {
 	        dialog.setContentPane(p);
 	        dialog.pack();
 	        
-	        fileChooser = new JFileChooser();
-	        fileChooser.setMultiSelectionEnabled(false);
-	        fileChooser.setDialogTitle("URL");
-	        // TODO ....	        
 		}
 		@Override
 		public Component getTableCellEditorComponent(JTable table, Object value,
@@ -138,26 +133,16 @@ public class URL implements CustomFieldType {
 		    	 dialog.setVisible(false);
 		     }
 		     else if (CHOOSE.equals(e.getActionCommand())) {
-		    	 // TODO initial value...		    	 
 		    	 String path = dialogTextField.getText();
-		    	 fileChooser.setSelectedFile(new File(""));
-		    	 //fileChooser.getCurrentDirectory());
-		    	 if (path!=null && path.length()>0) {
- 		    		 try {
-		    			 File file= new File(new URI(path));	
-		    			 fileChooser.setSelectedFile(file);
-		    		 }
- 		    		 catch (Exception ex) {
- 		    			 logger.log(Level.WARNING, "File to choose "+path+": "+e);
- 		    			 JOptionPane.showMessageDialog(dialog, "Value is not a valid file URL", "URL", JOptionPane.ERROR_MESSAGE);		    		 
- 		    		 }
+		    	 // Java1.6!
+		    	 try {
+		    		 Desktop.getDesktop().browse(new URI(OPEN_STREET_MAP_URL));
 		    	 }
-		    	 int res = fileChooser.showOpenDialog(dialog);
-		    	 if (res==JFileChooser.APPROVE_OPTION) {
-		    		 File file = fileChooser.getSelectedFile();
-		    		 dialogTextField.setText(file.toURI().toString());
+		    	 catch (Exception ex) {
+		    		 logger.log(Level.WARNING, "Unable to launch browser for "+OPEN_STREET_MAP_URL, e);
 		    	 }
 		     }
 		}
 	}
+	static final String OPEN_STREET_MAP_URL = "http://dev.openstreetmap.de/staticmap/wizzard/";
 }

@@ -329,9 +329,59 @@
             </entry>
           </fieldValues>
         </uk.ac.horizon.ug.exserver.devclient.Fact>
+        <uk.ac.horizon.ug.exserver.devclient.Fact>
+          <namespace>uk.ac.horizon.ug.hyperplace.facts</namespace>
+          <typeName>GeoMapTile</typeName>
+          <fieldValues>
+            <entry>
+              <string>url</string>
+              <string>http://dev.openstreetmap.de/staticmap/staticmap.php?center=52.925045216983,-1.1669731159646&amp;zoom=12&amp;size=500x500</string>
+            </entry>
+          </fieldValues>
+        </uk.ac.horizon.ug.exserver.devclient.Fact>
       </facts>
     </uk.ac.horizon.ug.authorapp.FactStore>
   </factStores>
   <defaultFactStoreName>default</defaultFactStoreName>
-  <customViews class="linked-list"/>
+  <customViews class="linked-list">
+    <uk.ac.horizon.ug.authorapp.model.CustomViewInfo>
+      <name>Geoview</name>
+      <layers class="linked-list">
+        <uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
+          <name>Pins</name>
+          <visible>true</visible>
+          <viewItemSets class="linked-list">
+            <uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
+              <typeNames class="linked-list">
+                <string>HyperplaceMapPin</string>
+              </typeNames>
+              <viewLayoutName>geo</viewLayoutName>
+            </uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
+          </viewItemSets>
+        </uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
+        <uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
+          <name>Map</name>
+          <visible>true</visible>
+          <viewItemSets class="linked-list">
+            <uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
+              <typeNames class="linked-list">
+                <string>GeoMapTile</string>
+              </typeNames>
+              <viewLayoutName>geo</viewLayoutName>
+              <viewItemType>MapTile</viewItemType>
+            </uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
+          </viewItemSets>
+        </uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
+      </layers>
+      <layouts class="linked-list">
+        <uk.ac.horizon.ug.authorapp.model.ViewLayoutInfo>
+          <name>geo</name>
+          <layoutType>GeoPosition</layoutType>
+          <properties/>
+        </uk.ac.horizon.ug.authorapp.model.ViewLayoutInfo>
+      </layouts>
+      <minimumWidth>400</minimumWidth>
+      <minimumHeight>400</minimumHeight>
+    </uk.ac.horizon.ug.authorapp.model.CustomViewInfo>
+  </customViews>
 </project>

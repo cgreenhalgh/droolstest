@@ -3,11 +3,13 @@
  */
 package uk.ac.horizon.ug.authorapp.customview;
 
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 import uk.ac.horizon.ug.exserver.devclient.Fact;
+import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 
 /**
  * @author cmg
@@ -173,5 +175,18 @@ public abstract class AbstractViewItem {
 	public void setBaseFactID(String baseFactID) {
 		this.baseFactID = baseFactID;
 	}
-	
+	public void initialise(Fact fact, TypeDescription typeDesc, Component referenceComponent) {
+		this.setBaseFact(fact);
+		String instanceName = null;
+		if (typeDesc!=null) {
+			String idField = typeDesc.getIdFieldName();
+			if (idField==null)
+				idField = typeDesc.getSubjectFieldName();
+			if (idField!=null) 
+				instanceName = (String) fact.getFieldValues().get(idField);
+		}
+		if (instanceName==null)
+			instanceName = fact.toString();
+		setBaseFactID(instanceName);
+	}
 }

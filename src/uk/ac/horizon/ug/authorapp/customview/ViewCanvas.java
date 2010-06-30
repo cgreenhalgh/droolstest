@@ -101,6 +101,7 @@ public class ViewCanvas extends JComponent {
 	 */
 	public void setMinx(float minx) {
 		this.minx = minx;
+		updateSize();
 	}
 	/**
 	 * @return the maxx
@@ -113,6 +114,7 @@ public class ViewCanvas extends JComponent {
 	 */
 	public void setMaxx(float maxx) {
 		this.maxx = maxx;
+		updateSize();
 	}
 	/**
 	 * @return the miny
@@ -125,6 +127,7 @@ public class ViewCanvas extends JComponent {
 	 */
 	public void setMiny(float miny) {
 		this.miny = miny;
+		updateSize();
 	}
 	/**
 	 * @return the maxy
@@ -137,6 +140,7 @@ public class ViewCanvas extends JComponent {
 	 */
 	public void setMaxy(float maxy) {
 		this.maxy = maxy;
+		updateSize();
 	}
 	/**
 	 * @return the zoomRatio

@@ -74,18 +74,28 @@ declare HyperplaceActionPerformed
 end
 
 // a position of something (e.g. reported by client, or of a virtual target)
-// NB This name is magic for the GeoPositionViewLayout
+// NB This name is (currently) magic for the GeoPositionViewLayout
 declare GeoPosition
 	@sensed
 	@message
 	time : long
-	// NB These field names are magic for the GeoPositionViewLayout
+	// NB These field names are (currently) magic for the GeoPositionViewLayout
 	subjectId : String @subject("HyperplaceClient,HyperplaceMapPin,GeoTarget") 
 	latitude : double
 	longitude : double
 	provider : String // e.g. "gps" - optional
 	accuracy : double // metres
 end
+
+// an image in the "google" map tile projection (e.g. tile/tileset/static map)
+declare GeoMapTile
+	@entity
+	@digital
+	@describedbyauthor 
+	url : String @type("MapTileURL")
+	// may add explicit latitude/longitude/zoom if they cannot be reliably derived from the URL
+end
+
 
 // a "pin" on the map. Position is provided by GeoPosition
 declare HyperplaceMapPin

@@ -75,6 +75,10 @@ public class Main implements BrowserPanelCallback {
 	private static final int DEFAULT_WIDTH = 800;
 	private static final int DEFAULT_HEIGHT = 600;
 
+	private static final int DEFAULT_CUSTOM_VIEW_WIDTH = 1000;
+
+	private static final int DEFAULT_CUSTOM_VIEW_HEIGHT = 1000;
+
 	/**
 	 * @param args
 	 */
@@ -641,12 +645,22 @@ public class Main implements BrowserPanelCallback {
 			return;
 		}
 		CustomViewInfo cvi = new CustomViewInfo(name);
+		cvi.setMinimumWidth(DEFAULT_CUSTOM_VIEW_WIDTH);
+		cvi.setMinimumHeight(DEFAULT_CUSTOM_VIEW_HEIGHT);
 		project.getProjectInfo().getCustomViews().add(cvi);
 		project.setChanged(true);
 		openCustomViewPanel(cvi);
 	}
 	public void openCustomViewPanel(CustomViewInfo cvi) {	
 		CustomViewPanel cvp = new CustomViewPanel(project, cvi);
+		if(cvi.getMinimumWidth()==0) {
+			cvi.setMinimumWidth(DEFAULT_CUSTOM_VIEW_WIDTH);
+			project.setChanged(true);
+		}
+		if (cvi.getMinimumHeight()==0) {
+			cvi.setMinimumHeight(DEFAULT_CUSTOM_VIEW_HEIGHT);
+			project.setChanged(true);
+		}
 		customViewPanels.put(cvi.getName(), cvp);
 		tabbedPane.add("View: "+cvi.getName(), cvp);
 		tabbedPane.setSelectedComponent(cvp);		

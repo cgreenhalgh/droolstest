@@ -12,7 +12,9 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import uk.ac.horizon.ug.authorapp.customtype.CustomFieldType;
+import uk.ac.horizon.ug.authorapp.customview.AbstractViewItem;
 import uk.ac.horizon.ug.authorapp.customview.AbstractViewLayout;
+import uk.ac.horizon.ug.authorapp.customview.DefaultViewItem;
 import uk.ac.horizon.ug.authorapp.customview.NullViewLayout;
 import uk.ac.horizon.ug.authorapp.model.ViewLayoutInfo;
 
@@ -100,5 +102,22 @@ public class PluginManager {
 			viewLayout = new NullViewLayout();		
 		}
 		return viewLayout;
+	}
+	/** get view item (not cached) */
+	public synchronized AbstractViewItem newViewItem(String name) {
+		if (name==null || name.length()==0) {
+			//logger.log(Level.WARNING, "newViewItem called with no name");
+			return new DefaultViewItem();
+		}
+		AbstractViewItem viewItem = null;
+		try {
+			viewItem = (AbstractViewItem)Class.forName("uk.ac.horizon.ug.authorapp.customview."+name+"ViewItem").newInstance();
+			logger.info("Found ViewItem "+viewItem.getClass());
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "Could not find ViewLayout "+name+" ("+e+")");
+			viewItem = new DefaultViewItem();		
+		}
+		return viewItem;
 	}
 }

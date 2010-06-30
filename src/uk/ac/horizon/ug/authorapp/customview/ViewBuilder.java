@@ -89,30 +89,10 @@ public class ViewBuilder {
 	 * @param viewItems2 */
 	private AbstractViewItem getViewItem(Project project, ViewItemSetInfo visi,
 			Fact fact, List<List<AbstractViewItem>> viewItems2, Component referenceComponent) {
-		DefaultViewItem viewItem = new DefaultViewItem(referenceComponent);
-		viewItem.setBaseFact(fact);
+		AbstractViewItem viewItem = PluginManager.getPluginManager().newViewItem(visi.getViewItemType());
 		String typeName = fact.getTypeName();
-		String instanceName = null;
 		TypeDescription typeDesc = project.getTypeDescription(typeName);
-		if (typeDesc!=null) {
-			String idField = typeDesc.getIdFieldName();
-			if (idField==null)
-				idField = typeDesc.getSubjectFieldName();
-			if (idField!=null) 
-				instanceName = (String) fact.getFieldValues().get(idField);
-		}
-		if (instanceName==null)
-			instanceName = fact.toString();
-		viewItem.setBaseFactID(instanceName);
-		viewItem.setLineWidth(1);
-		viewItem.setBorderWidth(3);
-		viewItem.setTextRows(new String[] { typeName, instanceName });
-		Rectangle textBounds = viewItem.getTextBounds();
-//		logger.info("Text bounds: "+textBounds.x+","+textBounds.y+","+textBounds.width+","+textBounds.height);
-		if (textBounds.getMaxX()+viewItem.getBorderWidth() > viewItem.getWidth())
-			viewItem.setWidth((float)(textBounds.getMaxX()+viewItem.getBorderWidth()));
-		if (textBounds.getMaxY()+viewItem.getBorderWidth() > viewItem.getHeight())
-			viewItem.setHeight((float)(textBounds.getMaxY()+viewItem.getBorderWidth()));
+		viewItem.initialise(fact, typeDesc, referenceComponent);
 		return viewItem;
 	}
 	/** view layouts - by name */

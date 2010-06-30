@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import uk.ac.horizon.ug.exserver.devclient.Fact;
+import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 
 /** Store of Facts :-)
  * 
@@ -21,6 +22,8 @@ public class FactStore {
 	/** trivial implementation  */
 	protected List<Fact> facts = new LinkedList<Fact>();
 	protected transient boolean changed = false;
+	/** types */
+	protected transient List<TypeDescription> types;
 	/** listener support */
 	protected transient PropertyChangeSupport propertyChangeSupport;
 	protected  PropertyChangeSupport getPropertyChangeSupport() {
@@ -149,5 +152,19 @@ public class FactStore {
 			PropertyChangeListener listener) {
 		getPropertyChangeSupport().removePropertyChangeListener(propertyName,
 				listener);
+	}
+	public List<TypeDescription> getTypes() {
+		return types;
+	}
+	public TypeDescription getType(String name) {
+		if (types==null)
+			return null;
+		for (TypeDescription type: types)
+			if (type.getTypeName().equals(name))
+				return type;
+		return null;
+	}
+	public void setTypes(List<TypeDescription> types) {
+		this.types = types;
 	}
 }

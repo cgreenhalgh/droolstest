@@ -75,7 +75,7 @@ public class ProjectInfo {
 	 * @return the factStores
 	 */
 	public List<FactStore> getFactStores() {
-		if (factStores==null)
+		if (factStores==null) 
 			factStores = new LinkedList<FactStore>();
 		return factStores;
 	}

@@ -56,6 +56,17 @@ public class TypeFieldDescription {
 	public String getMetaType() {
 		return fieldMeta.get(FieldMetaKeys.type.name());
 	}
+	/** get type metadata match specific key */
+	public boolean hasMetaType(String name) {
+		String type = getMetaType();
+		if (type==null)
+			return false;
+		String types [] = type.split("[\", |]");
+		for (int i=0 ;i<types.length; i++) 
+			if (types[i].equals(name))
+				return true;
+		return false;
+	}
 	/** get fk metadata */
 	public String getFk() {
 		return fieldMeta.get(FieldMetaKeys.fk.name());
