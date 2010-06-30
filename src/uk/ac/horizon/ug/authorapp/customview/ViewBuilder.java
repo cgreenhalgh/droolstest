@@ -37,7 +37,7 @@ public class ViewBuilder {
 		return new ViewBuilder();
 	}
 	/** generate view, i.e. ViewItem list */
-	public List<List<AbstractViewItem>> getView(Project project, CustomViewInfo customViewInfo, Component referenceComponent) {
+	public List<List<AbstractViewItem>> getView(Project project, CustomViewInfo customViewInfo, ViewCanvas referenceComponent) {
 		List<List<AbstractViewItem>> viewItems2 = new LinkedList<List<AbstractViewItem>>();
 		
 		for (ViewLayerInfo vli : customViewInfo.getLayers()) {
@@ -77,8 +77,8 @@ public class ViewBuilder {
 				} 
 
 				//TODO: should do all layer's pre layout first, then real layout later
-				preLayout(customViewInfo, viewLayoutInfo, viewItems, viewItems2, referenceComponent);
-				doLayout(customViewInfo, viewLayoutInfo, viewItems, viewItems2, referenceComponent);
+				preLayout(customViewInfo, viewLayoutInfo, viewItems, viewItems2, referenceComponent, factStore);
+				doLayout(customViewInfo, viewLayoutInfo, viewItems, viewItems2, referenceComponent, factStore);
 				viewItems2.add(viewItems);
 			}
 		}
@@ -90,6 +90,7 @@ public class ViewBuilder {
 	private AbstractViewItem getViewItem(Project project, ViewItemSetInfo visi,
 			Fact fact, List<List<AbstractViewItem>> viewItems2, Component referenceComponent) {
 		DefaultViewItem viewItem = new DefaultViewItem(referenceComponent);
+		viewItem.setBaseFact(fact);
 		String typeName = fact.getTypeName();
 		String instanceName = null;
 		TypeDescription typeDesc = project.getTypeDescription(typeName);
@@ -102,6 +103,7 @@ public class ViewBuilder {
 		}
 		if (instanceName==null)
 			instanceName = fact.toString();
+		viewItem.setBaseFactID(instanceName);
 		viewItem.setLineWidth(1);
 		viewItem.setBorderWidth(3);
 		viewItem.setTextRows(new String[] { typeName, instanceName });
@@ -126,9 +128,10 @@ public class ViewBuilder {
 		return viewLayout;
 	}
 	/** do layout of new item(s) 
-	 * @param customViewInfo */
+	 * @param customViewInfo 
+	 * @param factStore */
 	private void preLayout(CustomViewInfo customViewInfo, ViewLayoutInfo viewLayoutInfo,
-			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, Component referenceComponent) {
+			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, ViewCanvas referenceComponent, FactStore factStore) {
 		// include by defulat
 		for(AbstractViewItem viewItem : viewItems) 
 			viewItem.setExcludedByLayout(false);
@@ -139,18 +142,19 @@ public class ViewBuilder {
 		else 
 			viewLayout = getViewLayout(viewLayoutInfo.getName(), viewLayoutInfo.getLayoutType(), viewLayoutInfo);
 		// first pass
-		viewLayout.preLayout(referenceComponent, customViewInfo, viewItems, viewItems2);		
+		viewLayout.preLayout(referenceComponent, customViewInfo, viewItems, viewItems2, factStore);		
 	}
 	/** do layout of new item(s) 
-	 * @param customViewInfo */
+	 * @param customViewInfo 
+	 * @param factStore */
 	private void doLayout(CustomViewInfo customViewInfo, ViewLayoutInfo viewLayoutInfo,
-			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, Component referenceComponent) {
+			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, ViewCanvas referenceComponent, FactStore factStore) {
 		AbstractViewLayout viewLayout = null;
 		if (viewLayoutInfo==null)
 			viewLayout = new NullViewLayout();
 		else 
 			viewLayout = getViewLayout(viewLayoutInfo.getName(), viewLayoutInfo.getLayoutType(), viewLayoutInfo);
 		// first pass
-		viewLayout.doLayout(referenceComponent, customViewInfo, viewItems, viewItems2);		
+		viewLayout.doLayout(referenceComponent, customViewInfo, viewItems, viewItems2, factStore);		
 	}
 }

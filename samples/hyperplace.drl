@@ -74,10 +74,12 @@ declare HyperplaceActionPerformed
 end
 
 // a position of something (e.g. reported by client, or of a virtual target)
+// NB This name is magic for the GeoPositionViewLayout
 declare GeoPosition
 	@sensed
 	@message
 	time : long
+	// NB These field names are magic for the GeoPositionViewLayout
 	subjectId : String @subject("HyperplaceClient,HyperplaceMapPin,GeoTarget") 
 	latitude : double
 	longitude : double

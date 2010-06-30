@@ -6,6 +6,7 @@ package uk.ac.horizon.ug.authorapp.customview;
 import java.awt.Component;
 import java.util.List;
 
+import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.authorapp.model.CustomViewInfo;
 import uk.ac.horizon.ug.authorapp.model.ViewLayoutInfo;
 
@@ -24,9 +25,9 @@ public class NullViewLayout extends AbstractViewLayout {
 	 * @see uk.ac.horizon.ug.authorapp.customview.AbstractViewLayout#doLayout(java.awt.Component, uk.ac.horizon.ug.authorapp.model.CustomViewInfo, java.util.List, java.util.List)
 	 */
 	@Override
-	public void doLayout(Component component, CustomViewInfo customViewInfo,
+	public void doLayout(ViewCanvas component, CustomViewInfo customViewInfo,
 			List<AbstractViewItem> viewItems,
-			List<List<AbstractViewItem>> viewItems2) {
+			List<List<AbstractViewItem>> viewItems2,  FactStore factStore) {
 		for (AbstractViewItem viewItem : viewItems) {
 			viewItem.setExcludedByLayout(true);
 		}

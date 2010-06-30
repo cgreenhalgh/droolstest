@@ -107,7 +107,7 @@ public class CustomViewPanel extends JPanel {
 	protected ViewBuilder viewBuilder;
 	/** regenerate view */
 	public void refresh() {
-		List<List<AbstractViewItem>> items2 = viewBuilder.getView(project, customViewInfo, this);
+		List<List<AbstractViewItem>> items2 = viewBuilder.getView(project, customViewInfo, viewCanvas);
 		viewCanvas.setViewItems(items2);
 		viewCanvas.repaint();
 		paletteCanvas.setViewItems(items2);

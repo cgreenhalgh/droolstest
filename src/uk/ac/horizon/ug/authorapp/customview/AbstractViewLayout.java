@@ -6,6 +6,7 @@ package uk.ac.horizon.ug.authorapp.customview;
 import java.awt.Component;
 import java.util.List;
 
+import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.authorapp.model.CustomViewInfo;
 import uk.ac.horizon.ug.authorapp.model.ViewLayoutInfo;
 
@@ -38,11 +39,11 @@ public abstract class AbstractViewLayout {
 	}
 
 	/** pre-layout pass over ViewItems (no-op by default) */
-	public void preLayout(Component component, CustomViewInfo customViewInfo, 
-			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2) {
+	public void preLayout(ViewCanvas component, CustomViewInfo customViewInfo, 
+			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, FactStore factStore) {
 		// no-op 
 	}
 	/** pre-layout pass over ViewItems (no-op by default) */
-	public abstract void doLayout(Component component, CustomViewInfo customViewInfo, 
-			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2);
+	public abstract void doLayout(ViewCanvas component, CustomViewInfo customViewInfo, 
+			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, FactStore factStore);
 }

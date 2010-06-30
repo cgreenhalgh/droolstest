@@ -7,6 +7,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
+import uk.ac.horizon.ug.exserver.devclient.Fact;
+
 /**
  * @author cmg
  *
@@ -28,6 +30,10 @@ public abstract class AbstractViewItem {
 	protected boolean excludedByLayout;
 	/** view layout */
 	protected AbstractViewLayout viewLayout;
+	/** base fact */
+	protected Fact baseFact;
+	/** base fact ID (if any) */
+	protected String baseFactID;
 	
 	/** draw */
 	public abstract void draw(Graphics2D graphics);
@@ -142,6 +148,30 @@ public abstract class AbstractViewItem {
 	 */
 	public void setViewLayout(AbstractViewLayout viewLayout) {
 		this.viewLayout = viewLayout;
+	}
+	/**
+	 * @return the baseFact
+	 */
+	public Fact getBaseFact() {
+		return baseFact;
+	}
+	/**
+	 * @param baseFact the baseFact to set
+	 */
+	public void setBaseFact(Fact baseFact) {
+		this.baseFact = baseFact;
+	}
+	/**
+	 * @return the baseFactID
+	 */
+	public String getBaseFactID() {
+		return baseFactID;
+	}
+	/**
+	 * @param baseFactID the baseFactID to set
+	 */
+	public void setBaseFactID(String baseFactID) {
+		this.baseFactID = baseFactID;
 	}
 	
 }

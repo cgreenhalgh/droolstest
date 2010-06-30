@@ -333,5 +333,32 @@
     </uk.ac.horizon.ug.authorapp.FactStore>
   </factStores>
   <defaultFactStoreName>default</defaultFactStoreName>
-  <customViews class="linked-list"/>
+  <customViews class="linked-list">
+    <uk.ac.horizon.ug.authorapp.model.CustomViewInfo>
+      <name>Geoview</name>
+      <layers class="linked-list">
+        <uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
+          <name>Pins</name>
+          <visible>true</visible>
+          <viewItemSets class="linked-list">
+            <uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
+              <typeNames class="linked-list">
+                <string>HyperplaceMapPin</string>
+              </typeNames>
+              <viewLayoutName>geo</viewLayoutName>
+            </uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
+          </viewItemSets>
+        </uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
+      </layers>
+      <layouts class="linked-list">
+        <uk.ac.horizon.ug.authorapp.model.ViewLayoutInfo>
+          <name>geo</name>
+          <layoutType>GeoPosition</layoutType>
+          <properties/>
+        </uk.ac.horizon.ug.authorapp.model.ViewLayoutInfo>
+      </layouts>
+      <minimumWidth>0</minimumWidth>
+      <minimumHeight>0</minimumHeight>
+    </uk.ac.horizon.ug.authorapp.model.CustomViewInfo>
+  </customViews>
 </project>

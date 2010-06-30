@@ -55,5 +55,28 @@ public class Fact {
 	public void setFieldValues(Map<String, Object> fieldValues) {
 		this.fieldValues = fieldValues;
 	}
-	
+	/** field access helper */
+	public boolean hasField(String name) {
+		return fieldValues!=null && fieldValues.containsKey(name);
+	}
+	/** field access helper */
+	public Object getObject(String fieldName) {
+		return getFieldValues().get(fieldName);
+	}
+	/** field access helper */
+	public Double getDouble(String fieldName) {
+		Object value = getObject(fieldName);
+		if (value ==null)
+			return null;
+		if (value instanceof Number) 
+			return ((Number)value).doubleValue();
+		return Double.parseDouble(value.toString());
+	}
+	/** field access helper */
+	public String getString(String fieldName) {
+		Object value = getObject(fieldName);
+		if (value ==null)
+			return null;
+		return value.toString();
+	}	
 }
