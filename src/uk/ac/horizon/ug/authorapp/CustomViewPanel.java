@@ -103,6 +103,22 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 			}
 			
 		}));
+		buttons.add(new JButton(new AbstractAction("Configure") {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				showConfigDialog();
+			}
+			
+		}));
+		buttons.add(new JButton(new AbstractAction("Refresh") {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				refresh();
+			}
+			
+		}));
 		viewScrollPane.addMouseWheelListener(new MouseWheelListener() {
 
 			@Override
