@@ -4,11 +4,15 @@
 package uk.ac.horizon.ug.authorapp.customview;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -20,10 +24,10 @@ import javax.swing.JComponent;
  * @author cmg
  *
  */
-public class ViewCanvas extends JComponent {
+public class ViewCanvas extends AbstractViewItemCanvas {
 	static Logger logger = Logger.getLogger(ViewCanvas.class.getName());
 	/** list of list of ViewItems */
-	protected List<List<AbstractViewItem>> viewItems = new LinkedList<List<AbstractViewItem>>();
+	//super:protected List<List<AbstractViewItem>> viewItems = new LinkedList<List<AbstractViewItem>>();
 	protected float minx;
 	protected float maxx;
 	protected float miny;
@@ -31,7 +35,7 @@ public class ViewCanvas extends JComponent {
 	protected float zoomRatio;
 	/** cons */
 	public ViewCanvas() {
-		super();
+		super(false);
 		this.minx = 0;
 		this.maxx = 100;
 		this.miny = 0;
@@ -42,6 +46,9 @@ public class ViewCanvas extends JComponent {
 		// default font
 		setFont(getDefaultFont());
 		updateSize();
+		MouseEventHandler handler = new MouseEventHandler();
+		addMouseListener(handler);
+		addMouseMotionListener(handler);
 	}
 	protected void updateSize() {
 		Dimension size = new Dimension((int)((maxx-minx)*zoomRatio), (int)((maxy-miny)*zoomRatio));
@@ -75,20 +82,6 @@ public class ViewCanvas extends JComponent {
 				avi.draw(graphics);
 			}
 		}
-	}
-	/**
-	 * @return the viewItems
-	 */
-	public List<List<AbstractViewItem>> getViewItems() {
-		if (viewItems==null)
-			viewItems = new LinkedList<List<AbstractViewItem>>();
-		return viewItems;
-	}
-	/**
-	 * @param viewItems the viewItems to set
-	 */
-	public void setViewItems(List<List<AbstractViewItem>> viewItems) {
-		this.viewItems = viewItems;
 	}
 	/**
 	 * @return the minx

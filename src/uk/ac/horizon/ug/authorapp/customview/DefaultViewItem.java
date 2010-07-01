@@ -19,6 +19,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.exserver.devclient.Fact;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 
@@ -115,6 +116,7 @@ public class DefaultViewItem extends AbstractViewItem {
 			if (foregroundColor!=null)
 				graphics.setColor(foreground);
 		}
+		drawSelected(graphics);
 	}
 	/**
 	 * @return the borderWidth
@@ -290,8 +292,8 @@ public class DefaultViewItem extends AbstractViewItem {
 	public void setUserObject(Object userObject) {
 		this.userObject = userObject;
 	}
-	public void initialise(Fact fact, TypeDescription typeDesc, Component referenceComponent) {
-		super.initialise(fact, typeDesc, referenceComponent);
+	public void initialise(Fact fact, TypeDescription typeDesc, Component referenceComponent, FactStore factStore) {
+		super.initialise(fact, typeDesc, referenceComponent, factStore);
 		this.referenceComponent = referenceComponent;
 
 		setLineWidth(1);

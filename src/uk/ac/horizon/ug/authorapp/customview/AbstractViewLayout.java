@@ -39,11 +39,23 @@ public abstract class AbstractViewLayout {
 	}
 
 	/** pre-layout pass over ViewItems (no-op by default) */
-	public void preLayout(ViewCanvas component, CustomViewInfo customViewInfo, 
+	public void preLayout(AbstractViewItemCanvas component, CustomViewInfo customViewInfo, 
 			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, FactStore factStore) {
-		// no-op 
+		// no-op
 	}
 	/** pre-layout pass over ViewItems (no-op by default) */
 	public abstract void doLayout(ViewCanvas component, CustomViewInfo customViewInfo, 
 			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, FactStore factStore);
+	/** mouse interaction handler (no-op by default) */
+	public void handleItemMove(ViewCanvas component, AbstractViewItem viewItem, int dx, int dy) {
+		// default: no-op
+	}
+	/** mouse interaction handler (no-op by default) */
+	public void handleItemDragOff(ViewCanvas component, AbstractViewItem viewItem) {
+		// default: no-op
+	}
+	/** mouse interaction handler (no-op by default) */
+	public void handleItemDragOn(ViewCanvas component, AbstractViewItem viewItem, int x, int y) {
+		// default: no-op
+	}
 }

@@ -3,11 +3,15 @@
  */
 package uk.ac.horizon.ug.authorapp.customview;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Stroke;
 
+import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.exserver.devclient.Fact;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 
@@ -36,9 +40,25 @@ public abstract class AbstractViewItem {
 	protected Fact baseFact;
 	/** base fact ID (if any) */
 	protected String baseFactID;
+	/** fact store */
+	protected FactStore factStore;
 	
 	/** draw */
 	public abstract void draw(Graphics2D graphics);
+	/** draw default selection outside */
+	public void drawSelected(Graphics2D graphics) {
+		if (!selected)
+			return;
+		Stroke stroke = graphics.getStroke();
+		Stroke s = new BasicStroke(0.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 2, new float[] { 3, 3 }, 0);
+		Color foreground = graphics.getColor();
+		graphics.setColor(Color.red); // ?!
+		graphics.setStroke(s);
+		Rectangle visibleExtent = getVisibleExtent();
+		graphics.drawRect((int)(x+visibleExtent.x), (int)(y+visibleExtent.y), visibleExtent.width-1, visibleExtent.height-1);
+		graphics.setStroke(stroke);
+		graphics.setColor(foreground);
+	}
 	/**
 	 * @return the x
 	 */
@@ -175,8 +195,21 @@ public abstract class AbstractViewItem {
 	public void setBaseFactID(String baseFactID) {
 		this.baseFactID = baseFactID;
 	}
-	public void initialise(Fact fact, TypeDescription typeDesc, Component referenceComponent) {
+	/**
+	 * @return the factStore
+	 */
+	public FactStore getFactStore() {
+		return factStore;
+	}
+	/**
+	 * @param factStore the factStore to set
+	 */
+	public void setFactStore(FactStore factStore) {
+		this.factStore = factStore;
+	}
+	public void initialise(Fact fact, TypeDescription typeDesc, Component referenceComponent, FactStore factStore) {
 		this.setBaseFact(fact);
+		this.factStore = factStore;
 		String instanceName = null;
 		if (typeDesc!=null) {
 			String idField = typeDesc.getIdFieldName();

@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
+import uk.ac.horizon.ug.authorapp.FactStore;
 import uk.ac.horizon.ug.exserver.devclient.Fact;
 import uk.ac.horizon.ug.exserver.protocol.TypeDescription;
 import uk.ac.horizon.ug.exserver.protocol.TypeFieldDescription;
@@ -31,9 +32,9 @@ public class MapTileViewItem extends AbstractViewItem {
 	
 	@Override
 	public void initialise(Fact fact, TypeDescription typeDesc,
-			Component referenceComponent) {
+			Component referenceComponent, FactStore factStore) {
 		// TODO Auto-generated method stub
-		super.initialise(fact, typeDesc, referenceComponent);
+		super.initialise(fact, typeDesc, referenceComponent, factStore);
 		this.typeDesc = typeDesc;
 		for (Map.Entry<String, TypeFieldDescription> field : typeDesc.getFields().entrySet()) {
 			if (field.getValue().hasMetaType("MapTileURL")) {
@@ -67,6 +68,7 @@ public class MapTileViewItem extends AbstractViewItem {
 			graphics.drawImage(i, transform, null);
 			logger.info("Drew "+image+" at "+transform);
 		}
+		drawSelected(graphics);
 	}
 
 }

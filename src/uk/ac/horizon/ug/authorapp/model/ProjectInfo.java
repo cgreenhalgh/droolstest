@@ -106,7 +106,7 @@ public class ProjectInfo {
 				return fs;
 		}
 		FactStore fs = new FactStore(getDefaultFactStoreName());
-		fs.setChanged(true);
+		//fs.setChanged(true);
 		factStores.add(fs);
 		return fs;
 	}

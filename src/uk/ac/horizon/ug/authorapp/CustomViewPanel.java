@@ -119,7 +119,10 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 			viewCanvas.setMaxx(customViewInfo.getMinimumWidth());
 		if (viewCanvas.getMaxy()!=customViewInfo.getMinimumHeight())
 			viewCanvas.setMaxy(customViewInfo.getMinimumHeight());
-		List<List<AbstractViewItem>> items2 = viewBuilder.getView(project, customViewInfo, viewCanvas);
+		
+		List<List<AbstractViewItem>> items2 = new LinkedList<List<AbstractViewItem>>();
+		if (project.getTypes()!=null)
+			items2 = viewBuilder.getView(project, customViewInfo, viewCanvas);
 		viewCanvas.setViewItems(items2);
 		viewCanvas.repaint();
 		paletteCanvas.setViewItems(items2);

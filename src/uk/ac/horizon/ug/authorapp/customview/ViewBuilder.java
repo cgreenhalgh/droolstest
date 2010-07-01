@@ -72,7 +72,7 @@ public class ViewBuilder {
 					List<Fact> facts = itemSet.factStore.getFacts(factTypeName);
 					for (Fact fact : facts) {
 						// create views...
-						AbstractViewItem viewItem = getViewItem(project, visi, fact, viewItems2, referenceComponent);
+						AbstractViewItem viewItem = getViewItem(project, visi, fact, viewItems2, referenceComponent, itemSet.factStore);
 						itemSet.viewItems.add(viewItem);
 					}
 				}
@@ -100,11 +100,11 @@ public class ViewBuilder {
 	/** create ViewItem for fact 
 	 * @param viewItems2 */
 	private AbstractViewItem getViewItem(Project project, ViewItemSetInfo visi,
-			Fact fact, List<List<AbstractViewItem>> viewItems2, Component referenceComponent) {
+			Fact fact, List<List<AbstractViewItem>> viewItems2, Component referenceComponent, FactStore factStore) {
 		AbstractViewItem viewItem = PluginManager.getPluginManager().newViewItem(visi.getViewItemType());
 		String typeName = fact.getTypeName();
 		TypeDescription typeDesc = project.getTypeDescription(typeName);
-		viewItem.initialise(fact, typeDesc, referenceComponent);
+		viewItem.initialise(fact, typeDesc, referenceComponent, factStore);
 		return viewItem;
 	}
 	/** view layouts - by name */
@@ -123,16 +123,18 @@ public class ViewBuilder {
 	 * @param customViewInfo 
 	 * @param factStore */
 	private void preLayout(CustomViewInfo customViewInfo, ViewLayoutInfo viewLayoutInfo,
-			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, ViewCanvas referenceComponent, FactStore factStore) {
-		// include by defulat
-		for(AbstractViewItem viewItem : viewItems) 
-			viewItem.setExcludedByLayout(false);
+			List<AbstractViewItem> viewItems, List<List<AbstractViewItem>> viewItems2, AbstractViewItemCanvas referenceComponent, FactStore factStore) {
 		// layout implementation
 		AbstractViewLayout viewLayout = null;
 		if (viewLayoutInfo==null)
 			viewLayout = new NullViewLayout();
 		else 
 			viewLayout = getViewLayout(viewLayoutInfo.getName(), viewLayoutInfo.getLayoutType(), viewLayoutInfo);
+		// include by default
+		for(AbstractViewItem viewItem : viewItems) {
+			viewItem.setExcludedByLayout(false);
+			viewItem.setViewLayout(viewLayout);
+		}
 		// first pass
 		viewLayout.preLayout(referenceComponent, customViewInfo, viewItems, viewItems2, factStore);		
 	}

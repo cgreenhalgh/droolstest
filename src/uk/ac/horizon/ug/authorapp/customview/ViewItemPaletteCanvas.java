@@ -7,38 +7,25 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.util.LinkedList;
 import java.util.List;
 
-import javax.swing.JComponent;
+import uk.ac.horizon.ug.authorapp.customview.AbstractViewItemCanvas.MouseEventHandler;
+
 
 /** Layout-excluded items.
  * 
  * @author cmg
  *
  */
-public class ViewItemPaletteCanvas extends JComponent {
-	/** items */
-	protected List<List<AbstractViewItem>> viewItems = new LinkedList<List<AbstractViewItem>>();
-
+public class ViewItemPaletteCanvas extends AbstractViewItemCanvas {
 	/** cons */
 	public ViewItemPaletteCanvas() {
-		super();
+		super(true);
+		MouseEventHandler handler = new MouseEventHandler();
+		addMouseListener(handler);
+		addMouseMotionListener(handler);
 	}
 
-	/**
-	 * @return the viewItems
-	 */
-	public List<List<AbstractViewItem>> getViewItems() {
-		return viewItems;
-	}
-
-	/**
-	 * @param viewItems the viewItems to set
-	 */
-	public void setViewItems(List<List<AbstractViewItem>> viewItems) {
-		this.viewItems = viewItems;
-	}
 	public static final int GAP = 4;
 
 	/** update */
@@ -52,6 +39,8 @@ public class ViewItemPaletteCanvas extends JComponent {
 				Rectangle visibleExtent = vi.getVisibleExtent();
 				if (visibleExtent.getHeight()>minHeight)
 					minHeight = (int)visibleExtent.getHeight();
+				vi.setY((float)(GAP/2-visibleExtent.getY()));
+				vi.setX((float)(GAP/2-visibleExtent.getX()+minWidth));
 				minWidth = (int)(minWidth + visibleExtent.getWidth() + GAP);
 			}
 		}
@@ -69,19 +58,25 @@ public class ViewItemPaletteCanvas extends JComponent {
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		int x = 0;
 		for (List<AbstractViewItem> vis : viewItems) {
 			for (AbstractViewItem vi : vis) {
 				if (!vi.isExcludedByLayout())
 					continue;
 				Rectangle visibleExtent = vi.getVisibleExtent();
-				Graphics2D graphics = (Graphics2D) g.create(x, 0, visibleExtent.width+GAP, visibleExtent.height+GAP);
-				vi.setX(GAP/2-visibleExtent.x);
-				vi.setY(GAP/2-visibleExtent.y);
+				Graphics2D graphics = (Graphics2D) g.create();
+				graphics.clipRect((int)(vi.getX()-GAP/2+visibleExtent.x), (int)(vi.getY()-GAP/2+visibleExtent.y), visibleExtent.width+GAP, visibleExtent.height+GAP);
 				vi.draw(graphics);
-				x = x+visibleExtent.width+GAP;
 			}
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see uk.ac.horizon.ug.authorapp.customview.AbstractViewItemCanvas#updateAfterDrag()
+	 */
+	@Override
+	protected void updateAfterDrag() {
+		this.updateItems();
+		super.updateAfterDrag();
 	}
 	
 }
