@@ -65,17 +65,23 @@ public abstract class AbstractViewItemCanvas extends JComponent {
 		if (changed)
 			repaint();
 	}
+	/** placeholder */
+	public float getZoomRatio() {
+		return 1.0f;
+	}
 
 	public AbstractViewItem getViewItemAt(int x, int y) {
 		// search in reverse order (i.e. visible order) 
 		if (viewItems==null)
 			return null;
+		double sx = x/getZoomRatio();
+		double sy = y/getZoomRatio();
 		for (int li=viewItems.size()-1; li>=0; li--) {
 			List<AbstractViewItem> vis = viewItems.get(li);
 			for (int ii=vis.size()-1; ii>=0; ii--) {
 				AbstractViewItem vi = vis.get(ii);
 				Rectangle visibleExtent = vi.getVisibleExtent();
-				if (visibleExtent.contains(x-vi.getX(), y-vi.getY()))
+				if (visibleExtent.contains(sx-vi.getX(), sy-vi.getY()))
 					return vi;
 			}
 		}
@@ -87,8 +93,9 @@ public abstract class AbstractViewItemCanvas extends JComponent {
 	class MouseEventHandler implements MouseListener, MouseMotionListener {
 		boolean pressedInSelected = false;
 		boolean dragInProgress = false;
+		protected boolean moveInProgress = false;
 		boolean exited = false;
-		int pressX, pressY;
+		int pressX, pressY, lastX, lastY;
 		
 		@Override
 		public void mouseClicked(MouseEvent ev) {
@@ -118,11 +125,19 @@ public abstract class AbstractViewItemCanvas extends JComponent {
 
 		@Override
 		public void mousePressed(MouseEvent ev) {
-			AbstractViewItem vi = getViewItemAt(ev.getX(), ev.getY());
-			if (vi!=null && vi.isSelected())
-				pressedInSelected = true;
-			else
-				pressedInSelected = false;
+			if (ev.getButton()==MouseEvent.BUTTON1) {
+				AbstractViewItem vi = getViewItemAt(ev.getX(), ev.getY());
+				if (vi!=null && vi.isSelected())
+					pressedInSelected = true;
+				else
+					pressedInSelected = false;
+			}
+			else if (ev.getButton()!=MouseEvent.BUTTON1) {
+  				setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+  				moveInProgress = true;	
+  				lastX = ev.getXOnScreen();
+  				lastY = ev.getYOnScreen();
+			}
 			dragInProgress = false;
 			exited = false;
 			pressX = ev.getX();
@@ -133,43 +148,14 @@ public abstract class AbstractViewItemCanvas extends JComponent {
 		@Override
 		public void mouseReleased(MouseEvent ev) {
 			// TODO Auto-generated method stub
-			if (dragInProgress) {
-				if (pressedInSelected) {
-					if (exited) {
-						logger.info("Released after move exited: "+ev);
-						// TODO / DND?
-					}
-					else {
-						// move
-						//logger.info("Released after move: "+ev);
-						if (ev.getX()>=getWidth() || ev.getY()>=getHeight() || ev.getX()<0 || ev.getY()<0) {
-							logger.info("Released after move outside canvas: "+ev);							
-						}
-						else {
-							// move all selected...
-							boolean changed = false;
-							int dx = ev.getX()-pressX;
-							int dy = ev.getY()-pressY;
-							for (List<AbstractViewItem> viewItems : getViewItems()) {
-								for (AbstractViewItem viewItem : viewItems) {
-									if (viewItem.isSelected()) {
-										AbstractViewLayout vl = viewItem.getViewLayout();
-										if (vl==null) {
-											logger.log(Level.WARNING, "No ViewLayout for moved item "+viewItem);
-											continue;											
-										}
-										if (AbstractViewItemCanvas.this instanceof ViewCanvas)
-											vl.handleItemMove((ViewCanvas)AbstractViewItemCanvas.this, viewItem, dx, dy);
-									}
-								}
-							}
-						}
-					}
-				}
-				else {
-					// select
-					// TODO
-				}
+			if (moveInProgress) {
+				setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+				Rectangle visible = getVisibleRect();
+				Rectangle scrollTo = new Rectangle(visible.x-(ev.getXOnScreen()-lastX), visible.y-(ev.getYOnScreen()-lastY), visible.width, visible.height);
+				scrollRectToVisible(scrollTo);
+				moveInProgress = false;
+			}
+			else if (dragInProgress) {
 				setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 			}
 		}
@@ -177,13 +163,20 @@ public abstract class AbstractViewItemCanvas extends JComponent {
 		@Override
 		public void mouseDragged(MouseEvent ev) {
 			// TODO Auto-generated method stub
-			if (!dragInProgress) {
+			if (moveInProgress) {
+				Rectangle visible = getVisibleRect();
+				Rectangle scrollTo = new Rectangle(visible.x-(ev.getXOnScreen()-lastX), visible.y-(ev.getYOnScreen()-lastY), visible.width, visible.height);
+				scrollRectToVisible(scrollTo);
+				lastX = ev.getXOnScreen();
+				lastY = ev.getYOnScreen();
+			}
+			else if (!dragInProgress) {
 				dragInProgress = true;
 				if (pressedInSelected) {
 					getTransferHandler().exportAsDrag(AbstractViewItemCanvas.this, ev, TransferHandler.MOVE);
 					//setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
 				}
-				else
+				else if (ev.getButton()==MouseEvent.BUTTON1)
 					setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 			}
 		}

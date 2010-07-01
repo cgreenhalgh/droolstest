@@ -138,6 +138,7 @@ public class ViewCanvas extends AbstractViewItemCanvas {
 	/**
 	 * @return the zoomRatio
 	 */
+	@Override
 	public float getZoomRatio() {
 		return zoomRatio;
 	}

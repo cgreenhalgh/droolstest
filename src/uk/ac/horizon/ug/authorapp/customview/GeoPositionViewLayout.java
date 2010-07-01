@@ -272,8 +272,8 @@ public class GeoPositionViewLayout extends AbstractViewLayout {
 		double googleX = longitudeToGoogleX(longitude);
 		double googleY = latitudeToGoogleY(latitude);
 		// scale mouse dx/dy by range & canvas size
-		double gdx = dx / (canvas.getMaxx()-canvas.getMinx()) * range.getWidth();
-		double gdy = dy / (canvas.getMaxy()-canvas.getMiny()) * range.getHeight();
+		double gdx = dx / canvas.getZoomRatio() / (canvas.getMaxx()-canvas.getMinx()) * range.getWidth();
+		double gdy = dy / canvas.getZoomRatio() / (canvas.getMaxy()-canvas.getMiny()) * range.getHeight();
 		
 		double newX = googleX+gdx;
 		double newY = googleY+gdy;
@@ -331,8 +331,8 @@ public class GeoPositionViewLayout extends AbstractViewLayout {
 			position.setTypeName(GEO_POSITION_TYPE_NAME);
 			viewItem.getFactStore().addFact(position);
 		}
-		double googleX = x / (canvas.getMaxx()-canvas.getMinx()) * range.getWidth() + range.getMinX();
-		double googleY = y / (canvas.getMaxy()-canvas.getMiny()) * range.getHeight() + range.getMinY();
+		double googleX = x / canvas.getZoomRatio() / (canvas.getMaxx()-canvas.getMinx()) * range.getWidth() + range.getMinX();
+		double googleY = y / canvas.getZoomRatio() / (canvas.getMaxy()-canvas.getMiny()) * range.getHeight() + range.getMinY();
 		
 		double newLongitude = this.googleXToLongitude(googleX);
 		double newLatitude = this.googleYToLatitude(googleY);

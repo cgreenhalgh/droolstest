@@ -6,7 +6,10 @@ package uk.ac.horizon.ug.authorapp;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -78,6 +81,7 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 		
 		viewCanvas = new ViewCanvas();
 		final JScrollPane viewScrollPane = new JScrollPane(viewCanvas);
+		viewScrollPane.setWheelScrollingEnabled(false);
 		viewScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 		viewScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		bottomPane.add(viewScrollPane, BorderLayout.CENTER);
@@ -87,9 +91,7 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO Keep centre in the centre!
-				//viewScrollPane.getViewport().scrollRectToVisible(contentRect)
-				viewCanvas.setZoomRatio(viewCanvas.getZoomRatio()*2);
+				zoomIn();
 			}
 			
 		}));
@@ -97,19 +99,46 @@ public class CustomViewPanel extends JPanel implements PropertyChangeListener {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO Keep centre in the centre!
-				viewCanvas.setZoomRatio(viewCanvas.getZoomRatio()/2);
-				if (viewCanvas.getZoomRatio()>0.55 && viewCanvas.getZoomRatio()<1.9) 
-					viewCanvas.setZoomRatio(1);
-				
+				zoomOut();
 			}
 			
 		}));
+		viewScrollPane.addMouseWheelListener(new MouseWheelListener() {
+
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent ev) {
+				// TODO Auto-generated method stub
+				int rots = ev.getWheelRotation();
+				for (int i=0; i<rots; i++)
+					zoomIn();
+				for (int i=0; i>rots; i--)
+					zoomOut();
+			}
+			
+		});
 		
 		viewBuilder = ViewBuilder.getViewBuilder();
 		// can't create usefully in construction as view component doesn't exist
 		// to size things
 		//refresh();
+	}
+	protected void zoomOut() {
+		Rectangle visible = viewCanvas.getVisibleRect();//viewScrollPane.getV
+		Rectangle contentRect = new Rectangle((int)(visible.getCenterX()/2-visible.getWidth()/2), (int)(visible.getCenterY()/2-visible.getHeight()/2), (int)(visible.getWidth()), (int)(visible.getHeight()));
+		viewCanvas.setZoomRatio(viewCanvas.getZoomRatio()/2);
+		if (viewCanvas.getZoomRatio()>0.55 && viewCanvas.getZoomRatio()<1.9) 
+			viewCanvas.setZoomRatio(1);
+		viewCanvas.scrollRectToVisible(contentRect);				
+		logger.info("Scroll visible="+visible+" to "+contentRect);
+
+	}
+	protected void zoomIn() {
+		//viewScrollPane.getViewport().scrollRectToVisible(contentRect)
+		Rectangle visible = viewCanvas.getVisibleRect();//viewScrollPane.getV
+		Rectangle contentRect = new Rectangle((int)(2*visible.getCenterX()-visible.getWidth()/2), (int)(2*visible.getCenterY()-visible.getHeight()/2), (int)(visible.getWidth()), (int)(visible.getHeight()));
+		viewCanvas.setZoomRatio(viewCanvas.getZoomRatio()*2);
+		viewCanvas.scrollRectToVisible(contentRect);
+		logger.info("Scroll visible="+visible+" to "+contentRect);
 	}
 	/** view builder */
 	protected ViewBuilder viewBuilder;

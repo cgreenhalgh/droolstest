@@ -298,8 +298,8 @@ public class DefaultViewItem extends AbstractViewItem {
 
 		setLineWidth(1);
 		setBorderWidth(3);
-		String typeName = fact.getTypeName();
-		setTextRows(new String[] { typeName, getBaseFactID() });
+		//String typeName = fact.getTypeName();
+		setTextRows(getDefaultText());
 		Rectangle textBounds = getTextBounds();
 //		logger.info("Text bounds: "+textBounds.x+","+textBounds.y+","+textBounds.width+","+textBounds.height);
 		if (textBounds.getMaxX()+this.getBorderWidth() > this.getWidth())
@@ -307,5 +307,7 @@ public class DefaultViewItem extends AbstractViewItem {
 		if (textBounds.getMaxY()+this.getBorderWidth() > this.getHeight())
 			this.setHeight((float)(textBounds.getMaxY()+this.getBorderWidth()));
 	}
-
+	protected String [] getDefaultText() {
+		return new String[] { getBaseFact().getTypeName(), getBaseFactID() };
+	}
 }

@@ -379,6 +379,7 @@
                 <string>HyperplaceMapPin</string>
               </typeNames>
               <viewLayoutName>geo</viewLayoutName>
+              <viewItemType>MapPin</viewItemType>
             </uk.ac.horizon.ug.authorapp.model.ViewItemSetInfo>
           </viewItemSets>
         </uk.ac.horizon.ug.authorapp.model.ViewLayerInfo>
