@@ -72,6 +72,8 @@ public class ClientSubscriptionManager {
 
 			if (conversation.getStatus()==ConversationStatus.ACTIVE) {
 				insertMessageToClient(conversation, MessageType.NEW_CONV, null, null, null, null, null, em);
+				// adopt any old messages for this clientId and sessionId
+				// TODO
 			} else {
 				// remove old messages (unless lifetime = client)
 				Query q = em.createQuery ("SELECT x FROM MessageToClient x WHERE x.conversationId = :conversationId AND x.lifetime != :lifetime");
